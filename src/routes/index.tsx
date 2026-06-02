@@ -1,17 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowRight, ShieldCheck, Sprout, Landmark, BadgeCheck } from "lucide-react";
-import heroImg from "@/assets/hero-entrepreneurs.jpg";
+import { ArrowRight, ShieldCheck, Sprout, Landmark, BadgeCheck, GraduationCap, Home, HeartPulse, Briefcase, Coins, Flag } from "lucide-react";
+import heroImg from "@/assets/hero-seedling.jpg";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Seedin America — Federal Grant Capital for U.S. Entrepreneurs" },
-      { name: "description", content: "Apply for federally backed grant capital to launch and scale your American business. Endorsed at the highest level." },
+      { title: "Seedin America — Federal Grants for Business, Debt, Tuition & More" },
+      { name: "description", content: "Federally backed grants for U.S. citizens: business capital, student loan repayment, mortgage relief, accident recovery and more. Plant the seed." },
       { property: "og:title", content: "Seedin America" },
-      { property: "og:description", content: "Plant the seed. Grow the dream. Federal grant capital for U.S. entrepreneurs." },
+      { property: "og:description", content: "Plant the seed. Grow the dream. American grants for life's biggest moments." },
     ],
   }),
   component: Landing,
