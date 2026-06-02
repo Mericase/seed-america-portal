@@ -14,13 +14,58 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          address: string
+          balance: number
+          created_at: string
+          date_of_birth: string
+          email: string
+          full_name: string
+          hear_about: string | null
+          id: string
+          phone: string
+          referral_code: string
+          referred_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          balance?: number
+          created_at?: string
+          date_of_birth: string
+          email: string
+          full_name: string
+          hear_about?: string | null
+          id: string
+          phone: string
+          referral_code: string
+          referred_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          balance?: number
+          created_at?: string
+          date_of_birth?: string
+          email?: string
+          full_name?: string
+          hear_about?: string | null
+          id?: string
+          phone?: string
+          referral_code?: string
+          referred_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_referral_code: { Args: never; Returns: string }
+      referral_code_exists: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
