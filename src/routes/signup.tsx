@@ -16,13 +16,18 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
+
 const step1Schema = z.object({
   full_name: z.string().trim().min(2, "Enter your full legal name").max(120),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().min(7, "Enter a valid phone").max(20),
   address: z.string().trim().min(5, "Enter your residential address").max(255),
-  date_of_birth: z.string().refine((v) => !!v && new Date(v) < new Date(), "Enter a valid date"),
+  date_of_birth: z.string().regex(dobRegex, "Use MM/DD/YYYY (e.g. 04/12/1990)"),
   password: z.string().min(8, "Minimum 8 characters").max(72),
+  confirm_password: z.string().min(8, "Confirm your password").max(72),
+}).refine((v) => v.password === v.confirm_password, {
+  message: "Passwords do not match", path: ["confirm_password"],
 });
 
 type Step1 = z.infer<typeof step1Schema>;
@@ -33,7 +38,7 @@ function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [data, setData] = useState<Step1>({
-    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "",
+    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
   });
   const [hearAbout, setHearAbout] = useState("");
   const [referralCode, setReferralCode] = useState("");
