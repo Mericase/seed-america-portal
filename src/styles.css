@@ -42,48 +42,49 @@
   --shadow-gold: 0 12px 40px -12px color-mix(in oklab, var(--gold) 50%, transparent);
   --shadow-card: 0 1px 2px rgba(11, 23, 50, 0.04), 0 8px 30px -12px rgba(11, 23, 50, 0.10);
 
-  --gradient-primary: linear-gradient(135deg, oklch(0.22 0.07 260) 0%, oklch(0.32 0.10 255) 100%);
+  --gradient-primary: linear-gradient(135deg, oklch(0.32 0.10 155) 0%, oklch(0.42 0.13 150) 100%);
   --gradient-gold: linear-gradient(135deg, oklch(0.82 0.14 85) 0%, oklch(0.72 0.16 70) 100%);
-  --gradient-forest: linear-gradient(135deg, oklch(0.35 0.09 155) 0%, oklch(0.45 0.11 150) 100%);
-  --gradient-hero-overlay: linear-gradient(180deg, oklch(0.18 0.06 260 / 0.55) 0%, oklch(0.12 0.05 260 / 0.85) 100%);
+  --gradient-forest: linear-gradient(135deg, oklch(0.30 0.09 155) 0%, oklch(0.48 0.13 148) 100%);
+  --gradient-soil: linear-gradient(180deg, oklch(0.30 0.05 60) 0%, oklch(0.22 0.04 50) 100%);
+  --gradient-hero-overlay: linear-gradient(180deg, oklch(0.18 0.06 155 / 0.35) 0%, oklch(0.14 0.06 155 / 0.78) 100%);
 }
 
 :root {
   --radius: 0.75rem;
 
   /* Deep patriotic navy */
-  --background: oklch(0.985 0.005 95);
-  --foreground: oklch(0.18 0.05 260);
+  --background: oklch(0.985 0.008 130);
+  --foreground: oklch(0.20 0.05 155);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.05 260);
+  --card-foreground: oklch(0.20 0.05 155);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.05 260);
+  --popover-foreground: oklch(0.20 0.05 155);
 
-  --primary: oklch(0.22 0.07 260);          /* navy */
-  --primary-foreground: oklch(0.98 0.01 95);
+  --primary: oklch(0.36 0.12 155);          /* deep forest green */
+  --primary-foreground: oklch(0.98 0.01 130);
 
-  --secondary: oklch(0.96 0.01 95);
-  --secondary-foreground: oklch(0.22 0.07 260);
+  --secondary: oklch(0.96 0.02 130);
+  --secondary-foreground: oklch(0.28 0.09 155);
 
-  --muted: oklch(0.95 0.01 90);
-  --muted-foreground: oklch(0.48 0.03 260);
+  --muted: oklch(0.95 0.015 130);
+  --muted-foreground: oklch(0.48 0.04 155);
 
-  --accent: oklch(0.94 0.03 90);             /* warm cream */
-  --accent-foreground: oklch(0.22 0.07 260);
+  --accent: oklch(0.94 0.04 130);            /* soft sage cream */
+  --accent-foreground: oklch(0.28 0.09 155);
 
-  --gold: oklch(0.76 0.14 80);               /* warm gold */
-  --gold-foreground: oklch(0.18 0.05 260);
+  --gold: oklch(0.76 0.14 80);               /* warm gold (coin) */
+  --gold-foreground: oklch(0.20 0.05 155);
 
-  --forest: oklch(0.40 0.10 155);            /* wealthy forest green */
-  --forest-foreground: oklch(0.98 0.01 95);
+  --forest: oklch(0.42 0.13 150);            /* signature green */
+  --forest-foreground: oklch(0.98 0.01 130);
 
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.90 0.01 90);
-  --input: oklch(0.92 0.01 90);
-  --ring: oklch(0.40 0.10 155);
+  --border: oklch(0.90 0.02 130);
+  --input: oklch(0.92 0.02 130);
+  --ring: oklch(0.42 0.13 150);
 }
 
 .dark {

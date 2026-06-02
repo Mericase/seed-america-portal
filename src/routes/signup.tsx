@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Check, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,13 +16,18 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
+
 const step1Schema = z.object({
   full_name: z.string().trim().min(2, "Enter your full legal name").max(120),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().min(7, "Enter a valid phone").max(20),
   address: z.string().trim().min(5, "Enter your residential address").max(255),
-  date_of_birth: z.string().refine((v) => !!v && new Date(v) < new Date(), "Enter a valid date"),
+  date_of_birth: z.string().regex(dobRegex, "Use MM/DD/YYYY (e.g. 04/12/1990)"),
   password: z.string().min(8, "Minimum 8 characters").max(72),
+  confirm_password: z.string().min(8, "Confirm your password").max(72),
+}).refine((v) => v.password === v.confirm_password, {
+  message: "Passwords do not match", path: ["confirm_password"],
 });
 
 type Step1 = z.infer<typeof step1Schema>;
@@ -33,7 +38,7 @@ function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [data, setData] = useState<Step1>({
-    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "",
+    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
   });
   const [hearAbout, setHearAbout] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -115,7 +120,7 @@ function SignupPage() {
                         full_name: data.full_name,
                         phone: data.phone,
                         address: data.address,
-                        date_of_birth: data.date_of_birth,
+                        date_of_birth: (() => { const [m,d,y] = data.date_of_birth.split("/"); return `${y}-${m}-${d}`; })(),
                         hear_about: hearAbout,
                         referral_code: referralCode.trim().toUpperCase() || null,
                       },
@@ -176,9 +181,19 @@ function Field({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> 
   );
 }
 
+function formatDob(input: string): string {
+  const digits = input.replace(/\D/g, "").slice(0, 8);
+  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+  return parts.join("/");
+}
+
 function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void }) {
   const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.target.value });
+  const [showPw, setShowPw] = useState(false);
+  const [showCpw, setShowCpw] = useState(false);
+  const dobPickerRef = useRef<HTMLInputElement>(null);
+
   return (
     <form onSubmit={(e) => { e.preventDefault(); onNext(); }} className="space-y-5">
       <Field label="Full Legal Name" placeholder="John A. Smith" value={value.full_name} onChange={set("full_name")} required />
@@ -187,14 +202,77 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
         <Field label="Phone Number" type="tel" placeholder="(555) 123-4567" value={value.phone} onChange={set("phone")} required />
       </div>
       <Field label="Residential Address" placeholder="1600 Main St, Springfield, IL 62701" value={value.address} onChange={set("address")} required />
+
+      <label className="block">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date of Birth</span>
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="MM/DD/YYYY"
+            value={value.date_of_birth}
+            onChange={(e) => onChange({ ...value, date_of_birth: formatDob(e.target.value) })}
+            maxLength={10}
+            required
+            className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
+          />
+          <button
+            type="button"
+            onClick={() => dobPickerRef.current?.showPicker?.()}
+            className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest"
+            aria-label="Pick date"
+          >
+            <Calendar className="h-4 w-4" />
+          </button>
+          <input
+            ref={dobPickerRef}
+            type="date"
+            max={new Date().toISOString().split("T")[0]}
+            className="pointer-events-none absolute right-2 top-1/2 h-0 w-0 -translate-y-1/2 opacity-0"
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) return;
+              const [y, m, d] = v.split("-");
+              onChange({ ...value, date_of_birth: `${m}/${d}/${y}` });
+            }}
+          />
+        </div>
+      </label>
+
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <Field label="Date of Birth" type="date" value={value.date_of_birth} onChange={set("date_of_birth")} required max={new Date().toISOString().split("T")[0]} />
-        <Field label="Create Password" type="password" placeholder="Minimum 8 characters" value={value.password} onChange={set("password")} required minLength={8} />
+        <PasswordField label="Create Password" value={value.password} onChange={set("password")} show={showPw} setShow={setShowPw} />
+        <PasswordField label="Confirm Password" value={value.confirm_password} onChange={set("confirm_password")} show={showCpw} setShow={setShowCpw} />
       </div>
+
       <button type="submit" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95">
         Continue <ArrowRight className="h-4 w-4" />
       </button>
     </form>
+  );
+}
+
+function PasswordField({ label, value, onChange, show, setShow }: {
+  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  show: boolean; setShow: (v: boolean) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          required
+          minLength={8}
+          placeholder="Minimum 8 characters"
+          className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
+        />
+        <button type="button" onClick={() => setShow(!show)} className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest" aria-label={show ? "Hide" : "Show"}>
+          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </label>
   );
 }
 

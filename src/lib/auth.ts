@@ -13,6 +13,9 @@ export interface Profile {
   referred_by: string | null;
   balance: number;
   hear_about: string | null;
+  tier: number;
+  tier_status: string;
+  requested_tier: number | null;
 }
 
 export function useAuth() {
