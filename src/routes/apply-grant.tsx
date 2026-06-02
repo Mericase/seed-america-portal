@@ -300,7 +300,7 @@ function Grid({ children }: { children: React.ReactNode }) {
 
 function Field({ label, value, onChange, type = "text", required, prefix, ...rest }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; prefix?: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "type" | "required">) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">{label}{required && <span className="text-gold"> *</span>}</span>
