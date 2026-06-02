@@ -62,9 +62,10 @@ function Landing() {
           <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[1.05] text-white text-balance md:text-7xl">
             Plant the seed. <span className="text-gold">Grow the dream.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85 md:text-xl">
-            Seedin America is a federally backed grant initiative providing substantial capital to
-            Americans starting small to large scale businesses — no equity taken, no payback required.
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 md:text-xl">
+            Seedin America is a federally backed grant initiative providing relief and capital
+            to every American — for business, student loans, mortgages, accident recovery and more.
+            No equity. No payback. Just growth.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
@@ -83,9 +84,34 @@ function Landing() {
           </div>
 
           <div className="mt-16 grid w-full max-w-3xl grid-cols-3 gap-6 border-t border-white/15 pt-8">
-            <Stat value="$4.2B" label="Capital Deployed" />
-            <Stat value="312,000+" label="Businesses Funded" />
+            <Stat value="$4.2B" label="Funds Deployed" />
+            <Stat value="312,000+" label="Americans Helped" />
             <Stat value="All 50" label="States Served" />
+          </div>
+        </div>
+      </section>
+
+      {/* Grant categories */}
+      <section className="bg-background px-6 py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
+              <Flag className="h-3.5 w-3.5" /> Grants for every American
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-semibold md:text-4xl">
+              We fund more than just businesses.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Whatever season of life you're in, there's a Seedin program for you.
+            </p>
+          </div>
+          <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Category icon={<Briefcase className="h-5 w-5" />} title="Business Capital" desc="Launch or scale a small to large business with non-dilutive grants." />
+            <Category icon={<GraduationCap className="h-5 w-5" />} title="Student Loan Relief" desc="Repayment assistance for federal and private student loans." />
+            <Category icon={<Home className="h-5 w-5" />} title="Mortgage Aid" desc="Down-payment help, refinancing relief and foreclosure prevention." />
+            <Category icon={<HeartPulse className="h-5 w-5" />} title="Accident Relief Funds" desc="Emergency support for medical bills and accident recovery." />
+            <Category icon={<Coins className="h-5 w-5" />} title="Debt Repayment" desc="Pay down credit card, medical and personal debt with federal grants." />
+            <Category icon={<Sprout className="h-5 w-5" />} title="Family & Housing" desc="Childcare assistance, utility relief and first-home programs." />
           </div>
         </div>
       </section>
