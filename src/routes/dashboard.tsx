@@ -103,14 +103,22 @@ function Dashboard() {
           </button>
         </section>
 
+        {/* Upgrade Tier */}
+        <TierUpgradeCard
+          tier={profile.tier}
+          status={profile.tier_status}
+          requestedTier={profile.requested_tier}
+          onUpgrade={() => navigate({ to: "/upgrade-tier" })}
+        />
+
         {/* Referral banner */}
         {showBanner && (
-          <div className="mt-8 flex items-center gap-4 rounded-2xl border border-gold/30 bg-gradient-to-r from-gold/15 via-gold/5 to-transparent p-5">
+          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-gold/30 bg-gradient-to-r from-gold/15 via-gold/5 to-transparent p-5">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-gold text-primary shadow-gold">
               <Gift className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Refer 5 people to win an instant $500!</p>
+              <p className="text-sm font-semibold text-foreground">Refer 5 people to win an instant $1,500!</p>
               <p className="text-xs text-muted-foreground">Share your unique code and earn $300 per registered referral.</p>
             </div>
             <button onClick={() => setReferOpen(true)} className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
@@ -142,18 +150,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Grant Status</p>
-              <Award className="h-5 w-5 text-forest" />
-            </div>
-            <p className="mt-3 font-display text-2xl font-semibold">Pre-Approved</p>
-            <p className="mt-1 text-sm text-muted-foreground">Tier 2 · Up to $250,000</p>
-            <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-full w-2/3 rounded-full bg-gradient-forest" />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">2 of 3 verification steps complete</p>
-          </div>
+          <GrantStatusCard tier={profile.tier} status={profile.tier_status} requestedTier={profile.requested_tier} />
         </section>
 
         {/* Referral widget */}
