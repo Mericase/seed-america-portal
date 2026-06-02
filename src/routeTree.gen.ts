@@ -13,6 +13,7 @@ import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as IndexRouteImport } from './routes/index'
 
 const UpgradeTierRoute = UpgradeTierRouteImport.update({
@@ -35,6 +36,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplyGrantRoute = ApplyGrantRouteImport.update({
+  id: '/apply-grant',
+  path: '/apply-grant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -65,14 +74,34 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/signin' | '/signup' | '/upgrade-tier'
+  fullPaths:
+    | '/'
+    | '/apply-grant'
+    | '/dashboard'
+    | '/signin'
+    | '/signup'
+    | '/upgrade-tier'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/signin' | '/signup' | '/upgrade-tier'
-  id: '__root__' | '/' | '/dashboard' | '/signin' | '/signup' | '/upgrade-tier'
+  to:
+    | '/'
+    | '/apply-grant'
+    | '/dashboard'
+    | '/signin'
+    | '/signup'
+    | '/upgrade-tier'
+  id:
+    | '__root__'
+    | '/'
+    | '/apply-grant'
+    | '/dashboard'
+    | '/signin'
+    | '/signup'
+    | '/upgrade-tier'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplyGrantRoute: typeof ApplyGrantRoute
   DashboardRoute: typeof DashboardRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
@@ -109,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apply-grant': {
+      id: '/apply-grant'
+      path: '/apply-grant'
+      fullPath: '/apply-grant'
+      preLoaderRoute: typeof ApplyGrantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplyGrantRoute: ApplyGrantRoute,
   DashboardRoute: DashboardRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
@@ -129,3 +166,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
