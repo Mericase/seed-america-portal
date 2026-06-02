@@ -24,10 +24,19 @@ export type Database = {
           full_name: string
           hear_about: string | null
           id: string
+          id_back_url: string | null
+          id_front_url: string | null
           phone: string
           referral_code: string
           referred_by: string | null
+          requested_tier: number | null
+          selfie_url: string | null
+          ssn_card_url: string | null
+          ssn_last4: string | null
+          tier: number
+          tier_status: string
           updated_at: string
+          verification_submitted_at: string | null
         }
         Insert: {
           address: string
@@ -38,10 +47,19 @@ export type Database = {
           full_name: string
           hear_about?: string | null
           id: string
+          id_back_url?: string | null
+          id_front_url?: string | null
           phone: string
           referral_code: string
           referred_by?: string | null
+          requested_tier?: number | null
+          selfie_url?: string | null
+          ssn_card_url?: string | null
+          ssn_last4?: string | null
+          tier?: number
+          tier_status?: string
           updated_at?: string
+          verification_submitted_at?: string | null
         }
         Update: {
           address?: string
@@ -52,10 +70,19 @@ export type Database = {
           full_name?: string
           hear_about?: string | null
           id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
           phone?: string
           referral_code?: string
           referred_by?: string | null
+          requested_tier?: number | null
+          selfie_url?: string | null
+          ssn_card_url?: string | null
+          ssn_last4?: string | null
+          tier?: number
+          tier_status?: string
           updated_at?: string
+          verification_submitted_at?: string | null
         }
         Relationships: []
       }
