@@ -181,3 +181,15 @@ function Pillar({ icon, title, children }: { icon: React.ReactNode; title: strin
     </div>
   );
 }
+
+function Category({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card transition hover:-translate-y-0.5 hover:border-forest/40">
+      <div className="inline-grid h-11 w-11 place-items-center rounded-xl bg-gradient-forest text-forest-foreground shadow-elegant">
+        {icon}
+      </div>
+      <h3 className="mt-4 font-display text-lg font-semibold">{title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+    </div>
+  );
+}
