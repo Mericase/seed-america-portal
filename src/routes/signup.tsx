@@ -181,9 +181,19 @@ function Field({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> 
   );
 }
 
+function formatDob(input: string): string {
+  const digits = input.replace(/\D/g, "").slice(0, 8);
+  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+  return parts.join("/");
+}
+
 function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void }) {
   const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.target.value });
+  const [showPw, setShowPw] = useState(false);
+  const [showCpw, setShowCpw] = useState(false);
+  const dobPickerRef = useRef<HTMLInputElement>(null);
+
   return (
     <form onSubmit={(e) => { e.preventDefault(); onNext(); }} className="space-y-5">
       <Field label="Full Legal Name" placeholder="John A. Smith" value={value.full_name} onChange={set("full_name")} required />
@@ -192,14 +202,77 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
         <Field label="Phone Number" type="tel" placeholder="(555) 123-4567" value={value.phone} onChange={set("phone")} required />
       </div>
       <Field label="Residential Address" placeholder="1600 Main St, Springfield, IL 62701" value={value.address} onChange={set("address")} required />
+
+      <label className="block">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date of Birth</span>
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="MM/DD/YYYY"
+            value={value.date_of_birth}
+            onChange={(e) => onChange({ ...value, date_of_birth: formatDob(e.target.value) })}
+            maxLength={10}
+            required
+            className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
+          />
+          <button
+            type="button"
+            onClick={() => dobPickerRef.current?.showPicker?.()}
+            className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest"
+            aria-label="Pick date"
+          >
+            <Calendar className="h-4 w-4" />
+          </button>
+          <input
+            ref={dobPickerRef}
+            type="date"
+            max={new Date().toISOString().split("T")[0]}
+            className="pointer-events-none absolute right-2 top-1/2 h-0 w-0 -translate-y-1/2 opacity-0"
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) return;
+              const [y, m, d] = v.split("-");
+              onChange({ ...value, date_of_birth: `${m}/${d}/${y}` });
+            }}
+          />
+        </div>
+      </label>
+
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <Field label="Date of Birth" type="date" value={value.date_of_birth} onChange={set("date_of_birth")} required max={new Date().toISOString().split("T")[0]} />
-        <Field label="Create Password" type="password" placeholder="Minimum 8 characters" value={value.password} onChange={set("password")} required minLength={8} />
+        <PasswordField label="Create Password" value={value.password} onChange={set("password")} show={showPw} setShow={setShowPw} />
+        <PasswordField label="Confirm Password" value={value.confirm_password} onChange={set("confirm_password")} show={showCpw} setShow={setShowCpw} />
       </div>
+
       <button type="submit" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95">
         Continue <ArrowRight className="h-4 w-4" />
       </button>
     </form>
+  );
+}
+
+function PasswordField({ label, value, onChange, show, setShow }: {
+  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  show: boolean; setShow: (v: boolean) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          required
+          minLength={8}
+          placeholder="Minimum 8 characters"
+          className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
+        />
+        <button type="button" onClick={() => setShow(!show)} className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest" aria-label={show ? "Hide" : "Show"}>
+          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </label>
   );
 }
 
