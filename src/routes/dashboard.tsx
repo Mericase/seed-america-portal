@@ -94,7 +94,16 @@ function Dashboard() {
           <p className="mt-2 text-muted-foreground">{profile.full_name}</p>
 
           <button
-            onClick={() => toast.info("Grant application coming soon — your account is fully verified.")}
+            onClick={() => {
+              if (profile.tier < 2) {
+                toast.error("You're not eligible for any grant yet.", {
+                  description: "Upgrade to Tier 2 to unlock grant applications.",
+                  action: { label: "Upgrade", onClick: () => navigate({ to: "/upgrade-tier" }) },
+                });
+                return;
+              }
+              navigate({ to: "/apply-grant" });
+            }}
             className="group mt-6 inline-flex items-center gap-2.5 rounded-full bg-gradient-gold px-7 py-4 text-base font-semibold text-primary shadow-gold transition hover:translate-y-[-2px]"
           >
             <FileText className="h-5 w-5" />
