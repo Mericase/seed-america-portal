@@ -198,6 +198,74 @@ function ActionPill({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
+const TIER_INFO: Record<number, { label: string; cap: string }> = {
+  1: { label: "Tier 1", cap: "Up to $500" },
+  2: { label: "Tier 2", cap: "Up to $5,000" },
+  3: { label: "Tier 3", cap: "Unlimited" },
+};
+
+function TierUpgradeCard({ tier, status, requestedTier, onUpgrade }: {
+  tier: number; status: string; requestedTier: number | null; onUpgrade: () => void;
+}) {
+  const pending = status === "pending" && requestedTier && requestedTier > tier;
+  const isMax = tier >= 3;
+  return (
+    <div className="mt-8 overflow-hidden rounded-2xl border border-forest/30 bg-gradient-to-br from-forest/10 via-background to-gold/5 p-5">
+      <div className="flex items-center gap-4">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-forest text-forest-foreground shadow-elegant">
+          <ShieldCheck className="h-6 w-6" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-foreground">Upgrade your tier</p>
+            {pending && (
+              <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-foreground">
+                Tier {requestedTier} pending
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Currently <strong className="text-forest">{TIER_INFO[tier]?.label}</strong> ({TIER_INFO[tier]?.cap}). Upgrading unlocks higher grant amounts.
+          </p>
+        </div>
+        {!isMax && !pending && (
+          <button onClick={onUpgrade} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground hover:opacity-95">
+            Upgrade <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GrantStatusCard({ tier, status, requestedTier }: { tier: number; status: string; requestedTier: number | null }) {
+  const info = TIER_INFO[tier] ?? TIER_INFO[1];
+  const pending = status === "pending" && requestedTier && requestedTier > tier;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Grant Status</p>
+        <Award className="h-5 w-5 text-forest" />
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <p className="font-display text-2xl font-semibold">{info.label}</p>
+        {pending && (
+          <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-foreground">
+            Tier {requestedTier} · Pending
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{info.cap}</p>
+      <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-gradient-forest" style={{ width: `${(tier / 3) * 100}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {pending ? "Verification in progress" : tier < 3 ? "Upgrade to unlock more capital" : "Maximum tier reached"}
+      </p>
+    </div>
+  );
+}
+
 function Bullet({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
