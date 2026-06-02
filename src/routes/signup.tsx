@@ -120,7 +120,7 @@ function SignupPage() {
                         full_name: data.full_name,
                         phone: data.phone,
                         address: data.address,
-                        date_of_birth: data.date_of_birth,
+                        date_of_birth: (() => { const [m,d,y] = data.date_of_birth.split("/"); return `${y}-${m}-${d}`; })(),
                         hear_about: hearAbout,
                         referral_code: referralCode.trim().toUpperCase() || null,
                       },
