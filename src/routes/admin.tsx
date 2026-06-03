@@ -38,21 +38,33 @@ function AdminPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate({ to: "/signin" }); return; }
       try {
-        const res = await checkAdmin();
-        if (!res.admin) {
-          toast.error("Admin access required");
-          navigate({ to: "/dashboard" });
+        // Use getUser() instead of getSession() — more reliable on first load
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          navigate({ to: "/signin" });
           return;
         }
+
+        // Also accept staff_admin_auth (hardcoded login)
+        const staffAuth = typeof window !== "undefined" && sessionStorage.getItem("staff_admin_auth") === "true";
+
+        if (!staffAuth) {
+          const res = await checkAdmin();
+          if (!res.admin) {
+            toast.error("Admin access required");
+            navigate({ to: "/dashboard" });
+            return;
+          }
+        }
+
         const st = await stats();
         setS(st);
-        await refresh();
+        setAuthChecked(true);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to load admin");
         navigate({ to: "/dashboard" });
@@ -75,10 +87,15 @@ function AdminPage() {
   };
 
   useEffect(() => {
+    if (!authChecked) return;
     const t = setTimeout(refresh, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, filter]);
+  }, [search, filter, authChecked]);
+
+  const handleRowClick = (userId: string) => {
+    navigate({ to: "/admin/$userId", params: { userId } });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
@@ -91,10 +108,20 @@ function AdminPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+            >
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
-            <button onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/signin" }); }} className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+            <button
+              onClick={async () => {
+                sessionStorage.removeItem("staff_admin_auth");
+                await supabase.auth.signOut();
+                navigate({ to: "/signin" });
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+            >
               <LogOut className="h-4 w-4" /> Sign out
             </button>
           </div>
@@ -103,7 +130,9 @@ function AdminPage() {
 
       <main className="mx-auto max-w-7xl px-6 pt-10">
         <h1 className="font-display text-4xl font-semibold md:text-5xl">Member Records</h1>
-        <p className="mt-2 text-muted-foreground">Manage signups, verify tier upgrades, review grant applications, and moderate accounts.</p>
+        <p className="mt-2 text-muted-foreground">
+          Manage signups, verify tier upgrades, review grant applications, and moderate accounts.
+        </p>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat icon={<Users className="h-5 w-5" />} label="Total members" value={s.totalUsers} />
@@ -128,7 +157,9 @@ function AdminPage() {
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`rounded-md px-3 py-1.5 font-medium capitalize ${filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded-md px-3 py-1.5 font-medium capitalize ${
+                    filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   {f === "pending_tier" ? "Tier pending" : f}
                 </button>
@@ -138,7 +169,9 @@ function AdminPage() {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-forest" /></div>
+              <div className="grid place-items-center py-20">
+                <Loader2 className="h-6 w-6 animate-spin text-forest" />
+              </div>
             ) : users.length === 0 ? (
               <p className="py-16 text-center text-muted-foreground">No members match your filters.</p>
             ) : (
@@ -158,7 +191,7 @@ function AdminPage() {
                   {users.map((u) => (
                     <tr
                       key={u.id}
-                      onClick={() => navigate({ to: "/admin/$userId", params: { userId: u.id } })}
+                      onClick={() => handleRowClick(u.id)}
                       className="cursor-pointer border-t border-border transition hover:bg-accent/40"
                     >
                       <td className="px-4 py-3">
@@ -168,16 +201,24 @@ function AdminPage() {
                       <td className="px-4 py-3">
                         <div className="font-medium">Tier {u.tier}</div>
                         {u.tier_status === "pending" && u.requested_tier ? (
-                          <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-gold-foreground">→ T{u.requested_tier} pending</span>
+                          <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-gold-foreground">
+                            → T{u.requested_tier} pending
+                          </span>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 font-medium">${Number(u.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 font-medium">
+                        ${Number(u.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </td>
                       <td className="px-4 py-3">{appCounts[u.id] ?? 0}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={u.profile_status} />
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-right text-muted-foreground"><ChevronRight className="inline h-4 w-4" /></td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">
+                        <ChevronRight className="inline h-4 w-4" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,12 +231,25 @@ function AdminPage() {
   );
 }
 
-function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: "gold" | "forest" | "danger" }) {
+function Stat({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  accent?: "gold" | "forest" | "danger";
+}) {
   const colors =
-    accent === "gold" ? "from-gold/15 to-gold/0 border-gold/30 text-gold-foreground"
-    : accent === "forest" ? "from-forest/15 to-forest/0 border-forest/30 text-forest"
-    : accent === "danger" ? "from-destructive/15 to-destructive/0 border-destructive/30 text-destructive"
-    : "from-primary/10 to-transparent border-border text-foreground";
+    accent === "gold"
+      ? "from-gold/15 to-gold/0 border-gold/30 text-gold-foreground"
+      : accent === "forest"
+      ? "from-forest/15 to-forest/0 border-forest/30 text-forest"
+      : accent === "danger"
+      ? "from-destructive/15 to-destructive/0 border-destructive/30 text-destructive"
+      : "from-primary/10 to-transparent border-border text-foreground";
   return (
     <div className={`rounded-2xl border bg-gradient-to-br p-5 shadow-card ${colors}`}>
       <div className="flex items-center justify-between">
@@ -209,7 +263,15 @@ function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: st
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "terminated") {
-    return <span className="rounded-full bg-destructive/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-destructive">Terminated</span>;
+    return (
+      <span className="rounded-full bg-destructive/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-destructive">
+        Terminated
+      </span>
+    );
   }
-  return <span className="rounded-full bg-forest/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-forest">Active</span>;
+  return (
+    <span className="rounded-full bg-forest/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-forest">
+      Active
+    </span>
+  );
 }
