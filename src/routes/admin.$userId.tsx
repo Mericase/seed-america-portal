@@ -26,6 +26,13 @@ function AdminUserDetail() {
   const { userId } = useParams({ from: "/admin/$userId" });
   const checkAdmin = useServerFn(amIAdmin);
   const fetchDetail = useServerFn(getUserDetail);
+  const approveFn = useServerFn(approveTierUpgrade);
+  const rejectFn = useServerFn(rejectTierUpgrade);
+  const terminateFn = useServerFn(terminateUser);
+  const restoreFn = useServerFn(restoreUser);
+  const deleteFn = useServerFn(deleteUser);
+  const grantAdminFn = useServerFn(grantAdminRole);
+  const revokeAdminFn = useServerFn(revokeAdminRole);
 
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -131,7 +138,7 @@ function AdminUserDetail() {
           {pending ? (
             <>
               <ActionBtn
-                onClick={() => wrap(() => useServerFn(approveTierUpgrade)({ data: { userId } }), `Tier upgraded to ${p.requested_tier}`)}
+                onClick={() => wrap(() => approveFn({ data: { userId } }), `Tier upgraded to ${p.requested_tier}`)}
                 disabled={busy}
                 tone="forest"
                 icon={<CheckCircle2 className="h-4 w-4" />}
@@ -139,7 +146,7 @@ function AdminUserDetail() {
                 Approve Tier {p.requested_tier}
               </ActionBtn>
               <ActionBtn
-                onClick={() => wrap(() => useServerFn(rejectTierUpgrade)({ data: { userId } }), "Tier request rejected")}
+                onClick={() => wrap(() => rejectFn({ data: { userId } }), "Tier request rejected")}
                 disabled={busy}
                 tone="danger"
                 icon={<Ban className="h-4 w-4" />}
@@ -153,7 +160,7 @@ function AdminUserDetail() {
           <BalanceEditor balance={Number(p.balance)} userId={userId} onDone={load} busy={busy} setBusy={setBusy} />
           {p.profile_status === "terminated" ? (
             <ActionBtn
-              onClick={() => wrap(() => useServerFn(restoreUser)({ data: { userId } }), "User restored")}
+              onClick={() => wrap(() => restoreFn({ data: { userId } }), "User restored")}
               disabled={busy}
               tone="forest"
               icon={<RotateCcw className="h-4 w-4" />}
@@ -164,7 +171,7 @@ function AdminUserDetail() {
             <ActionBtn
               onClick={() => {
                 if (!confirm("Terminate this user? They will be signed out and lose access.")) return;
-                wrap(() => useServerFn(terminateUser)({ data: { userId } }), "User terminated");
+                wrap(() => terminateFn({ data: { userId } }), "User terminated");
               }}
               disabled={busy}
               tone="danger"
@@ -178,7 +185,7 @@ function AdminUserDetail() {
         <section className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {isAdmin ? (
             <ActionBtn
-              onClick={() => wrap(() => useServerFn(revokeAdminRole)({ data: { userId } }), "Admin role revoked")}
+              onClick={() => wrap(() => revokeAdminFn({ data: { userId } }), "Admin role revoked")}
               disabled={busy}
               tone="danger"
               icon={<UserCheck className="h-4 w-4" />}
@@ -187,7 +194,7 @@ function AdminUserDetail() {
             </ActionBtn>
           ) : (
             <ActionBtn
-              onClick={() => wrap(() => useServerFn(grantAdminRole)({ data: { userId } }), "Admin role granted")}
+              onClick={() => wrap(() => grantAdminFn({ data: { userId } }), "Admin role granted")}
               disabled={busy}
               tone="gold"
               icon={<Crown className="h-4 w-4" />}
@@ -199,7 +206,7 @@ function AdminUserDetail() {
             onClick={() => {
               if (!confirm("Permanently delete this user and all their data? This cannot be undone.")) return;
               wrap(async () => {
-                await useServerFn(deleteUser)({ data: { userId } });
+                await deleteFn({ data: { userId } });
                 navigate({ to: "/admin" });
               }, "User deleted");
             }}
