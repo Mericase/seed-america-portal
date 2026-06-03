@@ -15,8 +15,8 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminUserIdRouteImport } from './routes/admin.$userId'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminUserIdRouteImport } from './routes/admin.$userId'
 
 const UpgradeTierRoute = UpgradeTierRouteImport.update({
   id: '/upgrade-tier',
@@ -48,85 +48,84 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminUserIdRoute = AdminUserIdRouteImport.update({
-  id: '/admin/$userId',
-  path: '/admin/$userId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUserIdRoute = AdminUserIdRouteImport.update({
+  id: '/$userId',
+  path: '/$userId',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/admin/$userId': typeof AdminUserIdRoute
+  '/admin': typeof AdminRouteWithChildren
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/admin/$userId': typeof AdminUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/admin/$userId': typeof AdminUserIdRoute
+  '/admin': typeof AdminRouteWithChildren
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/admin/$userId': typeof AdminUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/admin/$userId': typeof AdminUserIdRoute
+  '/admin': typeof AdminRouteWithChildren
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/admin/$userId': typeof AdminUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
-    | '/admin/$userId'
     | '/apply-grant'
     | '/dashboard'
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/admin/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
-    | '/admin/$userId'
     | '/apply-grant'
     | '/dashboard'
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/admin/$userId'
   id:
     | '__root__'
     | '/'
     | '/admin'
-    | '/admin/$userId'
     | '/apply-grant'
     | '/dashboard'
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/admin/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
-  AdminUserIdRoute: typeof AdminUserIdRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ApplyGrantRoute: typeof ApplyGrantRoute
   DashboardRoute: typeof DashboardRoute
   SigninRoute: typeof SigninRoute
@@ -178,13 +177,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/$userId': {
-      id: '/admin/$userId'
-      path: '/admin/$userId'
-      fullPath: '/admin/$userId'
-      preLoaderRoute: typeof AdminUserIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -192,13 +184,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/$userId': {
+      id: '/admin/$userId'
+      path: '/$userId'
+      fullPath: '/admin/$userId'
+      preLoaderRoute: typeof AdminUserIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminUserIdRoute: typeof AdminUserIdRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminUserIdRoute: AdminUserIdRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
-  AdminUserIdRoute: AdminUserIdRoute,
+  AdminRoute: AdminRouteWithChildren,
   ApplyGrantRoute: ApplyGrantRoute,
   DashboardRoute: DashboardRoute,
   SigninRoute: SigninRoute,
