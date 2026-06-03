@@ -122,13 +122,53 @@ function ApplyGrant() {
     }
 
     setSubmitting(true);
-    // Simulate submission — wired to backend later
-    await new Promise((r) => setTimeout(r, 900));
-    setSubmitting(false);
-    toast.success("Grant application submitted", {
-      description: "We'll review and respond within 14 business days.",
-    });
-    navigate({ to: "/dashboard" });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate({ to: "/signin" }); return; }
+      const { error } = await supabase.from("grant_applications").insert({
+        user_id: session.user.id,
+        status: "pending",
+        marital_status: form.maritalStatus,
+        dependents: form.dependents ? parseInt(form.dependents) : null,
+        household_size: form.householdSize ? parseInt(form.householdSize) : null,
+        education: form.education,
+        ethnicity: form.ethnicity,
+        housing_status: form.housingStatus,
+        veteran: form.veteran,
+        disability: form.disability,
+        state: form.state,
+        city: form.city,
+        zip: form.zip,
+        employment_status: form.employmentStatus,
+        employer: form.employer,
+        occupation: form.occupation,
+        household_income: form.householdIncome ? Number(form.householdIncome) : null,
+        income_frequency: form.incomeFrequency,
+        monthly_expenses: form.monthlyExpenses ? Number(form.monthlyExpenses) : null,
+        received_gov_aid_before: form.receivedGovAidBefore,
+        received_gov_aid_details: form.receivedGovAidDetails,
+        has_public_record: form.hasPublicRecord,
+        grant_type: form.grantType,
+        grant_type_other: form.grantTypeOther,
+        amount_requested: form.amountRequested ? Number(form.amountRequested) : null,
+        urgency: form.urgency,
+        purpose_description: form.purposeDescription,
+        bank_name: form.bankName,
+        account_holder_name: form.accountHolderName,
+        account_type: form.accountType,
+        account_number: form.accountNumber,
+        routing_number: form.routingNumber,
+      });
+      if (error) throw error;
+      toast.success("Grant application submitted", {
+        description: "We'll review and respond within 14 business days.",
+      });
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {

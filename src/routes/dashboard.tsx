@@ -2,12 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight, Award, Copy, Gift, Loader2, LogOut, Plus, Send,
-  Sparkles, TrendingUp, Wallet, X, FileText, ShieldCheck, ChevronRight
+  Sparkles, TrendingUp, Wallet, X, FileText, ShieldCheck, ChevronRight, ShieldAlert
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { amIAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -21,10 +23,12 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const checkAdmin = useServerFn(amIAdmin);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [referOpen, setReferOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +48,10 @@ function Dashboard() {
         setProfile(data as Profile | null);
         setLoading(false);
       }
+      try {
+        const r = await checkAdmin();
+        if (mounted) setIsAdmin(r.admin);
+      } catch { /* ignore */ }
     };
     load();
 
@@ -75,12 +83,22 @@ function Dashboard() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Logo />
-          <button
-            onClick={async () => { await supabase.auth.signOut(); }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <LogOut className="h-4 w-4" /> Sign out
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => navigate({ to: "/admin" })}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                <ShieldAlert className="h-4 w-4" /> Admin
+              </button>
+            )}
+            <button
+              onClick={async () => { await supabase.auth.signOut(); }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          </div>
         </div>
       </header>
 

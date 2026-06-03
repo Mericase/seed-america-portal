@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      grant_applications: {
+        Row: {
+          account_holder_name: string | null
+          account_number: string | null
+          account_type: string | null
+          admin_notes: string | null
+          amount_requested: number | null
+          bank_name: string | null
+          city: string | null
+          created_at: string
+          dependents: number | null
+          disability: string | null
+          education: string | null
+          employer: string | null
+          employment_status: string | null
+          ethnicity: string | null
+          grant_type: string | null
+          grant_type_other: string | null
+          has_public_record: string | null
+          household_income: number | null
+          household_size: number | null
+          housing_status: string | null
+          id: string
+          income_frequency: string | null
+          marital_status: string | null
+          monthly_expenses: number | null
+          occupation: string | null
+          purpose_description: string | null
+          received_gov_aid_before: string | null
+          received_gov_aid_details: string | null
+          routing_number: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          urgency: string | null
+          user_id: string
+          veteran: string | null
+          zip: string | null
+        }
+        Insert: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          admin_notes?: string | null
+          amount_requested?: number | null
+          bank_name?: string | null
+          city?: string | null
+          created_at?: string
+          dependents?: number | null
+          disability?: string | null
+          education?: string | null
+          employer?: string | null
+          employment_status?: string | null
+          ethnicity?: string | null
+          grant_type?: string | null
+          grant_type_other?: string | null
+          has_public_record?: string | null
+          household_income?: number | null
+          household_size?: number | null
+          housing_status?: string | null
+          id?: string
+          income_frequency?: string | null
+          marital_status?: string | null
+          monthly_expenses?: number | null
+          occupation?: string | null
+          purpose_description?: string | null
+          received_gov_aid_before?: string | null
+          received_gov_aid_details?: string | null
+          routing_number?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          urgency?: string | null
+          user_id: string
+          veteran?: string | null
+          zip?: string | null
+        }
+        Update: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          admin_notes?: string | null
+          amount_requested?: number | null
+          bank_name?: string | null
+          city?: string | null
+          created_at?: string
+          dependents?: number | null
+          disability?: string | null
+          education?: string | null
+          employer?: string | null
+          employment_status?: string | null
+          ethnicity?: string | null
+          grant_type?: string | null
+          grant_type_other?: string | null
+          has_public_record?: string | null
+          household_income?: number | null
+          household_size?: number | null
+          housing_status?: string | null
+          id?: string
+          income_frequency?: string | null
+          marital_status?: string | null
+          monthly_expenses?: number | null
+          occupation?: string | null
+          purpose_description?: string | null
+          received_gov_aid_before?: string | null
+          received_gov_aid_details?: string | null
+          routing_number?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string
+          veteran?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string
@@ -27,6 +144,7 @@ export type Database = {
           id_back_url: string | null
           id_front_url: string | null
           phone: string
+          profile_status: string
           referral_code: string
           referred_by: string | null
           requested_tier: number | null
@@ -50,6 +168,7 @@ export type Database = {
           id_back_url?: string | null
           id_front_url?: string | null
           phone: string
+          profile_status?: string
           referral_code: string
           referred_by?: string | null
           requested_tier?: number | null
@@ -73,6 +192,7 @@ export type Database = {
           id_back_url?: string | null
           id_front_url?: string | null
           phone?: string
+          profile_status?: string
           referral_code?: string
           referred_by?: string | null
           requested_tier?: number | null
@@ -86,15 +206,43 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       generate_referral_code: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -221,6 +369,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

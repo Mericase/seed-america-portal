@@ -1,0 +1,286 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+async function assertAdmin(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Forbidden: admin only");
+}
+
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return { admin: !!data };
+  });
+
+export const listUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { search?: string; status?: string; tierFilter?: string }) => i ?? {})
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code")
+      .order("created_at", { ascending: false });
+    if (data.search && data.search.trim()) {
+      const s = `%${data.search.trim()}%`;
+      q = q.or(`full_name.ilike.${s},email.ilike.${s},phone.ilike.${s},referral_code.ilike.${s}`);
+    }
+    if (data.status === "terminated") q = q.eq("profile_status", "terminated");
+    if (data.status === "active") q = q.eq("profile_status", "active");
+    if (data.status === "pending_tier") q = q.eq("tier_status", "pending");
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    // Count grant apps per user
+    const ids = (rows ?? []).map((r) => r.id);
+    let appCounts: Record<string, number> = {};
+    if (ids.length) {
+      const { data: apps } = await supabaseAdmin
+        .from("grant_applications")
+        .select("user_id")
+        .in("user_id", ids);
+      (apps ?? []).forEach((a) => {
+        appCounts[a.user_id] = (appCounts[a.user_id] ?? 0) + 1;
+      });
+    }
+    return { users: rows ?? [], appCounts };
+  });
+
+export const getUserDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!profile) throw new Error("User not found");
+
+    const { data: apps } = await supabaseAdmin
+      .from("grant_applications")
+      .select("*")
+      .eq("user_id", data.userId)
+      .order("created_at", { ascending: false });
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+
+    // Referrer details
+    let referrer: { full_name: string; email: string; referral_code: string } | null = null;
+    if (profile.referred_by) {
+      const { data: r } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name, email, referral_code")
+        .eq("referral_code", profile.referred_by)
+        .maybeSingle();
+      referrer = r ?? null;
+    }
+
+    // Count referrals
+    const { count: referralCount } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("referred_by", profile.referral_code);
+
+    // Signed URLs for verification documents
+    const signed: Record<string, string | null> = { id_front_url: null, id_back_url: null, ssn_card_url: null, selfie_url: null };
+    for (const key of ["id_front_url", "id_back_url", "ssn_card_url", "selfie_url"] as const) {
+      const path = (profile as Record<string, unknown>)[key] as string | null;
+      if (path) {
+        const { data: s } = await supabaseAdmin.storage.from("verification").createSignedUrl(path, 60 * 60);
+        signed[key] = s?.signedUrl ?? null;
+      }
+    }
+
+    return {
+      profile,
+      applications: apps ?? [],
+      roles: (roles ?? []).map((r) => r.role),
+      referrer,
+      referralCount: referralCount ?? 0,
+      signedUrls: signed,
+    };
+  });
+
+export const approveTierUpgrade = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier").eq("id", data.userId).maybeSingle();
+    if (!p) throw new Error("User not found");
+    const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ tier: newTier, tier_status: "active", requested_tier: null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, tier: newTier };
+  });
+
+export const rejectTierUpgrade = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ tier_status: "rejected", requested_tier: null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setUserTier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string; tier: number }) =>
+    z.object({ userId: z.string().uuid(), tier: z.number().int().min(1).max(3) }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ tier: data.tier, tier_status: "active", requested_tier: null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateBalance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string; balance: number }) =>
+    z.object({ userId: z.string().uuid(), balance: z.number().min(0) }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("profiles").update({ balance: data.balance }).eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const terminateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    if (data.userId === context.userId) throw new Error("You cannot terminate yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "terminated" }).eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    // Also sign them out of all sessions
+    await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
+    return { ok: true };
+  });
+
+export const restoreUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "active" }).eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    if (data.userId === context.userId) throw new Error("You cannot delete yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateApplicationStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { applicationId: string; status: string; notes?: string }) =>
+    z.object({
+      applicationId: z.string().uuid(),
+      status: z.enum(["pending", "approved", "rejected", "disbursed"]),
+      notes: z.string().max(2000).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("grant_applications")
+      .update({ status: data.status, admin_notes: data.notes ?? null, updated_at: new Date().toISOString() })
+      .eq("id", data.applicationId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const grantAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
+    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const revokeAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    if (data.userId === context.userId) throw new Error("You cannot revoke your own admin role");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("tier_status", "pending"),
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("profile_status", "terminated"),
+      supabaseAdmin.from("grant_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    ]);
+    return {
+      totalUsers: total ?? 0,
+      pendingTierUpgrades: pending ?? 0,
+      terminated: terminated ?? 0,
+      pendingApplications: apps ?? 0,
+    };
+  });
