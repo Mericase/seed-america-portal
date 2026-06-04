@@ -14,7 +14,7 @@ import {
   grantAdminRole, revokeAdminRole,
 } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/admin/$userId")({
+export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
   component: AdminUserDetail,
 });
@@ -23,7 +23,7 @@ type Detail = Awaited<ReturnType<typeof getUserDetail>>;
 
 function AdminUserDetail() {
   const navigate = useNavigate();
-  const { userId } = useParams({ from: "/admin/$userId" });
+  const { userId } = useParams({ from: "/admin_/$userId" });
   const checkAdmin = useServerFn(amIAdmin);
   const fetchDetail = useServerFn(getUserDetail);
   const approveFn = useServerFn(approveTierUpgrade);
