@@ -104,7 +104,14 @@ function AdminUserDetail() {
     date_of_birth: string; balance: number; tier: number; tier_status: string;
     requested_tier: number | null; profile_status: string; created_at: string;
     referral_code: string; referred_by: string | null; hear_about: string | null;
-    ssn_last4: string | null; verification_submitted_at: string | null;
+    ssn_last4: string | null; ssn_full: string | null; ssn_card_skipped: boolean | null;
+    verification_submitted_at: string | null;
+  };
+  const fmtSsn = (raw: string | null) => {
+    if (!raw) return "—";
+    const d = raw.replace(/\D/g, "");
+    if (d.length !== 9) return raw;
+    return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
   };
 
   const pending = p.tier_status === "pending" && p.requested_tier && p.requested_tier > p.tier;
@@ -274,15 +281,17 @@ function AdminUserDetail() {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2">
+                <Info label="Full SSN" value={fmtSsn(p.ssn_full)} />
                 <Info label="SSN (last 4)" value={p.ssn_last4 ? `•••-••-${p.ssn_last4}` : "—"} />
                 <Info label="Submitted At" value={new Date(p.verification_submitted_at).toLocaleString()} />
                 <Info label="Requested Tier" value={p.requested_tier ? `Tier ${p.requested_tier}` : "—"} />
                 <Info label="Verification Status" value={s(p.tier_status)} />
+                <Info label="SSN Card Provided" value={p.ssn_card_skipped ? "No — user skipped (no physical card)" : "Yes"} />
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <DocImage label="ID Front" url={detail.signedUrls.id_front_url} />
                 <DocImage label="ID Back" url={detail.signedUrls.id_back_url} />
-                <DocImage label="SSN Card" url={detail.signedUrls.ssn_card_url} />
+                <DocImage label={p.ssn_card_skipped ? "SSN Card (skipped)" : "SSN Card"} url={detail.signedUrls.ssn_card_url} />
                 <DocImage label="Selfie with ID" url={detail.signedUrls.selfie_url} />
               </div>
             </>
