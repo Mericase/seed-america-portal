@@ -23,7 +23,7 @@ type Detail = Awaited<ReturnType<typeof getUserDetail>>;
 
 function AdminUserDetail() {
   const navigate = useNavigate();
-  const { userId } = useParams({ from: "/admin/$userId" });
+  const { userId } = useParams({ from: "/admin_/$userId" });
   const checkAdmin = useServerFn(amIAdmin);
   const fetchDetail = useServerFn(getUserDetail);
   const approveFn = useServerFn(approveTierUpgrade);
