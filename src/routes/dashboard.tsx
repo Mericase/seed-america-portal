@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
 import { amIAdmin } from "@/lib/admin.functions";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -84,6 +85,7 @@ function Dashboard() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Logo />
           <div className="flex items-center gap-2">
+            <NotificationBell userId={profile.id} />
             {isAdmin && (
               <button
                 onClick={() => navigate({ to: "/admin" })}
@@ -227,7 +229,7 @@ function ActionPill({ icon, label }: { icon: React.ReactNode; label: string }) {
 
 const TIER_INFO: Record<number, { label: string; cap: string }> = {
   1: { label: "Tier 1", cap: "Up to $500" },
-  2: { label: "Tier 2", cap: "Up to $5,000" },
+  2: { label: "Tier 2", cap: "Up to $15,000" },
   3: { label: "Tier 3", cap: "Unlimited" },
 };
 
