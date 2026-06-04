@@ -17,7 +17,7 @@ import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminUserIdRouteImport } from './routes/admin.$userId'
+import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 
 const UpgradeTierRoute = UpgradeTierRouteImport.update({
   id: '/upgrade-tier',
@@ -60,14 +60,14 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUserIdRoute = AdminUserIdRouteImport.update({
-  id: '/$userId',
-  path: '/$userId',
-  getParentRoute: () => AdminRoute,
+  id: '/admin_/$userId',
+  path: '/admin/$userId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
@@ -78,7 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
@@ -90,14 +90,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
-  '/admin/$userId': typeof AdminUserIdRoute
+  '/admin_/$userId': typeof AdminUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,18 +132,19 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
-    | '/admin/$userId'
+    | '/admin_/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AdminLoginRoute: typeof AdminLoginRoute
   ApplyGrantRoute: typeof ApplyGrantRoute
   DashboardRoute: typeof DashboardRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   UpgradeTierRoute: typeof UpgradeTierRoute
+  AdminUserIdRoute: typeof AdminUserIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,35 +205,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/$userId': {
-      id: '/admin/$userId'
-      path: '/$userId'
+    '/admin_/$userId': {
+      id: '/admin_/$userId'
+      path: '/admin/$userId'
       fullPath: '/admin/$userId'
       preLoaderRoute: typeof AdminUserIdRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AdminRouteChildren {
-  AdminUserIdRoute: typeof AdminUserIdRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminUserIdRoute: AdminUserIdRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
+  AdminRoute: AdminRoute,
   AdminLoginRoute: AdminLoginRoute,
   ApplyGrantRoute: ApplyGrantRoute,
   DashboardRoute: DashboardRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   UpgradeTierRoute: UpgradeTierRoute,
+  AdminUserIdRoute: AdminUserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

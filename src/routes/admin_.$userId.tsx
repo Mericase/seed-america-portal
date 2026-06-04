@@ -14,7 +14,7 @@ import {
   grantAdminRole, revokeAdminRole,
 } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/admin/$userId")({
+export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
   component: AdminUserDetail,
 });
