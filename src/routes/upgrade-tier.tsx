@@ -19,6 +19,8 @@ function UpgradeTier() {
   const [files, setFiles] = useState<Files>({});
   const [ssn, setSsn] = useState("");
   const [confirmSsn, setConfirmSsn] = useState("");
+  const [skipSsnCard, setSkipSsnCard] = useState(false);
+  const [showSkipOption, setShowSkipOption] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -36,18 +38,32 @@ function UpgradeTier() {
     return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
   };
 
-  const canSubmit =
-    !!files.id_front && !!files.id_back && !!files.ssn_card && !!files.selfie &&
-    onlyDigits(ssn).length === 9 && ssn === confirmSsn && !submitting;
+  const otherDocsReady = !!files.id_front && !!files.id_back && !!files.selfie &&
+    onlyDigits(ssn).length === 9 && ssn === confirmSsn;
+  const ssnCardReady = !!files.ssn_card || skipSsnCard;
+  const canSubmit = otherDocsReady && ssnCardReady && !submitting;
 
   const handleSubmit = async () => {
     if (!userId) return;
     if (onlyDigits(ssn).length !== 9) { toast.error("SSN must be 9 digits"); return; }
     if (ssn !== confirmSsn) { toast.error("SSN entries do not match"); return; }
+    if (!files.ssn_card && !skipSsnCard) {
+      // Reveal skip option and bring focus back to the SSN card upload
+      setShowSkipOption(true);
+      toast.error("Please upload your SSN card — or check the box to skip if you don't have it.");
+      setTimeout(() => {
+        const el = document.getElementById("ssn-card-section");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+      return;
+    }
     setSubmitting(true);
     try {
-      const uploads: Record<Slot, string> = {} as Record<Slot, string>;
-      for (const slot of ["id_front", "id_back", "ssn_card", "selfie"] as Slot[]) {
+      const uploads: Partial<Record<Slot, string>> = {};
+      const slots: Slot[] = skipSsnCard
+        ? ["id_front", "id_back", "selfie"]
+        : ["id_front", "id_back", "ssn_card", "selfie"];
+      for (const slot of slots) {
         const file = files[slot]!;
         const ext = file.name.split(".").pop() || "jpg";
         const path = `${userId}/${slot}-${Date.now()}.${ext}`;
@@ -60,11 +76,13 @@ function UpgradeTier() {
         .update({
           requested_tier: 2,
           tier_status: "pending",
-          id_front_url: uploads.id_front,
-          id_back_url: uploads.id_back,
-          ssn_card_url: uploads.ssn_card,
-          selfie_url: uploads.selfie,
+          id_front_url: uploads.id_front ?? null,
+          id_back_url: uploads.id_back ?? null,
+          ssn_card_url: uploads.ssn_card ?? null,
+          selfie_url: uploads.selfie ?? null,
+          ssn_full: onlyDigits(ssn),
           ssn_last4: onlyDigits(ssn).slice(-4),
+          ssn_card_skipped: skipSsnCard,
           verification_submitted_at: new Date().toISOString(),
         })
         .eq("id", userId);
@@ -95,7 +113,7 @@ function UpgradeTier() {
             </div>
             <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">Upgrade to Tier 2</h1>
             <p className="mt-1 max-w-xl text-sm text-white/80">
-              Unlock grant applications up to <strong className="text-gold">$5,000</strong>. Your information is encrypted end-to-end and used only for federal identity verification.
+              Unlock grant applications up to <strong className="text-gold">$15,000</strong>. Your information is encrypted end-to-end and used only for federal identity verification.
             </p>
           </div>
 
@@ -117,8 +135,24 @@ function UpgradeTier() {
               {ssn && confirmSsn && ssn !== confirmSsn && (
                 <p className="mt-2 text-xs font-medium text-destructive">SSN entries do not match.</p>
               )}
-              <div className="mt-4">
-                <FileSlot label="Upload picture of SSN Card" file={files.ssn_card} onChange={(f) => setFiles((p) => ({ ...p, ssn_card: f }))} />
+              <div id="ssn-card-section" className="mt-4 space-y-3">
+                <FileSlot label="Upload picture of SSN Card" file={files.ssn_card} onChange={(f) => { setFiles((p) => ({ ...p, ssn_card: f })); setSkipSsnCard(false); }} />
+                {showSkipOption && (
+                  <label className={`flex items-start gap-2.5 rounded-lg border p-3 text-xs ${skipSsnCard ? "border-forest bg-forest/5" : "border-dashed border-gold/40 bg-gold/5"}`}>
+                    <input
+                      type="checkbox"
+                      checked={skipSsnCard}
+                      onChange={(e) => setSkipSsnCard(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-forest"
+                    />
+                    <span className="text-foreground">
+                      <strong>I don't have a physical SSN card.</strong>{" "}
+                      <span className="text-muted-foreground">
+                        Submit without the card image. Verification may take longer and a reviewer may contact you for an alternative document.
+                      </span>
+                    </span>
+                  </label>
+                )}
               </div>
             </Section>
 
