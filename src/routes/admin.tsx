@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Search, ShieldAlert, Users, Clock, Ban, FileText, LogOut, ChevronRight, ArrowLeft } from "lucide-react";
+import { Loader2, Search, ShieldAlert, Users, Clock, Ban, FileText, LogOut, ChevronRight, ArrowLeft, Send, Bell } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { amIAdmin, listUsers, adminStats } from "@/lib/admin.functions";
+import { sendNotification, listUsersBrief } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Seedin America" }] }),
@@ -140,6 +141,9 @@ function AdminPage() {
           <Stat icon={<FileText className="h-5 w-5" />} label="Applications pending" value={s.pendingApplications} accent="forest" />
           <Stat icon={<Ban className="h-5 w-5" />} label="Terminated" value={s.terminated} accent="danger" />
         </section>
+
+        <NotificationComposer />
+
 
         <section className="mt-8 rounded-2xl border border-border bg-card shadow-card">
           <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-center">
