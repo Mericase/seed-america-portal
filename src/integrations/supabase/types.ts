@@ -131,6 +131,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string
@@ -149,7 +179,9 @@ export type Database = {
           referred_by: string | null
           requested_tier: number | null
           selfie_url: string | null
+          ssn_card_skipped: boolean
           ssn_card_url: string | null
+          ssn_full: string | null
           ssn_last4: string | null
           tier: number
           tier_status: string
@@ -173,7 +205,9 @@ export type Database = {
           referred_by?: string | null
           requested_tier?: number | null
           selfie_url?: string | null
+          ssn_card_skipped?: boolean
           ssn_card_url?: string | null
+          ssn_full?: string | null
           ssn_last4?: string | null
           tier?: number
           tier_status?: string
@@ -197,12 +231,41 @@ export type Database = {
           referred_by?: string | null
           requested_tier?: number | null
           selfie_url?: string | null
+          ssn_card_skipped?: boolean
           ssn_card_url?: string | null
+          ssn_full?: string | null
           ssn_last4?: string | null
           tier?: number
           tier_status?: string
           updated_at?: string
           verification_submitted_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }
