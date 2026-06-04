@@ -94,7 +94,7 @@ function AdminPage() {
   }, [search, filter, authChecked]);
 
   const handleRowClick = (userId: string) => {
-    navigate({ to: "/admin_/$userId", params: { userId } });
+    navigate({ to: "/admin/$userId", params: { userId } });
   };
 
   return (
