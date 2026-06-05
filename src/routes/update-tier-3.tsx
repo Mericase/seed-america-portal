@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, Bank, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
+  ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
   Shield, ChevronRight, AlertCircle
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
