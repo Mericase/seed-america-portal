@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft, Lock, Loader2, AlertCircle, CheckCircle2, Send, Wallet,
-  Bank, ChevronRight, ArrowUpRight
+  Landmark as Bank, ChevronRight, ArrowUpRight
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
