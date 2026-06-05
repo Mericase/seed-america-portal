@@ -604,7 +604,7 @@ function UpgradeTier3() {
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                 <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">Linked Account</p>
-                <p className="text-lg font-semibold text-foreground">{selectedBank.name}</p>
+                <p className="text-lg font-semibold text-foreground">{selectedBank?.name}</p>
               </div>
 
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
