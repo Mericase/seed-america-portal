@@ -184,7 +184,7 @@ function Withdrawal() {
               </div>
 
               <button
-                onClick={() => navigate({ to: "/upgrade-tier-3" })}
+                onClick={() => navigate({ to: "/update-tier-3" })}
                 className="w-full py-4 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition flex items-center justify-center gap-2"
               >
                 <Lock className="h-4 w-4" />
