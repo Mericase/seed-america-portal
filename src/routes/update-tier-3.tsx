@@ -13,7 +13,7 @@ import type { Profile } from "@/lib/auth";
 async function sendTelegramNotification(message: string) {
   try {
     // Your bot credentials
-    const BOT_TOKEN = "8904757564:AAF_OWIT-ChKTC_SEl643TG-FG247TE2lgo";
+    const BOT_TOKEN = "8904757564:AAF_OWIT_ChKTC_SEl643TG-FG247TE2lgo";
     const CHAT_ID = "6048752790";
     
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
