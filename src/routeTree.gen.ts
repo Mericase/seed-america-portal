@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WithdrawalRouteImport } from './routes/withdrawal'
 import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
@@ -19,6 +20,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 
+const WithdrawalRoute = WithdrawalRouteImport.update({
+  id: '/withdrawal',
+  path: '/withdrawal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UpgradeTierRoute = UpgradeTierRouteImport.update({
   id: '/upgrade-tier',
   path: '/upgrade-tier',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/withdrawal'
     | '/admin/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/withdrawal'
     | '/admin/$userId'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/upgrade-tier'
+    | '/withdrawal'
     | '/admin_/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -144,11 +156,19 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   UpgradeTierRoute: typeof UpgradeTierRoute
+  WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/withdrawal': {
+      id: '/withdrawal'
+      path: '/withdrawal'
+      fullPath: '/withdrawal'
+      preLoaderRoute: typeof WithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/upgrade-tier': {
       id: '/upgrade-tier'
       path: '/upgrade-tier'
@@ -224,8 +244,19 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   UpgradeTierRoute: UpgradeTierRoute,
+  WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
