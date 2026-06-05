@@ -1303,7 +1303,7 @@ function WithdrawalTier3System({ userTier = 2, availableBalance = 45000 }: { use
             <p className="text-slate-600 mb-8">Your bank account has been securely linked.</p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 text-center">
-              <p className="text-sm text-slate-700"><strong>Bank:</strong> {linkedBankAccount.bank}</p>
+              <p className="text-sm text-slate-700"><strong>Bank:</strong> {linkedBankAccount?.bank}</p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
@@ -1402,7 +1402,7 @@ function WithdrawalTier3System({ userTier = 2, availableBalance = 45000 }: { use
                       <span className="text-lg">🏦</span>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{linkedBankAccount.bank}</p>
+                      <p className="font-semibold text-slate-900">{linkedBankAccount?.bank}</p>
                       <p className="text-xs text-slate-600 mt-1">Funds will be transferred to this account</p>
                     </div>
                   </div>
@@ -1480,7 +1480,7 @@ function WithdrawalTier3System({ userTier = 2, availableBalance = 45000 }: { use
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 font-bold">3</span>
-                  <span>Funds sent to {linkedBankAccount.bank}</span>
+                  <span>Funds sent to {linkedBankAccount?.bank}</span>
                 </li>
               </ul>
             </div>
