@@ -173,7 +173,7 @@ function Dashboard() {
               <Wallet className="h-7 w-7 text-gold" />
             </div>
             <div className="mt-8 flex gap-2">
-              <ActionPill icon={<Send className="h-4 w-4" />} label="Withdraw" />
+              <ActionPill icon={<Send className="h-4 w-4" />} label="Withdraw" onClick={() => navigate({ to: "/withdrawal" })} />
               <ActionPill icon={<Plus className="h-4 w-4" />} label="Add" />
               <ActionPill icon={<TrendingUp className="h-4 w-4" />} label="Activity" />
             </div>
@@ -219,9 +219,9 @@ function Dashboard() {
   );
 }
 
-function ActionPill({ icon, label }: { icon: React.ReactNode; label: string }) {
+function ActionPill({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
-    <button className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15">
+    <button onClick={onClick} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15">
       {icon} {label}
     </button>
   );
