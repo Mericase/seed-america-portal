@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
-export const Route = createFileRoute("/upgrade-tier-3")({
+export const Route = createFileRoute("/update-tier-3")({
   head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin America" }] }),
   component: UpgradeTier3,
 });
