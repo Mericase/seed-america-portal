@@ -563,7 +563,7 @@ function UpgradeTier3() {
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength="6"
+                  maxLength={6}
                   placeholder="000000"
                   className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-border rounded-lg focus:outline-none focus:border-forest tracking-widest"
                 />
