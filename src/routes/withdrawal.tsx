@@ -88,7 +88,7 @@ function Withdrawal() {
           pending_withdrawal: numAmount,
           withdrawal_submitted_at: new Date().toISOString(),
           withdrawal_status: "pending_admin_approval",
-        })
+        } as any)
         .eq("id", profile.id);
 
       if (error) throw error;
