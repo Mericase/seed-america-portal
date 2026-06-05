@@ -298,13 +298,13 @@ function Withdrawal() {
               )}
 
               {/* Linked account */}
-              {profile.linked_bank_name && (
+              {(profile as any).linked_bank_name && (
                 <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                   <div className="flex items-start gap-4">
                     <Bank className="h-5 w-5 text-forest flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-1">Withdrawal Account</p>
-                      <p className="font-semibold text-foreground">{profile.linked_bank_name}</p>
+                      <p className="font-semibold text-foreground">{(profile as any).linked_bank_name}</p>
                       <p className="text-xs text-muted-foreground mt-1">This is your verified withdrawal account</p>
                     </div>
                   </div>
