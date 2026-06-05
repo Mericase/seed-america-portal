@@ -137,8 +137,9 @@ function Dashboard() {
           tier={profile.tier}
           status={profile.tier_status}
           requestedTier={profile.requested_tier}
-          onUpgrade={() => navigate({ to: "/upgrade-tier" })}
+          onUpgrade={() => navigate({ to: profile.tier >= 2 ? "/update-tier-3" : "/upgrade-tier" })}
         />
+
 
         {/* Referral banner */}
         {showBanner && (
