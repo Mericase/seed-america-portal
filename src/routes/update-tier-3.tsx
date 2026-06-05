@@ -320,9 +320,9 @@ function UpgradeTier3() {
         .update({
           requested_tier: 3,
           tier_status: "pending",
-          linked_bank_name: selectedBank.name,
+          linked_bank_name: selectedBank?.name,
           verification_submitted_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", userId);
 
       if (error) throw error;
