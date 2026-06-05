@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, Bank, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
+  ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
   Shield, ChevronRight, AlertCircle
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
-export const Route = createFileRoute("/upgrade-tier-3")({
+export const Route = createFileRoute("/update-tier-3")({
   head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin America" }] }),
   component: UpgradeTier3,
 });
@@ -320,9 +320,9 @@ function UpgradeTier3() {
         .update({
           requested_tier: 3,
           tier_status: "pending",
-          linked_bank_name: selectedBank.name,
+          linked_bank_name: selectedBank?.name,
           verification_submitted_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", userId);
 
       if (error) throw error;
@@ -563,7 +563,7 @@ function UpgradeTier3() {
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength="6"
+                  maxLength={6}
                   placeholder="000000"
                   className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-border rounded-lg focus:outline-none focus:border-forest tracking-widest"
                 />
@@ -604,7 +604,7 @@ function UpgradeTier3() {
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                 <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">Linked Account</p>
-                <p className="text-lg font-semibold text-foreground">{selectedBank.name}</p>
+                <p className="text-lg font-semibold text-foreground">{selectedBank?.name}</p>
               </div>
 
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">

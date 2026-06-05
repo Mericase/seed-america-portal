@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawalRouteImport } from './routes/withdrawal'
 import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
+import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -28,6 +29,11 @@ const WithdrawalRoute = WithdrawalRouteImport.update({
 const UpgradeTierRoute = UpgradeTierRouteImport.update({
   id: '/upgrade-tier',
   path: '/upgrade-tier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpdateTier3Route = UpdateTier3RouteImport.update({
+  id: '/update-tier-3',
+  path: '/update-tier-3',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/signin'
     | '/signup'
+    | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/signin'
     | '/signup'
+    | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/signin'
     | '/signup'
+    | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin_/$userId'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  UpdateTier3Route: typeof UpdateTier3Route
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrade-tier'
       fullPath: '/upgrade-tier'
       preLoaderRoute: typeof UpgradeTierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/update-tier-3': {
+      id: '/update-tier-3'
+      path: '/update-tier-3'
+      fullPath: '/update-tier-3'
+      preLoaderRoute: typeof UpdateTier3RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  UpdateTier3Route: UpdateTier3Route,
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
