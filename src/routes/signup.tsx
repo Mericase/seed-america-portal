@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldChe
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendWelcomeEmail } from "@/lib/support.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
