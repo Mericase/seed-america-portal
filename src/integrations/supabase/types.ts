@@ -173,6 +173,7 @@ export type Database = {
           id: string
           id_back_url: string | null
           id_front_url: string | null
+          linked_bank_name: string | null
           phone: string
           profile_status: string
           referral_code: string
@@ -199,6 +200,7 @@ export type Database = {
           id: string
           id_back_url?: string | null
           id_front_url?: string | null
+          linked_bank_name?: string | null
           phone: string
           profile_status?: string
           referral_code: string
@@ -225,6 +227,7 @@ export type Database = {
           id?: string
           id_back_url?: string | null
           id_front_url?: string | null
+          linked_bank_name?: string | null
           phone?: string
           profile_status?: string
           referral_code?: string
