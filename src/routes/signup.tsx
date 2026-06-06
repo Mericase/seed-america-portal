@@ -39,6 +39,7 @@ function SignupPage() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const triggerWelcomeEmail = useServerFn(sendWelcomeEmail);
   const [data, setData] = useState<Step1>({
     full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
   });
