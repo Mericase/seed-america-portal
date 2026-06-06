@@ -109,5 +109,33 @@ export const sendNotification = createServerFn({ method: "POST" })
     }));
     if (stale.length) await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
 
-    return { ok: true, recipients: userIds.length, pushed };
+    // Send email notification to each recipient (best-effort)
+    let emailed = 0;
+    try {
+      const { sendEmail, renderBrandedEmail } = await import("./email.server");
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+      const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+      await Promise.all((profiles ?? []).map(async (p) => {
+        if (!p.email) return;
+        const firstName = (p.full_name || "").split(" ")[0] || "there";
+        const html = renderBrandedEmail({
+          preheader: data.title,
+          heading: data.title,
+          intro: `Hello ${escape(firstName)}, you have a new notification from Seedin America.`,
+          bodyHtml: `<p style="white-space:pre-wrap;">${escape(data.body)}</p><p style="margin-top:18px;color:#555;">Sign in to your dashboard to view the full notification and any further details.</p>`,
+          ctaLabel: "View notification",
+          ctaUrl: "https://seedinamerica.org/dashboard",
+        });
+        const r = await sendEmail({ to: p.email, subject: data.title, html });
+        if (r.ok) emailed++;
+      }));
+    } catch (e) {
+      console.error("[notifications] email send error", e);
+    }
+
+    return { ok: true, recipients: userIds.length, pushed, emailed };
   });
+
