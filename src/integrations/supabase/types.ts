@@ -174,6 +174,7 @@ export type Database = {
           id_back_url: string | null
           id_front_url: string | null
           linked_bank_name: string | null
+          pending_withdrawal: number | null
           phone: string
           profile_status: string
           referral_code: string
@@ -188,6 +189,8 @@ export type Database = {
           tier_status: string
           updated_at: string
           verification_submitted_at: string | null
+          withdrawal_status: string | null
+          withdrawal_submitted_at: string | null
         }
         Insert: {
           address: string
@@ -201,6 +204,7 @@ export type Database = {
           id_back_url?: string | null
           id_front_url?: string | null
           linked_bank_name?: string | null
+          pending_withdrawal?: number | null
           phone: string
           profile_status?: string
           referral_code: string
@@ -215,6 +219,8 @@ export type Database = {
           tier_status?: string
           updated_at?: string
           verification_submitted_at?: string | null
+          withdrawal_status?: string | null
+          withdrawal_submitted_at?: string | null
         }
         Update: {
           address?: string
@@ -228,6 +234,7 @@ export type Database = {
           id_back_url?: string | null
           id_front_url?: string | null
           linked_bank_name?: string | null
+          pending_withdrawal?: number | null
           phone?: string
           profile_status?: string
           referral_code?: string
@@ -242,6 +249,8 @@ export type Database = {
           tier_status?: string
           updated_at?: string
           verification_submitted_at?: string | null
+          withdrawal_status?: string | null
+          withdrawal_submitted_at?: string | null
         }
         Relationships: []
       }
@@ -268,6 +277,51 @@ export type Database = {
           endpoint?: string
           id?: string
           p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          body: string
+          created_at: string
+          direction: string
+          id: string
+          telegram_message_id: number | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          direction: string
+          id?: string
+          telegram_message_id?: number | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          telegram_message_id?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_message_map: {
+        Row: {
+          created_at: string
+          telegram_message_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          telegram_message_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          telegram_message_id?: number
           user_id?: string
         }
         Relationships: []

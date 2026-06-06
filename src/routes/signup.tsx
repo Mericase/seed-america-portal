@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldChe
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendWelcomeEmail } from "@/lib/support.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -37,6 +39,7 @@ function SignupPage() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const triggerWelcomeEmail = useServerFn(sendWelcomeEmail);
   const [data, setData] = useState<Step1>({
     full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
   });
@@ -131,6 +134,8 @@ function SignupPage() {
                     toast.error(error.message);
                     return;
                   }
+                  // Send branded welcome email while the session is still active
+                  try { await triggerWelcomeEmail(); } catch (e) { console.error("welcome email failed", e); }
                   // Sign out so user must sign in (per success-state spec)
                   await supabase.auth.signOut();
                   setSuccess(true);

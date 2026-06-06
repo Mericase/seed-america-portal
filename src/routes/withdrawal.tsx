@@ -353,12 +353,15 @@ function Withdrawal() {
         <main className="mx-auto max-w-3xl px-6">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="bg-gradient-forest px-8 py-12 text-forest-foreground text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6 animate-bounce">
-                <CheckCircle2 className="h-8 w-8 text-gold" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
+                <Loader2 className="h-8 w-8 text-gold animate-spin" />
               </div>
-              <h1 className="font-display text-3xl font-semibold">Withdrawal Requested!</h1>
-              <p className="mt-2 text-white/80">Your request has been submitted for admin review</p>
+              <h1 className="font-display text-3xl font-semibold">Withdrawal Under Review</h1>
+              <p className="mt-3 text-white/85 max-w-md mx-auto">
+                Your withdrawal request has been received and is being processed by our team. The approved funds will be credited to your linked bank account within <strong className="text-gold">24–72 hours</strong>.
+              </p>
             </div>
+
 
             <div className="p-8 space-y-8">
               {/* Summary */}
