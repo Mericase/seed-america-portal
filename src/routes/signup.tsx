@@ -134,6 +134,8 @@ function SignupPage() {
                     toast.error(error.message);
                     return;
                   }
+                  // Send branded welcome email while the session is still active
+                  try { await triggerWelcomeEmail(); } catch (e) { console.error("welcome email failed", e); }
                   // Sign out so user must sign in (per success-state spec)
                   await supabase.auth.signOut();
                   setSuccess(true);
