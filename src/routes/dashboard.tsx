@@ -23,7 +23,6 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const navigate = useNavigate();
-  const checkAdmin = useServerFn(amIAdmin);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [referOpen, setReferOpen] = useState(false);
@@ -48,10 +47,14 @@ function Dashboard() {
         setProfile(data as Profile | null);
         setLoading(false);
       }
-      try {
-        const r = await checkAdmin();
-        if (mounted) setIsAdmin(r.admin);
-      } catch { /* ignore */ }
+      // Admin check via browser-side RLS query (works identically on every host)
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (mounted) setIsAdmin(!!roles);
     };
     load();
 
@@ -60,6 +63,7 @@ function Dashboard() {
     });
     return () => { mounted = false; subscription.unsubscribe(); };
   }, [navigate]);
+
 
   if (loading) {
     return <div className="grid min-h-screen place-items-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-forest" /></div>;
