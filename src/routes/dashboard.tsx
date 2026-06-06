@@ -8,9 +8,8 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
-import { useServerFn } from "@tanstack/react-start";
-import { amIAdmin } from "@/lib/admin.functions";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ChatWidget } from "@/components/ChatWidget";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
