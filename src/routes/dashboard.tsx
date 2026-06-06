@@ -219,6 +219,8 @@ function Dashboard() {
       </main>
 
       {referOpen && <ReferModal code={profile.referral_code} onClose={() => setReferOpen(false)} />}
+      <ChatWidget userId={profile.id} firstName={firstName} />
+
     </div>
   );
 }
