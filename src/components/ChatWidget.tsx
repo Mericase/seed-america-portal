@@ -17,8 +17,15 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [lastUpdateId, setLastUpdateId] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastUpdateIdRef = useRef(0);
+  const openRef = useRef(false);
+
+  // Keep refs in sync so the polling closure always reads fresh values
+  useEffect(() => { lastUpdateIdRef.current = lastUpdateId; }, [lastUpdateId]);
+  useEffect(() => { openRef.current = open; }, [open]);
 
   const greeting: Msg = {
     id: "greeting",
@@ -27,19 +34,24 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     created_at: new Date(0).toISOString(),
   };
 
+  // Clear unread badge when user opens the chat
   useEffect(() => {
-    if (listRef.current) {
+    if (open) setUnreadCount(0);
+  }, [open]);
+
+  // Auto-scroll when messages change and chat is visible
+  useEffect(() => {
+    if (open && !minimized && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [msgs, open, minimized]);
 
+  // Poll Telegram continuously — even when chat is closed — so we catch replies
   useEffect(() => {
-    if (!open) return;
-
     const poll = async () => {
       try {
         const params = new URLSearchParams({
-          offset: String(lastUpdateId + 1),
+          offset: String(lastUpdateIdRef.current + 1),
           timeout: "2",
           allowed_updates: JSON.stringify(["message"]),
         });
@@ -48,36 +60,47 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
         if (!data.ok || !data.result?.length) return;
 
         const tag = `[SEEDIN:${userId}]`;
-        let maxId = lastUpdateId;
+        let maxId = lastUpdateIdRef.current;
         const incoming: Msg[] = [];
 
         for (const update of data.result) {
           if (update.update_id > maxId) maxId = update.update_id;
           const msg = update.message;
-          if (!msg) continue;
+          if (!msg?.text) continue;
 
-          const isFromAdmin =
-            String(msg.chat?.id) === String(ADMIN_CHAT_ID) ||
-            String(msg.from?.id) === String(ADMIN_CHAT_ID);
-          if (!isFromAdmin) continue;
-
+          // Accept any reply (from any sender in the bot chat) that references
+          // a message tagged for this specific user
           const replyText: string = msg.reply_to_message?.text ?? "";
           if (!replyText.includes(tag)) continue;
+
+          // Ignore echoes of the user's own outgoing messages (they contain the tag too)
+          // Outgoing messages are tagged AND contain the user's name header — skip those
+          const isBotEcho = msg.text.includes(`[SEEDIN:${userId}]`);
+          if (isBotEcho) continue;
 
           incoming.push({
             id: String(update.update_id),
             direction: "in",
-            body: msg.text ?? "",
+            body: msg.text,
             created_at: new Date(msg.date * 1000).toISOString(),
           });
         }
 
-        if (maxId !== lastUpdateId) setLastUpdateId(maxId);
+        if (maxId !== lastUpdateIdRef.current) {
+          lastUpdateIdRef.current = maxId;
+          setLastUpdateId(maxId);
+        }
+
         if (incoming.length > 0) {
-          setMsgs((prev) => [
-            ...prev,
-            ...incoming.filter((m) => !prev.find((p) => p.id === m.id)),
-          ]);
+          setMsgs((prev) => {
+            const fresh = incoming.filter((m) => !prev.find((p) => p.id === m.id));
+            if (fresh.length === 0) return prev;
+            // If chat is closed or minimised, increment the unread badge
+            if (!openRef.current) {
+              setUnreadCount((n) => n + fresh.length);
+            }
+            return [...prev, ...fresh];
+          });
         }
       } catch (_e) {
         // silent network hiccup
@@ -88,7 +111,8 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [open, userId, lastUpdateId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const handleSend = async () => {
     const body = text.trim();
@@ -105,7 +129,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     setText("");
 
     try {
-      const telegramText = `[SEEDIN:${userId}]\n👤 *${firstName}*\n\n${body}`;
+      const telegramText = `[SEEDIN:${userId}]\n\u{1F464} *${firstName}*\n\n${body}`;
       const res = await fetch(`${TG}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -142,6 +166,11 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
           className="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-forest text-forest-foreground shadow-elegant hover:scale-105 transition"
         >
           <MessageCircle className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background animate-bounce">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
       )}
 
