@@ -1,3 +1,39 @@
+import { useEffect, useRef, useState } from "react";
+import { MessageCircle, Send, X, Minus, Loader2 } from "lucide-react";
+
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const BOT_TOKEN = "8853476207:AAEClfXSFx8r0W9tgUzGOrTGCF19nGKtwrk";
+const ADMIN_CHAT_ID = "6048752790";
+// ───────────────────────────────────────────────────────────────────────────
+
+const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+type Msg = { id: string; direction: "in" | "out"; body: string; created_at: string };
+
+export function ChatWidget({ userId, firstName }: { userId: string; firstName: string }) {
+  const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [lastUpdateId, setLastUpdateId] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const greeting: Msg = {
+    id: "greeting",
+    direction: "in",
+    body: `Good day ${firstName}, this is Seedin America Support. How can we help you today?`,
+    created_at: new Date(0).toISOString(),
+  };
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [msgs, open, minimized]);
+
+  useEffect(() => {
     if (!open) return;
 
     const poll = async () => {
@@ -20,14 +56,12 @@
           const msg = update.message;
           if (!msg) continue;
 
-          // Only messages sent from the admin chat
           const isFromAdmin =
             String(msg.chat?.id) === String(ADMIN_CHAT_ID) ||
             String(msg.from?.id) === String(ADMIN_CHAT_ID);
           if (!isFromAdmin) continue;
 
-          // Only replies to messages tagged for this specific user
-          const replyText = msg.reply_to_message?.text ?? "";
+          const replyText: string = msg.reply_to_message?.text ?? "";
           if (!replyText.includes(tag)) continue;
 
           incoming.push({
@@ -45,13 +79,15 @@
             ...incoming.filter((m) => !prev.find((p) => p.id === m.id)),
           ]);
         }
-      } catch {
-        // silent — network hiccup
+      } catch (_e) {
+        // silent network hiccup
       }
     };
 
     pollRef.current = setInterval(poll, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [open, userId, lastUpdateId]);
 
   const handleSend = async () => {
@@ -69,7 +105,6 @@
     setText("");
 
     try {
-      // Send to Telegram tagged so admin knows which user to reply to
       const telegramText = `[SEEDIN:${userId}]\n👤 *${firstName}*\n\n${body}`;
       const res = await fetch(`${TG}/sendMessage`, {
         method: "POST",
@@ -81,7 +116,7 @@
         }),
       });
       if (!res.ok) throw new Error("Telegram API error");
-    } catch {
+    } catch (_e) {
       setMsgs((p) => [
         ...p.filter((m) => m.id !== optimistic.id),
         {
@@ -100,7 +135,6 @@
 
   return (
     <>
-      {/* FAB */}
       {!open && (
         <button
           aria-label="Open support chat"
@@ -111,14 +145,12 @@
         </button>
       )}
 
-      {/* Chat window */}
       {open && (
         <div
           className={`fixed bottom-6 right-6 z-40 flex w-[360px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-elegant transition-all duration-200 ${
             minimized ? "h-[56px]" : "h-[560px]"
           }`}
         >
-          {/* Header */}
           <div className="flex shrink-0 items-center justify-between bg-gradient-primary px-4 py-3 text-primary-foreground">
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-gold">Support</p>
@@ -144,11 +176,7 @@
 
           {!minimized && (
             <>
-              {/* Messages */}
-              <div
-                ref={listRef}
-                className="flex-1 space-y-3 overflow-y-auto bg-accent/20 p-4"
-              >
+              <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto bg-accent/20 p-4">
                 {all.map((m) => (
                   <div
                     key={m.id}
@@ -167,7 +195,6 @@
                 ))}
               </div>
 
-              {/* Input */}
               <div className="flex items-end gap-2 border-t border-border bg-background p-3">
                 <textarea
                   value={text}
