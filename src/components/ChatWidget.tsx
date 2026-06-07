@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X, Minus, Loader2 } from "lucide-react";
 
-const BOT_TOKEN = "8853476207:AAEClfXSFx8r0W9tgUzGOrTGCF19nGKtwrk";
+const BOT_TOKEN = "7972563603:AAFR9N0X2GxQ5ggQXFWhtMWtD8HR3eyo1JA";
 const ADMIN_CHAT_ID = "6048752790";
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
@@ -22,6 +22,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
 
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { if (open) setUnreadCount(0); }, [open]);
+
   useEffect(() => {
     if (open && !minimized && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -38,12 +39,15 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
   useEffect(() => {
     const poll = async () => {
       try {
-        const params = new URLSearchParams({
-          offset: String(lastUpdateIdRef.current + 1),
-          timeout: "2",
-          allowed_updates: JSON.stringify(["message"]),
+        const res = await fetch(`${TG}/getUpdates`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            offset: lastUpdateIdRef.current + 1,
+            timeout: 2,
+            allowed_updates: ["message"],
+          }),
         });
-        const res = await fetch(`${TG}/getUpdates?${params}`);
         const data = await res.json();
         if (!data.ok || !data.result?.length) return;
 
@@ -55,28 +59,15 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
           const msg = update.message;
           if (!msg?.text) continue;
 
-          const fromId = String(msg.from?.id ?? "");
-          const chatId = String(msg.chat?.id ?? "");
           const replyToId: number | undefined = msg.reply_to_message?.message_id;
           const replyToText: string = msg.reply_to_message?.text ?? "";
+          const tag = `[SEEDIN:${userId}]`;
 
-          // Strategy 1: admin replied to one of our tracked sent messages
           const repliedToOurMessage =
             replyToId !== undefined && sentMessageIdsRef.current.has(replyToId);
-
-          // Strategy 2: reply_to text contains the user tag (fallback)
-          const tag = `[SEEDIN:${userId}]`;
           const tagInReply = replyToText.includes(tag);
 
-          // Strategy 3: message is from admin chat and text contains the tag
-          // (covers case where admin sends without using reply thread)
-          const isFromAdmin = fromId === ADMIN_CHAT_ID || chatId === ADMIN_CHAT_ID;
-          const tagInBody = msg.text.includes(tag) && isFromAdmin;
-
-          const isMatch = repliedToOurMessage || tagInReply || tagInBody;
-          if (!isMatch) continue;
-
-          // Skip echoes of outgoing messages (they start with the tag marker)
+          if (!repliedToOurMessage && !tagInReply) continue;
           if (msg.text.startsWith("[SEEDIN:")) continue;
 
           incoming.push({
@@ -125,22 +116,20 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
 
     try {
       const tag = `[SEEDIN:${userId}]`;
-      const telegramText = `${tag}\n\u{1F464} *${firstName}*\n\n${body}`;
+      const telegramText = tag + "\n" + "👤" + " " + firstName + "\n\n" + body;
       const res = await fetch(`${TG}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: ADMIN_CHAT_ID,
           text: telegramText,
-          parse_mode: "Markdown",
         }),
       });
       const result = await res.json();
-      // Track the sent message_id so we can match replies to it precisely
       if (result.ok && result.result?.message_id) {
         sentMessageIdsRef.current.add(result.result.message_id);
       }
-      if (!res.ok) throw new Error("Telegram API error");
+      if (!result.ok) throw new Error(result.description ?? "Telegram error");
     } catch (_e) {
       setMsgs((p) => [
         ...p.filter((m) => m.id !== optimistic.id),
@@ -177,9 +166,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
 
       {open && (
         <div
-          className={`fixed bottom-6 right-6 z-40 flex w-[360px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-elegant transition-all duration-200 ${
-            minimized ? "h-[56px]" : "h-[560px]"
-          }`}
+          className={`fixed bottom-6 right-6 z-40 flex w-[360px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-elegant transition-all duration-200 ${minimized ? "h-[56px]" : "h-[560px]"}`}
         >
           <div className="flex shrink-0 items-center justify-between bg-gradient-primary px-4 py-3 text-primary-foreground">
             <div>
@@ -213,11 +200,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
                     className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[78%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
-                        m.direction === "out"
-                          ? "bg-gradient-forest text-forest-foreground rounded-br-sm"
-                          : "bg-background border border-border text-foreground rounded-bl-sm"
-                      }`}
+                      className={`max-w-[78%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${m.direction === "out" ? "bg-gradient-forest text-forest-foreground rounded-br-sm" : "bg-background border border-border text-foreground rounded-bl-sm"}`}
                     >
                       {m.body}
                     </div>
