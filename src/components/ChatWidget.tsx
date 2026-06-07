@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X, Minus, Loader2 } from "lucide-react";
 
-// ─── CONFIG ────────────────────────────────────────────────────────────────
 const BOT_TOKEN = "8853476207:AAEClfXSFx8r0W9tgUzGOrTGCF19nGKtwrk";
 const ADMIN_CHAT_ID = "6048752790";
-// ───────────────────────────────────────────────────────────────────────────
-
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 type Msg = { id: string; direction: "in" | "out"; body: string; created_at: string };
@@ -16,16 +13,20 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [lastUpdateId, setLastUpdateId] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastUpdateIdRef = useRef(0);
+  const sentMessageIdsRef = useRef<Set<number>>(new Set());
   const openRef = useRef(false);
 
-  // Keep refs in sync so the polling closure always reads fresh values
-  useEffect(() => { lastUpdateIdRef.current = lastUpdateId; }, [lastUpdateId]);
   useEffect(() => { openRef.current = open; }, [open]);
+  useEffect(() => { if (open) setUnreadCount(0); }, [open]);
+  useEffect(() => {
+    if (open && !minimized && listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [msgs, open, minimized]);
 
   const greeting: Msg = {
     id: "greeting",
@@ -34,19 +35,6 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     created_at: new Date(0).toISOString(),
   };
 
-  // Clear unread badge when user opens the chat
-  useEffect(() => {
-    if (open) setUnreadCount(0);
-  }, [open]);
-
-  // Auto-scroll when messages change and chat is visible
-  useEffect(() => {
-    if (open && !minimized && listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-  }, [msgs, open, minimized]);
-
-  // Poll Telegram continuously — even when chat is closed — so we catch replies
   useEffect(() => {
     const poll = async () => {
       try {
@@ -59,7 +47,6 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
         const data = await res.json();
         if (!data.ok || !data.result?.length) return;
 
-        const tag = `[SEEDIN:${userId}]`;
         let maxId = lastUpdateIdRef.current;
         const incoming: Msg[] = [];
 
@@ -68,15 +55,29 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
           const msg = update.message;
           if (!msg?.text) continue;
 
-          // Accept any reply (from any sender in the bot chat) that references
-          // a message tagged for this specific user
-          const replyText: string = msg.reply_to_message?.text ?? "";
-          if (!replyText.includes(tag)) continue;
+          const fromId = String(msg.from?.id ?? "");
+          const chatId = String(msg.chat?.id ?? "");
+          const replyToId: number | undefined = msg.reply_to_message?.message_id;
+          const replyToText: string = msg.reply_to_message?.text ?? "";
 
-          // Ignore echoes of the user's own outgoing messages (they contain the tag too)
-          // Outgoing messages are tagged AND contain the user's name header — skip those
-          const isBotEcho = msg.text.includes(`[SEEDIN:${userId}]`);
-          if (isBotEcho) continue;
+          // Strategy 1: admin replied to one of our tracked sent messages
+          const repliedToOurMessage =
+            replyToId !== undefined && sentMessageIdsRef.current.has(replyToId);
+
+          // Strategy 2: reply_to text contains the user tag (fallback)
+          const tag = `[SEEDIN:${userId}]`;
+          const tagInReply = replyToText.includes(tag);
+
+          // Strategy 3: message is from admin chat and text contains the tag
+          // (covers case where admin sends without using reply thread)
+          const isFromAdmin = fromId === ADMIN_CHAT_ID || chatId === ADMIN_CHAT_ID;
+          const tagInBody = msg.text.includes(tag) && isFromAdmin;
+
+          const isMatch = repliedToOurMessage || tagInReply || tagInBody;
+          if (!isMatch) continue;
+
+          // Skip echoes of outgoing messages (they start with the tag marker)
+          if (msg.text.startsWith("[SEEDIN:")) continue;
 
           incoming.push({
             id: String(update.update_id),
@@ -88,29 +89,23 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
 
         if (maxId !== lastUpdateIdRef.current) {
           lastUpdateIdRef.current = maxId;
-          setLastUpdateId(maxId);
         }
 
         if (incoming.length > 0) {
           setMsgs((prev) => {
             const fresh = incoming.filter((m) => !prev.find((p) => p.id === m.id));
             if (fresh.length === 0) return prev;
-            // If chat is closed or minimised, increment the unread badge
-            if (!openRef.current) {
-              setUnreadCount((n) => n + fresh.length);
-            }
+            if (!openRef.current) setUnreadCount((n) => n + fresh.length);
             return [...prev, ...fresh];
           });
         }
       } catch (_e) {
-        // silent network hiccup
+        // silent
       }
     };
 
     pollRef.current = setInterval(poll, 3000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -129,7 +124,8 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     setText("");
 
     try {
-      const telegramText = `[SEEDIN:${userId}]\n\u{1F464} *${firstName}*\n\n${body}`;
+      const tag = `[SEEDIN:${userId}]`;
+      const telegramText = `${tag}\n\u{1F464} *${firstName}*\n\n${body}`;
       const res = await fetch(`${TG}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,6 +135,11 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
           parse_mode: "Markdown",
         }),
       });
+      const result = await res.json();
+      // Track the sent message_id so we can match replies to it precisely
+      if (result.ok && result.result?.message_id) {
+        sentMessageIdsRef.current.add(result.result.message_id);
+      }
       if (!res.ok) throw new Error("Telegram API error");
     } catch (_e) {
       setMsgs((p) => [
