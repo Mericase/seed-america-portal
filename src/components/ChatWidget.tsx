@@ -1,39 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, X, Minus, Loader2 } from "lucide-react";
-
-// ─── CONFIG ────────────────────────────────────────────────────────────────
-const BOT_TOKEN = "8853476207:AAEClfXSFx8r0W9tgUzGOrTGCF19nGKtwrk";
-const ADMIN_CHAT_ID = "6048752790";
-// ───────────────────────────────────────────────────────────────────────────
-
-const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
-
-type Msg = { id: string; direction: "in" | "out"; body: string; created_at: string };
-
-export function ChatWidget({ userId, firstName }: { userId: string; firstName: string }) {
-  const [open, setOpen] = useState(false);
-  const [minimized, setMinimized] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const [lastUpdateId, setLastUpdateId] = useState(0);
-  const listRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const greeting: Msg = {
-    id: "greeting",
-    direction: "in",
-    body: `Good day ${firstName}, this is Seedin America Support. How can we help you today?`,
-    created_at: new Date(0).toISOString(),
-  };
-
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [msgs, open, minimized]);
-
-  // Poll Telegram for admin replies while chat is open
-  useEffect(() => {
     if (!open) return;
 
     const poll = async () => {
