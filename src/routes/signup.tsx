@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from "lucide-react";
@@ -16,76 +16,17 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
-const RESEND_API_KEY = "re_7pB2Rfui_LJKQdFJm9ZXRyDomCwbUy2G6";
-const HERO_URL = "https://seedinamerica.org/email-assets/hero-seedling.jpeg";
-
-async function sendWelcomeEmail(fullName: string, toEmail: string, referralCode: string) {
-  const firstName = fullName.split(" ")[0] || "Member";
-  const html = buildWelcomeHtml(firstName, toEmail, referralCode);
+// Calls the Supabase Edge Function server-side.
+// The edge function holds the RESEND_API_KEY secret — nothing sensitive is in this file.
+async function sendWelcomeEmail(accessToken: string) {
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Seedin America <info@seedinamerica.org>",
-        to: [toEmail],
-        subject: `Welcome to Seedin America, ${firstName} \u2014 Your Seed Is Planted`,
-        html,
-      }),
+    const { error } = await supabase.functions.invoke("send-welcome-email", {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) console.error("[email] Resend error:", await res.text());
+    if (error) console.error("[email] edge fn error:", error);
   } catch (e) {
-    console.error("[email] fetch failed:", e);
+    console.error("[email] sendWelcomeEmail failed:", e);
   }
-}
-
-function buildWelcomeHtml(firstName: string, email: string, referralCode: string): string {
-  const code = referralCode || "\u2014";
-  return (
-    `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head>` +
-    `<body style="margin:0;padding:0;background:#0f2a1a;font-family:Arial,sans-serif;">` +
-    `<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2a1a;padding:40px 16px;"><tr><td align="center">` +
-    `<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border-radius:20px;overflow:hidden;">` +
-    `<tr><td style="line-height:0;"><img src="${HERO_URL}" alt="Seedin America" width="560" style="width:100%;display:block;" /></td></tr>` +
-    `<tr><td style="background:linear-gradient(135deg,#0f2a1a,#1a3a26);padding:32px 40px;text-align:center;">` +
-    `<p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#c9a84c;">Seedin America</p>` +
-    `<h1 style="margin:8px 0 6px;font-size:26px;font-weight:700;color:#fff;">Welcome, ${firstName}!</h1>` +
-    `<p style="margin:0;font-size:13px;color:rgba(255,255,255,0.7);">Your seed has been planted. Your account is ready.</p></td></tr>` +
-    `<tr><td style="background:#fff;padding:36px 40px 24px;">` +
-    `<p style="font-size:15px;color:#374151;line-height:1.7;">Dear <strong>${firstName}</strong>,</p>` +
-    `<p style="font-size:15px;color:#374151;line-height:1.7;">Welcome to Seedin America. Your account has been successfully created. You are now one step closer to accessing the capital you deserve.</p>` +
-    `<p style="font-size:15px;color:#374151;line-height:1.7;">Every dollar disbursed through our program is a <strong>pure grant</strong> &mdash; not a loan, not an advance. <strong>No repayment. Ever.</strong></p>` +
-    `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7f0;border-radius:12px;border-left:4px solid #2d6a4f;margin:20px 0;">` +
-    `<tr><td style="padding:20px 24px;">` +
-    `<p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#1a3a26;text-transform:uppercase;letter-spacing:1px;">What Happens Next</p>` +
-    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>1.</strong> Sign in to your secure member dashboard</p>` +
-    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>2.</strong> Verify your tier to unlock higher grant amounts</p>` +
-    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>3.</strong> Submit your grant application &mdash; decision in 14 business days</p>` +
-    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>4.</strong> Receive funds directly into your bank account</p>` +
-    `</td></tr></table>` +
-    `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(201,168,76,0.1);border-radius:12px;border:1px solid rgba(201,168,76,0.35);margin:0 0 24px;">` +
-    `<tr><td style="padding:20px 24px;">` +
-    `<p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#92700a;text-transform:uppercase;letter-spacing:1px;">Your Referral Code</p>` +
-    `<p style="margin:0 0 10px;font-size:28px;font-weight:700;color:#1a3a26;letter-spacing:0.4em;font-family:monospace;">${code}</p>` +
-    `<p style="margin:0;font-size:13px;color:#374151;">Share this code and earn <strong style="color:#2d6a4f;">$300</strong> for every friend who registers. They get an instant <strong style="color:#2d6a4f;">$200</strong> bonus.</p>` +
-    `</td></tr></table>` +
-    `<table cellpadding="0" cellspacing="0" style="margin:0 auto 8px;"><tr>` +
-    `<td style="background:linear-gradient(135deg,#1a3a26,#2d6a4f);border-radius:50px;padding:15px 40px;text-align:center;">` +
-    `<a href="https://seedinamerica.org/signin" style="font-size:15px;font-weight:700;color:#fff;text-decoration:none;">Access Your Dashboard &rarr;</a>` +
-    `</td></tr></table></td></tr>` +
-    `<tr><td style="background:#0f2a1a;padding:24px 40px;text-align:center;">` +
-    `<p style="margin:0 0 4px;font-size:12px;color:rgba(255,255,255,0.8);font-weight:600;">Seedin America</p>` +
-    `<p style="margin:0 0 8px;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;">Plant &middot; Grow &middot; Prosper</p>` +
-    `<p style="margin:0;font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;">` +
-    `Sent to ${email} because you signed up at seedinamerica.org<br>` +
-    `&copy; ${new Date().getFullYear()} Seedin America &middot; ` +
-    `<a href="https://seedinamerica.org" style="color:rgba(201,168,76,0.6);text-decoration:none;">seedinamerica.org</a> &middot; ` +
-    `<a href="mailto:info@seedinamerica.org" style="color:rgba(201,168,76,0.6);text-decoration:none;">info@seedinamerica.org</a>` +
-    `</p></td></tr></table></td></tr></table></body></html>`
-  );
 }
 
 const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
@@ -105,7 +46,6 @@ const step1Schema = z.object({
 type Step1 = z.infer<typeof step1Schema>;
 
 function SignupPage() {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -170,6 +110,7 @@ function SignupPage() {
                 onBack={() => setStep(2)} submitting={submitting}
                 onSubmit={async () => {
                   setSubmitting(true);
+
                   const { error, data: authData } = await supabase.auth.signUp({
                     email: data.email,
                     password: data.password,
@@ -179,28 +120,25 @@ function SignupPage() {
                         full_name: data.full_name,
                         phone: data.phone,
                         address: data.address,
-                        date_of_birth: (() => { const [m, d, y] = data.date_of_birth.split("/"); return `${y}-${m}-${d}`; })(),
+                        date_of_birth: (() => {
+                          const [m, d, y] = data.date_of_birth.split("/");
+                          return `${y}-${m}-${d}`;
+                        })(),
                         hear_about: hearAbout,
                         referral_code: referralCode.trim().toUpperCase() || null,
                       },
                     },
                   });
+
                   if (error) { setSubmitting(false); toast.error(error.message); return; }
 
-                  // Fetch the referral code Supabase generated for this user
-                  let userReferralCode = "";
-                  try {
-                    const uid = authData.user?.id;
-                    if (uid) {
-                      await new Promise((r) => setTimeout(r, 1500));
-                      const { data: profile } = await supabase
-                        .from("profiles").select("referral_code").eq("id", uid).maybeSingle();
-                      userReferralCode = profile?.referral_code ?? "";
-                    }
-                  } catch (_) {}
-
-                  // Send welcome email directly from the browser — no server function needed
-                  await sendWelcomeEmail(data.full_name, data.email, userReferralCode);
+                  // Pass the fresh session token to the edge function.
+                  // The edge function reads the user's profile (including referral_code)
+                  // from Supabase and sends the welcome email via Resend server-side.
+                  const accessToken = authData.session?.access_token;
+                  if (accessToken) {
+                    await sendWelcomeEmail(accessToken);
+                  }
 
                   await supabase.auth.signOut();
                   setSubmitting(false);
@@ -352,7 +290,7 @@ function Step2Form({ hearAbout, setHearAbout, referralCode, setReferralCode, onB
   );
 }
 
-const TERMS = `SEEDIN AMERICA \u2014 TERMS AND CONDITIONS OF PARTICIPATION
+const TERMS = `SEEDIN AMERICA — TERMS AND CONDITIONS OF PARTICIPATION
 
 PREAMBLE
 These Terms and Conditions ("Agreement") govern your participation in the Seedin America Federal Grant Initiative ("Program"), operated under endorsement of the Office of the President and administered in accordance with applicable federal regulations.
@@ -401,7 +339,7 @@ These Terms and Conditions ("Agreement") govern your participation in the Seedin
 10. ACKNOWLEDGMENT
 By checking the acceptance box below, you acknowledge that you have read, understood, and agree to be bound by the entirety of this Agreement. You further certify that all information provided in your application is true, accurate, and complete to the best of your knowledge.
 
-\u2014 END OF AGREEMENT \u2014`;
+— END OF AGREEMENT —`;
 
 function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, onBack, onSubmit, submitting }: {
   scrolledToEnd: boolean; setScrolledToEnd: (v: boolean) => void;
@@ -422,7 +360,7 @@ function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, on
       <div ref={ref} className="relative h-72 overflow-y-auto rounded-lg border border-input bg-accent/30 p-5 font-mono text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
         {TERMS}
       </div>
-      {!scrolledToEnd && <p className="text-center text-xs text-muted-foreground">\u2193 Scroll to the bottom to continue</p>}
+      {!scrolledToEnd && <p className="text-center text-xs text-muted-foreground">↓ Scroll to the bottom to continue</p>}
       <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition ${scrolledToEnd ? "border-input bg-background hover:bg-accent" : "border-dashed border-border bg-muted/30 opacity-60"}`}>
         <input type="checkbox" disabled={!scrolledToEnd} checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 accent-forest" />
         <span className="text-sm">I have read and accept the <strong>Terms and Conditions</strong> of Seedin America.</span>
@@ -433,7 +371,7 @@ function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, on
         </button>
         <button disabled={!canSubmit} onClick={onSubmit}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary shadow-gold transition disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none">
-          {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Submitting\u2026</>) : "Confirm Signup"}
+          {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>) : "Confirm Signup"}
         </button>
       </div>
     </div>
