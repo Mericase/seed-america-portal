@@ -5,8 +5,6 @@ import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldChe
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { sendWelcomeEmail } from "@/lib/support.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -17,6 +15,78 @@ export const Route = createFileRoute("/signup")({
   }),
   component: SignupPage,
 });
+
+const RESEND_API_KEY = "re_7pB2Rfui_LJKQdFJm9ZXRyDomCwbUy2G6";
+const HERO_URL = "https://seedinamerica.org/email-assets/hero-seedling.jpeg";
+
+async function sendWelcomeEmail(fullName: string, toEmail: string, referralCode: string) {
+  const firstName = fullName.split(" ")[0] || "Member";
+  const html = buildWelcomeHtml(firstName, toEmail, referralCode);
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Seedin America <info@seedinamerica.org>",
+        to: [toEmail],
+        subject: `Welcome to Seedin America, ${firstName} \u2014 Your Seed Is Planted`,
+        html,
+      }),
+    });
+    if (!res.ok) console.error("[email] Resend error:", await res.text());
+  } catch (e) {
+    console.error("[email] fetch failed:", e);
+  }
+}
+
+function buildWelcomeHtml(firstName: string, email: string, referralCode: string): string {
+  const code = referralCode || "\u2014";
+  return (
+    `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head>` +
+    `<body style="margin:0;padding:0;background:#0f2a1a;font-family:Arial,sans-serif;">` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2a1a;padding:40px 16px;"><tr><td align="center">` +
+    `<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border-radius:20px;overflow:hidden;">` +
+    `<tr><td style="line-height:0;"><img src="${HERO_URL}" alt="Seedin America" width="560" style="width:100%;display:block;" /></td></tr>` +
+    `<tr><td style="background:linear-gradient(135deg,#0f2a1a,#1a3a26);padding:32px 40px;text-align:center;">` +
+    `<p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#c9a84c;">Seedin America</p>` +
+    `<h1 style="margin:8px 0 6px;font-size:26px;font-weight:700;color:#fff;">Welcome, ${firstName}!</h1>` +
+    `<p style="margin:0;font-size:13px;color:rgba(255,255,255,0.7);">Your seed has been planted. Your account is ready.</p></td></tr>` +
+    `<tr><td style="background:#fff;padding:36px 40px 24px;">` +
+    `<p style="font-size:15px;color:#374151;line-height:1.7;">Dear <strong>${firstName}</strong>,</p>` +
+    `<p style="font-size:15px;color:#374151;line-height:1.7;">Welcome to Seedin America. Your account has been successfully created. You are now one step closer to accessing the capital you deserve.</p>` +
+    `<p style="font-size:15px;color:#374151;line-height:1.7;">Every dollar disbursed through our program is a <strong>pure grant</strong> &mdash; not a loan, not an advance. <strong>No repayment. Ever.</strong></p>` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7f0;border-radius:12px;border-left:4px solid #2d6a4f;margin:20px 0;">` +
+    `<tr><td style="padding:20px 24px;">` +
+    `<p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#1a3a26;text-transform:uppercase;letter-spacing:1px;">What Happens Next</p>` +
+    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>1.</strong> Sign in to your secure member dashboard</p>` +
+    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>2.</strong> Verify your tier to unlock higher grant amounts</p>` +
+    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>3.</strong> Submit your grant application &mdash; decision in 14 business days</p>` +
+    `<p style="margin:4px 0;font-size:14px;color:#374151;"><strong>4.</strong> Receive funds directly into your bank account</p>` +
+    `</td></tr></table>` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(201,168,76,0.1);border-radius:12px;border:1px solid rgba(201,168,76,0.35);margin:0 0 24px;">` +
+    `<tr><td style="padding:20px 24px;">` +
+    `<p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#92700a;text-transform:uppercase;letter-spacing:1px;">Your Referral Code</p>` +
+    `<p style="margin:0 0 10px;font-size:28px;font-weight:700;color:#1a3a26;letter-spacing:0.4em;font-family:monospace;">${code}</p>` +
+    `<p style="margin:0;font-size:13px;color:#374151;">Share this code and earn <strong style="color:#2d6a4f;">$300</strong> for every friend who registers. They get an instant <strong style="color:#2d6a4f;">$200</strong> bonus.</p>` +
+    `</td></tr></table>` +
+    `<table cellpadding="0" cellspacing="0" style="margin:0 auto 8px;"><tr>` +
+    `<td style="background:linear-gradient(135deg,#1a3a26,#2d6a4f);border-radius:50px;padding:15px 40px;text-align:center;">` +
+    `<a href="https://seedinamerica.org/signin" style="font-size:15px;font-weight:700;color:#fff;text-decoration:none;">Access Your Dashboard &rarr;</a>` +
+    `</td></tr></table></td></tr>` +
+    `<tr><td style="background:#0f2a1a;padding:24px 40px;text-align:center;">` +
+    `<p style="margin:0 0 4px;font-size:12px;color:rgba(255,255,255,0.8);font-weight:600;">Seedin America</p>` +
+    `<p style="margin:0 0 8px;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;">Plant &middot; Grow &middot; Prosper</p>` +
+    `<p style="margin:0;font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;">` +
+    `Sent to ${email} because you signed up at seedinamerica.org<br>` +
+    `&copy; ${new Date().getFullYear()} Seedin America &middot; ` +
+    `<a href="https://seedinamerica.org" style="color:rgba(201,168,76,0.6);text-decoration:none;">seedinamerica.org</a> &middot; ` +
+    `<a href="mailto:info@seedinamerica.org" style="color:rgba(201,168,76,0.6);text-decoration:none;">info@seedinamerica.org</a>` +
+    `</p></td></tr></table></td></tr></table></body></html>`
+  );
+}
 
 const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
 
@@ -39,7 +109,6 @@ function SignupPage() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const triggerWelcomeEmail = useServerFn(sendWelcomeEmail);
   const [data, setData] = useState<Step1>({
     full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
   });
@@ -81,40 +150,27 @@ function SignupPage() {
 
           <div className="p-8">
             {step === 1 && (
-              <Step1Form
-                value={data}
-                onChange={setData}
-                onNext={() => {
-                  const parsed = step1Schema.safeParse(data);
-                  if (!parsed.success) {
-                    toast.error(parsed.error.issues[0]?.message ?? "Please check your details");
-                    return;
-                  }
-                  setStep(2);
-                }}
-              />
+              <Step1Form value={data} onChange={setData} onNext={() => {
+                const parsed = step1Schema.safeParse(data);
+                if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
+                setStep(2);
+              }} />
             )}
             {step === 2 && (
               <Step2Form
-                hearAbout={hearAbout}
-                setHearAbout={setHearAbout}
-                referralCode={referralCode}
-                setReferralCode={setReferralCode}
-                onBack={() => setStep(1)}
-                onNext={() => setStep(3)}
+                hearAbout={hearAbout} setHearAbout={setHearAbout}
+                referralCode={referralCode} setReferralCode={setReferralCode}
+                onBack={() => setStep(1)} onNext={() => setStep(3)}
               />
             )}
             {step === 3 && (
               <Step3Terms
-                scrolledToEnd={scrolledToEnd}
-                setScrolledToEnd={setScrolledToEnd}
-                accepted={acceptedTerms}
-                setAccepted={setAcceptedTerms}
-                onBack={() => setStep(2)}
-                submitting={submitting}
+                scrolledToEnd={scrolledToEnd} setScrolledToEnd={setScrolledToEnd}
+                accepted={acceptedTerms} setAccepted={setAcceptedTerms}
+                onBack={() => setStep(2)} submitting={submitting}
                 onSubmit={async () => {
                   setSubmitting(true);
-                  const { error } = await supabase.auth.signUp({
+                  const { error, data: authData } = await supabase.auth.signUp({
                     email: data.email,
                     password: data.password,
                     options: {
@@ -123,21 +179,31 @@ function SignupPage() {
                         full_name: data.full_name,
                         phone: data.phone,
                         address: data.address,
-                        date_of_birth: (() => { const [m,d,y] = data.date_of_birth.split("/"); return `${y}-${m}-${d}`; })(),
+                        date_of_birth: (() => { const [m, d, y] = data.date_of_birth.split("/"); return `${y}-${m}-${d}`; })(),
                         hear_about: hearAbout,
                         referral_code: referralCode.trim().toUpperCase() || null,
                       },
                     },
                   });
-                  setSubmitting(false);
-                  if (error) {
-                    toast.error(error.message);
-                    return;
-                  }
-                  // Send branded welcome email while the session is still active
-                  try { await triggerWelcomeEmail(); } catch (e) { console.error("welcome email failed", e); }
-                  // Sign out so user must sign in (per success-state spec)
+                  if (error) { setSubmitting(false); toast.error(error.message); return; }
+
+                  // Fetch the referral code Supabase generated for this user
+                  let userReferralCode = "";
+                  try {
+                    const uid = authData.user?.id;
+                    if (uid) {
+                      await new Promise((r) => setTimeout(r, 1500));
+                      const { data: profile } = await supabase
+                        .from("profiles").select("referral_code").eq("id", uid).maybeSingle();
+                      userReferralCode = profile?.referral_code ?? "";
+                    }
+                  } catch (_) {}
+
+                  // Send welcome email directly from the browser — no server function needed
+                  await sendWelcomeEmail(data.full_name, data.email, userReferralCode);
+
                   await supabase.auth.signOut();
+                  setSubmitting(false);
                   setSuccess(true);
                 }}
               />
@@ -154,9 +220,7 @@ function ProgressBar({ step }: { step: number }) {
   return (
     <div className="flex items-center gap-3">
       {steps.map((label, i) => {
-        const n = i + 1;
-        const active = step >= n;
-        const done = step > n;
+        const n = i + 1; const active = step >= n; const done = step > n;
         return (
           <div key={label} className="flex flex-1 items-center gap-3">
             <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold transition ${active ? "bg-gradient-gold text-primary shadow-gold" : "bg-muted text-muted-foreground"}`}>
@@ -178,10 +242,7 @@ function Field({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> 
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <input
-        {...props}
-        className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
-      />
+      <input {...props} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20" />
     </label>
   );
 }
@@ -193,12 +254,10 @@ function formatDob(input: string): string {
 }
 
 function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void }) {
-  const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...value, [k]: e.target.value });
+  const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value, [k]: e.target.value });
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
   const dobPickerRef = useRef<HTMLInputElement>(null);
-
   return (
     <form onSubmit={(e) => { e.preventDefault(); onNext(); }} className="space-y-5">
       <Field label="Full Legal Name" placeholder="John A. Smith" value={value.full_name} onChange={set("full_name")} required />
@@ -207,48 +266,26 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
         <Field label="Phone Number" type="tel" placeholder="(555) 123-4567" value={value.phone} onChange={set("phone")} required />
       </div>
       <Field label="Residential Address" placeholder="1600 Main St, Springfield, IL 62701" value={value.address} onChange={set("address")} required />
-
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date of Birth</span>
         <div className="relative">
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="MM/DD/YYYY"
-            value={value.date_of_birth}
+          <input type="text" inputMode="numeric" placeholder="MM/DD/YYYY" value={value.date_of_birth}
             onChange={(e) => onChange({ ...value, date_of_birth: formatDob(e.target.value) })}
-            maxLength={10}
-            required
-            className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
-          />
-          <button
-            type="button"
-            onClick={() => dobPickerRef.current?.showPicker?.()}
-            className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest"
-            aria-label="Pick date"
-          >
+            maxLength={10} required
+            className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20" />
+          <button type="button" onClick={() => dobPickerRef.current?.showPicker?.()}
+            className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest" aria-label="Pick date">
             <Calendar className="h-4 w-4" />
           </button>
-          <input
-            ref={dobPickerRef}
-            type="date"
-            max={new Date().toISOString().split("T")[0]}
+          <input ref={dobPickerRef} type="date" max={new Date().toISOString().split("T")[0]}
             className="pointer-events-none absolute right-2 top-1/2 h-0 w-0 -translate-y-1/2 opacity-0"
-            onChange={(e) => {
-              const v = e.target.value;
-              if (!v) return;
-              const [y, m, d] = v.split("-");
-              onChange({ ...value, date_of_birth: `${m}/${d}/${y}` });
-            }}
-          />
+            onChange={(e) => { const v = e.target.value; if (!v) return; const [y, m, d] = v.split("-"); onChange({ ...value, date_of_birth: `${m}/${d}/${y}` }); }} />
         </div>
       </label>
-
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <PasswordField label="Create Password" value={value.password} onChange={set("password")} show={showPw} setShow={setShowPw} />
         <PasswordField label="Confirm Password" value={value.confirm_password} onChange={set("confirm_password")} show={showCpw} setShow={setShowCpw} />
       </div>
-
       <button type="submit" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95">
         Continue <ArrowRight className="h-4 w-4" />
       </button>
@@ -257,22 +294,14 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
 }
 
 function PasswordField({ label, value, onChange, show, setShow }: {
-  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  show: boolean; setShow: (v: boolean) => void;
+  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; show: boolean; setShow: (v: boolean) => void;
 }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={onChange}
-          required
-          minLength={8}
-          placeholder="Minimum 8 characters"
-          className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
-        />
+        <input type={show ? "text" : "password"} value={value} onChange={onChange} required minLength={8} placeholder="Minimum 8 characters"
+          className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20" />
         <button type="button" onClick={() => setShow(!show)} className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest" aria-label={show ? "Hide" : "Show"}>
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -282,55 +311,35 @@ function PasswordField({ label, value, onChange, show, setShow }: {
 }
 
 function Step2Form({ hearAbout, setHearAbout, referralCode, setReferralCode, onBack, onNext }: {
-  hearAbout: string; setHearAbout: (v: string) => void;
-  referralCode: string; setReferralCode: (v: string) => void;
-  onBack: () => void; onNext: () => void;
+  hearAbout: string; setHearAbout: (v: string) => void; referralCode: string; setReferralCode: (v: string) => void; onBack: () => void; onNext: () => void;
 }) {
   const options = ["Friend or family", "Social media", "News article", "Government outreach", "Other"];
   return (
     <form onSubmit={(e) => { e.preventDefault(); onNext(); }} className="space-y-6">
       <div>
-        <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          How did you hear about us?
-        </span>
+        <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">How did you hear about us?</span>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
           {options.map((opt) => (
-            <button
-              type="button"
-              key={opt}
-              onClick={() => setHearAbout(opt)}
-              className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${hearAbout === opt ? "border-forest bg-forest/10 text-forest" : "border-input bg-background hover:bg-accent"}`}
-            >
+            <button type="button" key={opt} onClick={() => setHearAbout(opt)}
+              className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${hearAbout === opt ? "border-forest bg-forest/10 text-forest" : "border-input bg-background hover:bg-accent"}`}>
               {opt}
             </button>
           ))}
         </div>
       </div>
-
       <label className="block">
-        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Referral Code (Optional)
-        </span>
-        <input
-          value={referralCode}
-          onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-          placeholder="e.g. US7X9K"
-          maxLength={6}
-          className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-center text-lg font-mono uppercase tracking-[0.4em] text-foreground outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/30"
-        />
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Referral Code (Optional)</span>
+        <input value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} placeholder="e.g. US7X9K" maxLength={6}
+          className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-center text-lg font-mono uppercase tracking-[0.4em] text-foreground outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/30" />
       </label>
-
       <div className="rounded-xl border border-gold/30 bg-gradient-to-br from-gold/10 to-gold/5 p-5">
         <div className="flex gap-3">
           <Sparkles className="h-5 w-5 shrink-0 text-gold" />
           <p className="text-sm leading-relaxed text-foreground">
-            <strong className="text-primary">Bonus offer:</strong> Every referred applicant receives an
-            instant <span className="font-semibold text-forest">$200 bonus balance</span> upon successful
-            registration, and the referrer receives <span className="font-semibold text-forest">$300</span>.
+            <strong className="text-primary">Bonus offer:</strong> Every referred applicant receives an instant <span className="font-semibold text-forest">$200 bonus balance</span> upon successful registration, and the referrer receives <span className="font-semibold text-forest">$300</span>.
           </p>
         </div>
       </div>
-
       <div className="flex gap-3">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-5 py-3 text-sm font-medium hover:bg-accent">
           <ArrowLeft className="h-4 w-4" /> Back
@@ -343,7 +352,7 @@ function Step2Form({ hearAbout, setHearAbout, referralCode, setReferralCode, onB
   );
 }
 
-const TERMS = `SEEDIN AMERICA — TERMS AND CONDITIONS OF PARTICIPATION
+const TERMS = `SEEDIN AMERICA \u2014 TERMS AND CONDITIONS OF PARTICIPATION
 
 PREAMBLE
 These Terms and Conditions ("Agreement") govern your participation in the Seedin America Federal Grant Initiative ("Program"), operated under endorsement of the Office of the President and administered in accordance with applicable federal regulations.
@@ -392,7 +401,7 @@ These Terms and Conditions ("Agreement") govern your participation in the Seedin
 10. ACKNOWLEDGMENT
 By checking the acceptance box below, you acknowledge that you have read, understood, and agree to be bound by the entirety of this Agreement. You further certify that all information provided in your application is true, accurate, and complete to the best of your knowledge.
 
-— END OF AGREEMENT —`;
+\u2014 END OF AGREEMENT \u2014`;
 
 function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, onBack, onSubmit, submitting }: {
   scrolledToEnd: boolean; setScrolledToEnd: (v: boolean) => void;
@@ -403,50 +412,28 @@ function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, on
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledToEnd(true);
-    };
+    const onScroll = () => { if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledToEnd(true); };
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
   }, [setScrolledToEnd]);
-
   const canSubmit = scrolledToEnd && accepted && !submitting;
-
   return (
     <div className="space-y-5">
-      <div
-        ref={ref}
-        className="relative h-72 overflow-y-auto rounded-lg border border-input bg-accent/30 p-5 font-mono text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap"
-      >
+      <div ref={ref} className="relative h-72 overflow-y-auto rounded-lg border border-input bg-accent/30 p-5 font-mono text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
         {TERMS}
       </div>
-      {!scrolledToEnd && (
-        <p className="text-center text-xs text-muted-foreground">↓ Scroll to the bottom to continue</p>
-      )}
-
+      {!scrolledToEnd && <p className="text-center text-xs text-muted-foreground">\u2193 Scroll to the bottom to continue</p>}
       <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition ${scrolledToEnd ? "border-input bg-background hover:bg-accent" : "border-dashed border-border bg-muted/30 opacity-60"}`}>
-        <input
-          type="checkbox"
-          disabled={!scrolledToEnd}
-          checked={accepted}
-          onChange={(e) => setAccepted(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-forest"
-        />
-        <span className="text-sm">
-          I have read and accept the <strong>Terms and Conditions</strong> of Seedin America.
-        </span>
+        <input type="checkbox" disabled={!scrolledToEnd} checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 accent-forest" />
+        <span className="text-sm">I have read and accept the <strong>Terms and Conditions</strong> of Seedin America.</span>
       </label>
-
       <div className="flex gap-3">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-5 py-3 text-sm font-medium hover:bg-accent">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <button
-          disabled={!canSubmit}
-          onClick={onSubmit}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary shadow-gold transition disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-        >
-          {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>) : "Confirm Signup"}
+        <button disabled={!canSubmit} onClick={onSubmit}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary shadow-gold transition disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none">
+          {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Submitting\u2026</>) : "Confirm Signup"}
         </button>
       </div>
     </div>
@@ -460,17 +447,12 @@ function SuccessScreen() {
         <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-gradient-gold shadow-gold">
           <Check className="h-10 w-10 text-primary" strokeWidth={3} />
         </div>
-        <h1 className="mt-8 font-display text-4xl font-semibold text-balance">
-          Welcome to Seedin America
-        </h1>
+        <h1 className="mt-8 font-display text-4xl font-semibold text-balance">Welcome to Seedin America</h1>
         <p className="mt-4 text-white/80">
-          Your application has been received and your secure account has been created.
+          Your account has been created and a welcome email is on its way to your inbox.
           Sign in to access your dashboard and begin your grant application.
         </p>
-        <Link
-          to="/signin"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-gold px-8 py-4 text-base font-semibold text-primary shadow-gold hover:scale-[1.02]"
-        >
+        <Link to="/signin" className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-gold px-8 py-4 text-base font-semibold text-primary shadow-gold hover:scale-[1.02]">
           Sign In <ArrowRight className="h-5 w-5" />
         </Link>
       </div>
