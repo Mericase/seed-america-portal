@@ -31,6 +31,19 @@ export const markAllRead = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const markOneRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string }) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .is("read_at", null);
+    return { ok: true };
+  });
+
 export const savePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { endpoint: string; p256dh: string; auth: string }) =>
@@ -78,6 +91,7 @@ export const sendNotification = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendWebPush } = await import("./push.server");
 
+    // ── resolve recipients ──────────────────────────────────────────────────
     let userIds: string[] = [];
     if (data.toAll) {
       const { data: rows } = await supabaseAdmin.from("profiles").select("id");
@@ -87,16 +101,20 @@ export const sendNotification = createServerFn({ method: "POST" })
     }
     if (userIds.length === 0) throw new Error("Select at least one recipient");
 
+    // ── insert in-app notifications ─────────────────────────────────────────
     const rows = userIds.map((uid) => ({
-      user_id: uid, title: data.title, body: data.body, link: data.link ?? "/dashboard",
+      user_id: uid,
+      title: data.title,
+      body: data.body,
+      link: data.link ?? "/dashboard",
     }));
     const { error: insErr } = await supabaseAdmin.from("notifications").insert(rows);
     if (insErr) throw new Error(insErr.message);
 
+    // ── web push (best-effort) ──────────────────────────────────────────────
     const { data: subs } = await supabaseAdmin
       .from("push_subscriptions").select("id, endpoint, p256dh, auth, user_id")
       .in("user_id", userIds);
-
     let pushed = 0;
     const stale: string[] = [];
     await Promise.all((subs ?? []).map(async (s) => {
@@ -107,17 +125,43 @@ export const sendNotification = createServerFn({ method: "POST" })
       if (r.ok) pushed++;
       else if (r.gone) stale.push(s.id);
     }));
-    if (stale.length) await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
+    if (stale.length) {
+      await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
+    }
 
-    // Send email notification to each recipient (best-effort)
+    // ── email (best-effort) ─────────────────────────────────────────────────
     let emailed = 0;
     try {
-      const { sendEmail, renderBrandedEmail } = await import("./email.server");
+      const { renderBrandedEmail } = await import("./email.server");
+
+      // sendEmail with support@ override
+      const RESEND_API_KEY = process.env.RESEND_API_KEY;
+      const sendNotificationEmail = async (to: string, subject: string, html: string) => {
+        if (!RESEND_API_KEY) return;
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Seedin America <support@seedinamerica.org>",
+            to: [to],
+            subject,
+            html,
+          }),
+        });
+        return res.ok;
+      };
+
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id, full_name, email")
         .in("id", userIds);
-      const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+      const escape = (s: string) =>
+        s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
       await Promise.all((profiles ?? []).map(async (p) => {
         if (!p.email) return;
         const firstName = (p.full_name || "").split(" ")[0] || "there";
@@ -125,12 +169,17 @@ export const sendNotification = createServerFn({ method: "POST" })
           preheader: data.title,
           heading: data.title,
           intro: `Hello ${escape(firstName)}, you have a new notification from Seedin America.`,
-          bodyHtml: `<p style="white-space:pre-wrap;">${escape(data.body)}</p><p style="margin-top:18px;color:#555;">Sign in to your dashboard to view the full notification and any further details.</p>`,
+          bodyHtml: `
+            <p style="white-space:pre-wrap;margin:0 0 16px;">${escape(data.body)}</p>
+            <p style="margin:0;color:#555;font-size:14px;">
+              Sign in to your dashboard to view the full notification and any further details.
+            </p>
+          `,
           ctaLabel: "View notification",
-          ctaUrl: "https://seedinamerica.org/dashboard",
+          ctaUrl: `https://seedinamerica.org${data.link ?? "/dashboard"}`,
         });
-        const r = await sendEmail({ to: p.email, subject: data.title, html });
-        if (r.ok) emailed++;
+        const ok = await sendNotificationEmail(p.email, data.title, html);
+        if (ok) emailed++;
       }));
     } catch (e) {
       console.error("[notifications] email send error", e);
@@ -138,4 +187,3 @@ export const sendNotification = createServerFn({ method: "POST" })
 
     return { ok: true, recipients: userIds.length, pushed, emailed };
   });
-
