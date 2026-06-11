@@ -245,10 +245,17 @@ function NotificationRow({
   notification: Notification;
   onRead: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const isUnread = !n.read_at;
-  const content = (
+
+  const handleOpen = () => {
+    setOpen(true);
+    onRead();
+  };
+
+  const row = (
     <div
-      onClick={onRead}
+      onClick={handleOpen}
       className={`group relative cursor-pointer rounded-xl border p-4 transition ${
         isUnread
           ? "border-forest/30 bg-forest/5 hover:bg-forest/10"
@@ -279,10 +286,111 @@ function NotificationRow({
     </div>
   );
 
-  if (n.link && n.link !== "/dashboard") {
-    return <Link to={n.link}>{content}</Link>;
-  }
-  return content;
+  return (
+    <>
+      {n.link && n.link !== "/dashboard" ? (
+        <Link to={n.link} onClick={handleOpen}>{row}</Link>
+      ) : (
+        row
+      )}
+
+      {open && (
+        <NotificationDetail
+          notification={n}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function NotificationDetail({
+  notification: n,
+  onClose,
+}: {
+  notification: Notification;
+  onClose: () => void;
+}) {
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent background scroll while sheet is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    /* Backdrop */
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      onClick={onClose}
+    >
+      {/* Dim layer */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+      {/* Sheet */}
+      <div
+        className="relative z-10 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-2xl animate-in slide-in-from-bottom-4 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle (mobile hint) */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 px-6 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/15 text-forest">
+              <Bell className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-snug text-foreground">{n.title}</p>
+              <p className="text-xs text-muted-foreground/60 mt-0.5">{timeAgo(n.created_at)}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-border mx-6" />
+
+        {/* Body — scrollable for long content */}
+        <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
+          <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{n.body}</p>
+        </div>
+
+        {/* Footer CTA — only when there's a meaningful link */}
+        {n.link && n.link !== "/dashboard" && (
+          <>
+            <div className="h-px bg-border mx-6" />
+            <div className="px-6 py-4">
+              <Link
+                to={n.link}
+                onClick={onClose}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-forest px-4 py-2.5 text-sm font-medium text-white transition hover:bg-forest/90"
+              >
+                View details
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
