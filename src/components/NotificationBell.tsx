@@ -1,12 +1,11 @@
 /**
  * src/components/NotificationBell.tsx
+ * Fetches directly from Supabase client — no server function needed.
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
-import { listMyNotifications } from "@/lib/notifications.functions";
 
 interface Props {
   userId: string;
@@ -14,23 +13,22 @@ interface Props {
 
 export function NotificationBell({ userId }: Props) {
   const navigate = useNavigate();
-  const fetchNotifications = useServerFn(listMyNotifications);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // ── initial fetch ────────────────────────────────────────────────────────
   useEffect(() => {
-    let cancelled = false;
-    fetchNotifications()
-      .then(({ notifications }) => {
-        if (cancelled) return;
-        setUnreadCount(notifications.filter((n: any) => !n.read_at).length);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
+    if (!userId) return;
+    supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: false })
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .then(({ count }) => setUnreadCount(count ?? 0));
   }, [userId]);
 
-  // ── real-time updates filtered to this user ──────────────────────────────
+  // ── real-time: listen for inserts/updates on this user's notifications ───
   useEffect(() => {
+    if (!userId) return;
     const channel = supabase
       .channel(`bell-${userId}`)
       .on(
@@ -70,7 +68,7 @@ export function NotificationBell({ userId }: Props) {
       aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ""}`}
       className="relative grid h-10 w-10 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest"
     >
-      <Bell className={`h-5 w-5 transition-transform ${hasUnread ? "animate-bell-shake" : ""}`} />
+      <Bell className={`h-5 w-5 ${hasUnread ? "animate-bell-shake" : ""}`} />
 
       {hasUnread && (
         <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
