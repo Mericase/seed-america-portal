@@ -1,13 +1,14 @@
 /**
  * src/routes/notifications.tsx
+ * Fetches directly from Supabase client — no server function needed.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bell, BellOff, BellRing, CheckCheck, Loader2 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { listMyNotifications, markAllRead, markOneRead, savePushSubscription } from "@/lib/notifications.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { savePushSubscription } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
@@ -36,10 +37,7 @@ function timeAgo(iso: string): string {
 }
 
 function NotificationsPage() {
-  const fetchNotifications = useServerFn(listMyNotifications);
-  const doMarkAllRead    = useServerFn(markAllRead);
-  const doMarkOneRead    = useServerFn(markOneRead);
-  const doSavePush       = useServerFn(savePushSubscription);
+  const doSavePush = useServerFn(savePushSubscription);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading]             = useState(true);
@@ -49,23 +47,33 @@ function NotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
-  // ── get current user id + load notifications ─────────────────────────────
+  // ── load notifications directly from Supabase client ────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user.id) setUserId(session.user.id);
-    });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) { setLoading(false); return; }
+      setUserId(session.user.id);
 
-    fetchNotifications()
-      .then(({ notifications }) => setNotifications(notifications))
-      .catch(() => toast.error("Could not load notifications"))
-      .finally(() => setLoading(false));
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        toast.error("Could not load notifications");
+      } else {
+        setNotifications(data ?? []);
+      }
+      setLoading(false);
+    });
 
     if ("Notification" in window) {
       setPushState(Notification.permission as any);
     }
   }, []);
 
-  // ── real-time filtered to this user ──────────────────────────────────────
+  // ── real-time: new notifications appear instantly ────────────────────────
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
@@ -84,25 +92,33 @@ function NotificationsPage() {
     return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
-  // ── mark all read ─────────────────────────────────────────────────────────
+  // ── mark all read ────────────────────────────────────────────────────────
   const handleMarkAllRead = async () => {
+    if (!userId) return;
     setMarkingRead(true);
-    await doMarkAllRead();
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null);
     setNotifications((prev) =>
       prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })),
     );
     setMarkingRead(false);
   };
 
-  // ── mark one read ─────────────────────────────────────────────────────────
+  // ── mark one read ────────────────────────────────────────────────────────
   const handleMarkOneRead = async (id: string) => {
-    await doMarkOneRead({ id });
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", id);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
     );
   };
 
-  // ── enable push — ONLY when user explicitly taps the button ──────────────
+  // ── enable push — ONLY when user explicitly taps the button ─────────────
   const handleEnablePush = async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       toast.error("Push notifications are not supported in this browser.");
@@ -112,7 +128,7 @@ function NotificationsPage() {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       setPushState("denied");
-      toast.error("Permission denied. You can enable notifications in your browser settings.");
+      toast.error("Permission denied. Enable notifications in your browser settings.");
       return;
     }
     setPushState("granted");
@@ -169,11 +185,11 @@ function NotificationsPage() {
           <div>
             <h1 className="font-display text-2xl font-semibold text-foreground">Notifications</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+              {loading ? "Loading…" : unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
             </p>
           </div>
 
-          {/* Push toggle — only shown when not yet granted, never auto-triggered */}
+          {/* Push toggle — only shown when not yet granted */}
           {"Notification" in window && pushState !== "granted" && (
             <button
               onClick={handleEnablePush}
@@ -249,7 +265,9 @@ function NotificationRow({
           <Bell className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-sm font-semibold leading-snug ${isUnread ? "text-foreground" : "text-muted-foreground"}`}>
+          <p className={`text-sm font-semibold leading-snug ${
+            isUnread ? "text-foreground" : "text-muted-foreground"
+          }`}>
             {n.title}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground line-clamp-3">
