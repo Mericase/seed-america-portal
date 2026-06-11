@@ -1,13 +1,6 @@
 /**
  * src/routes/notifications.tsx
- *
- * Full-page notifications view.
- * - Back to dashboard button at the top
- * - Lists all notifications, unread ones highlighted
- * - Mark all read button
- * - "Enable push notifications" button — ONLY place push permission is requested
  */
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bell, BellOff, BellRing, CheckCheck, Loader2 } from "lucide-react";
@@ -18,9 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
-    meta: [
-      { title: "Notifications — Seedin America" },
-    ],
+    meta: [{ title: "Notifications — Seedin America" }],
   }),
   component: NotificationsPage,
 });
@@ -41,52 +32,59 @@ function timeAgo(iso: string): string {
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function NotificationsPage() {
   const fetchNotifications = useServerFn(listMyNotifications);
-  const doMarkAllRead = useServerFn(markAllRead);
-  const doMarkOneRead = useServerFn(markOneRead);
-  const doSavePush = useServerFn(savePushSubscription);
+  const doMarkAllRead    = useServerFn(markAllRead);
+  const doMarkOneRead    = useServerFn(markOneRead);
+  const doSavePush       = useServerFn(savePushSubscription);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [markingRead, setMarkingRead] = useState(false);
-  const [pushState, setPushState] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
+  const [loading, setLoading]             = useState(true);
+  const [markingRead, setMarkingRead]     = useState(false);
+  const [userId, setUserId]               = useState<string | null>(null);
+  const [pushState, setPushState]         = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
-  // ── load ───────────────────────────────────────────────────────────────────
+  // ── get current user id + load notifications ─────────────────────────────
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user.id) setUserId(session.user.id);
+    });
+
     fetchNotifications()
       .then(({ notifications }) => setNotifications(notifications))
       .catch(() => toast.error("Could not load notifications"))
       .finally(() => setLoading(false));
 
-    // Check current push permission without requesting it
     if ("Notification" in window) {
       setPushState(Notification.permission as any);
     }
   }, []);
 
-  // ── real-time updates ──────────────────────────────────────────────────────
+  // ── real-time filtered to this user ──────────────────────────────────────
   useEffect(() => {
+    if (!userId) return;
     const channel = supabase
-      .channel("notifications-page")
+      .channel(`notifications-page-${userId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
-        (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev]);
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
         },
+        (payload) => setNotifications((prev) => [payload.new as Notification, ...prev]),
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [userId]);
 
-  // ── mark all read ──────────────────────────────────────────────────────────
+  // ── mark all read ─────────────────────────────────────────────────────────
   const handleMarkAllRead = async () => {
     setMarkingRead(true);
     await doMarkAllRead();
@@ -96,15 +94,15 @@ function NotificationsPage() {
     setMarkingRead(false);
   };
 
-  // ── mark one read ──────────────────────────────────────────────────────────
+  // ── mark one read ─────────────────────────────────────────────────────────
   const handleMarkOneRead = async (id: string) => {
     await doMarkOneRead({ id });
     setNotifications((prev) =>
-      prev.map((n) => n.id === id ? { ...n, read_at: new Date().toISOString() } : n),
+      prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
     );
   };
 
-  // ── enable push — ONLY called when user explicitly taps the button ─────────
+  // ── enable push — ONLY when user explicitly taps the button ──────────────
   const handleEnablePush = async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       toast.error("Push notifications are not supported in this browser.");
@@ -136,9 +134,10 @@ function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/40 to-background">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background">
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <Link
             to="/dashboard"
@@ -164,7 +163,8 @@ function NotificationsPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-8">
-        {/* ── Page title ───────────────────────────────────────────────────── */}
+
+        {/* ── Page title ────────────────────────────────────────────────── */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-semibold text-foreground">Notifications</h1>
@@ -173,7 +173,7 @@ function NotificationsPage() {
             </p>
           </div>
 
-          {/* Push notification toggle — only shown, never auto-triggered */}
+          {/* Push toggle — only shown when not yet granted, never auto-triggered */}
           {"Notification" in window && pushState !== "granted" && (
             <button
               onClick={handleEnablePush}
@@ -187,12 +187,16 @@ function NotificationsPage() {
               ) : (
                 <BellRing className="h-4 w-4" />
               )}
-              {pushState === "denied" ? "Blocked in browser" : pushState === "enabling" ? "Enabling…" : "Enable notifications"}
+              {pushState === "denied"
+                ? "Blocked in browser"
+                : pushState === "enabling"
+                ? "Enabling…"
+                : "Enable notifications"}
             </button>
           )}
         </div>
 
-        {/* ── List ─────────────────────────────────────────────────────────── */}
+        {/* ── List ──────────────────────────────────────────────────────── */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
@@ -208,7 +212,7 @@ function NotificationsPage() {
               <NotificationRow
                 key={n.id}
                 notification={n}
-                onRead={() => !n.read_at && handleMarkOneRead(n.id)}
+                onRead={() => { if (!n.read_at) handleMarkOneRead(n.id); }}
               />
             ))}
           </div>
@@ -226,8 +230,7 @@ function NotificationRow({
   onRead: () => void;
 }) {
   const isUnread = !n.read_at;
-
-  const inner = (
+  const content = (
     <div
       onClick={onRead}
       className={`group relative cursor-pointer rounded-xl border p-4 transition ${
@@ -236,13 +239,13 @@ function NotificationRow({
           : "border-border bg-card hover:bg-accent/50"
       }`}
     >
-      {/* Unread dot */}
       {isUnread && (
         <span className="absolute right-4 top-4 h-2 w-2 rounded-full bg-forest" />
       )}
-
       <div className="flex items-start gap-3 pr-4">
-        <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${isUnread ? "bg-forest/15 text-forest" : "bg-muted text-muted-foreground"}`}>
+        <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+          isUnread ? "bg-forest/15 text-forest" : "bg-muted text-muted-foreground"
+        }`}>
           <Bell className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
@@ -258,14 +261,12 @@ function NotificationRow({
     </div>
   );
 
-  // If there's a link, wrap in an anchor
   if (n.link && n.link !== "/dashboard") {
-    return <Link to={n.link}>{inner}</Link>;
+    return <Link to={n.link}>{content}</Link>;
   }
-  return inner;
+  return content;
 }
 
-// ── Utility ──────────────────────────────────────────────────────────────────
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
