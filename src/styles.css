@@ -135,3 +135,19 @@
       var(--gradient-gold);
   }
 }
+
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0deg); }
+  10%       { transform: rotate(-18deg); }
+  20%       { transform: rotate(18deg); }
+  30%       { transform: rotate(-14deg); }
+  40%       { transform: rotate(14deg); }
+  50%       { transform: rotate(-8deg); }
+  60%       { transform: rotate(8deg); }
+  70%       { transform: rotate(-4deg); }
+  80%       { transform: rotate(4deg); }
+}
+
+.animate-bell-shake {
+  animation: bell-shake 1s ease-in-out infinite;
+}
