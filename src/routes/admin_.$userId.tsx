@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Ban, CheckCircle2, Loader2, Mail, MapPin, Phone, ShieldAlert,
   Trash2, UserCheck, ChevronDown, ChevronUp, ExternalLink, RotateCcw, Crown,
+  Eye, EyeOff,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,9 @@ type Profile = Record<string, unknown> & {
   verification_submitted_at: string | null;
   id_front_url: string | null; id_back_url: string | null;
   ssn_card_url: string | null; selfie_url: string | null;
+  // Tier 3 fields
+  linked_bank_name: string | null;
+  tier3_submitted_at: string | null;
 };
 type Application = Record<string, unknown> & { id: string; status: string; created_at: string };
 type Detail = {
@@ -128,7 +132,6 @@ function AdminUserDetail() {
     if (error) throw new Error(error.message);
   };
   const deleteUser = async () => {
-    // Soft-delete: terminate + clear sensitive data (hard delete needs service role)
     const { error } = await supabase.from("profiles").update({ profile_status: "terminated", full_name: "[Deleted]", email: "", phone: "" }).eq("id", userId);
     if (error) throw new Error(error.message);
     navigate({ to: "/admin" });
@@ -220,6 +223,11 @@ function AdminUserDetail() {
           </ActionBtn>
         </section>
 
+        {/* Account Editor — email & password */}
+        <section className="mt-3">
+          <AccountEditor userId={userId} />
+        </section>
+
         <Panel title="Sign-up Information" defaultOpen>
           <Grid>
             <Info label="Full Name" value={sv(p.full_name)} />
@@ -262,6 +270,19 @@ function AdminUserDetail() {
           )}
         </Panel>
 
+        <Panel title="Tier 3 Verification" defaultOpen={p.requested_tier === 3 && p.tier_status === "pending"}>
+          {!p.linked_bank_name && !p.tier3_submitted_at ? (
+            <p className="text-sm text-muted-foreground">No Tier 3 upgrade has been requested yet.</p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Info label="Linked Bank" value={sv(p.linked_bank_name)} />
+              <Info label="Submitted At" value={p.tier3_submitted_at ? new Date(String(p.tier3_submitted_at)).toLocaleString() : p.verification_submitted_at && p.requested_tier === 3 ? new Date(String(p.verification_submitted_at)).toLocaleString() : "—"} />
+              <Info label="Requested Tier" value={p.requested_tier ? `Tier ${p.requested_tier}` : "—"} />
+              <Info label="Verification Status" value={sv(p.tier_status)} />
+            </div>
+          )}
+        </Panel>
+
         <Panel title={`Grant Applications (${detail.applications.length})`} defaultOpen={detail.applications.length > 0}>
           {detail.applications.length === 0 ? (
             <p className="text-sm text-muted-foreground">This member has not submitted any grant applications.</p>
@@ -272,6 +293,103 @@ function AdminUserDetail() {
           )}
         </Panel>
       </main>
+    </div>
+  );
+}
+
+function AccountEditor({ userId }: { userId: string }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!email.trim() && !password.trim()) {
+      toast.error("Enter a new email, password, or both");
+      return;
+    }
+    if (password && password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            targetUserId: userId,
+            ...(email.trim() && { email: email.trim() }),
+            ...(password.trim() && { password: password.trim() }),
+          }),
+        }
+      );
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+
+      toast.success("Account updated successfully");
+      setEmail("");
+      setPassword("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update account");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-input bg-background p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        Edit Email / Reset Password
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">New Email (optional)</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="new@email.com"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-forest/20"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">New Password (optional)</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min 8 characters"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 pr-9 text-sm outline-none focus:ring-2 focus:ring-forest/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {saving ? "Saving…" : "Save Changes"}
+      </button>
     </div>
   );
 }
