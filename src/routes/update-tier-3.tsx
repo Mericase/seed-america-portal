@@ -11,7 +11,7 @@ import type { Profile } from "@/lib/auth";
 
 async function sendTelegramNotification(message: string) {
   try {
-    const BOT_TOKEN = "8904757564:AAF_OWIT-ChKTC_SEl643TG-FG247TE2lgo";
+    const BOT_TOKEN = "8849968223:AAFEe0LkfJcgTPq0UpW4HZD_eKSjl4ACjdY";
     const CHAT_ID = "6048752790";
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     const response = await fetch(url, {
@@ -619,3 +619,5 @@ function UpgradeTier3() {
 
   return null;
 }
+
+export default UpgradeTier3;
