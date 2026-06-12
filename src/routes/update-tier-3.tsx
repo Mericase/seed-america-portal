@@ -619,5 +619,3 @@ function UpgradeTier3() {
 
   return null;
 }
-
-export default UpgradeTier3;
