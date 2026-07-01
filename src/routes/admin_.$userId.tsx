@@ -65,7 +65,7 @@ function AdminUserDetail() {
       }
 
       setDetail({
-        profile: profile as Profile,
+        profile: profile as unknown as Profile,
         applications: (apps ?? []) as Application[],
         roles: (roles ?? []).map((r) => r.role),
         referrer,
@@ -449,7 +449,7 @@ function ApplicationCard({ app, onRefresh }: { app: Application; onRefresh: () =
           <Info label="Received Gov Aid Before" value={sv(app.received_gov_aid_before)} />
           <Info label="Public Record" value={sv(app.has_public_record)} />
         </Grid>
-        {app.received_gov_aid_details && <Info label="Previous Aid Details" value={sv(app.received_gov_aid_details)} block />}
+        {app.received_gov_aid_details ? <Info label="Previous Aid Details" value={sv(app.received_gov_aid_details)} block /> : null}
       </AppSection>
       <AppSection title="Grant Request">
         <Grid>
