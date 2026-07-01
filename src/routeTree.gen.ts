@@ -14,7 +14,9 @@ import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
 import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
 import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -47,9 +49,19 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyGrantFormRoute = ApplyGrantFormRouteImport.update({
+  id: '/apply-grant-form',
+  path: '/apply-grant-form',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplyGrantRoute = ApplyGrantRouteImport.update({
@@ -89,7 +101,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
+  '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -103,7 +117,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
+  '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -118,7 +134,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
+  '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -134,7 +152,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-login'
     | '/apply-grant'
+    | '/apply-grant-form'
     | '/dashboard'
+    | '/notifications'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -148,7 +168,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-login'
     | '/apply-grant'
+    | '/apply-grant-form'
     | '/dashboard'
+    | '/notifications'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -162,7 +184,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-login'
     | '/apply-grant'
+    | '/apply-grant-form'
     | '/dashboard'
+    | '/notifications'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -177,7 +201,9 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminLoginRoute: typeof AdminLoginRoute
   ApplyGrantRoute: typeof ApplyGrantRoute
+  ApplyGrantFormRoute: typeof ApplyGrantFormRoute
   DashboardRoute: typeof DashboardRoute
+  NotificationsRoute: typeof NotificationsRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   UpdateTier3Route: typeof UpdateTier3Route
@@ -224,11 +250,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply-grant-form': {
+      id: '/apply-grant-form'
+      path: '/apply-grant-form'
+      fullPath: '/apply-grant-form'
+      preLoaderRoute: typeof ApplyGrantFormRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apply-grant': {
@@ -281,7 +321,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminLoginRoute: AdminLoginRoute,
   ApplyGrantRoute: ApplyGrantRoute,
+  ApplyGrantFormRoute: ApplyGrantFormRoute,
   DashboardRoute: DashboardRoute,
+  NotificationsRoute: NotificationsRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   UpdateTier3Route: UpdateTier3Route,

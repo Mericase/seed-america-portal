@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, Mail, RotateCw, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendSignupOtp, verifySignupOtp } from "@/lib/signup-otp.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -56,6 +58,29 @@ function SignupPage() {
   const [referralCode, setReferralCode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  const doSendOtp = useServerFn(sendSignupOtp);
+  const doVerifyOtp = useServerFn(verifySignupOtp);
+
+  const requestOtpAndAdvance = async () => {
+    const parsed = step1Schema.safeParse(data);
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
+    setSendingOtp(true);
+    try {
+      await doSendOtp({ data: { email: data.email } });
+      toast.success(`Verification code sent to ${data.email}`);
+      setEmailVerified(false);
+      setVerifiedEmail("");
+      setStep(2);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send verification code");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
 
   if (success) return <SuccessScreen />;
 
@@ -78,37 +103,66 @@ function SignupPage() {
             </div>
             <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">
               {step === 1 && "Personal Details"}
-              {step === 2 && "Referral Verification"}
-              {step === 3 && "Terms & Conditions"}
+              {step === 2 && "Verify Your Email"}
+              {step === 3 && "Referral Verification"}
+              {step === 4 && "Terms & Conditions"}
             </h1>
             <p className="mt-1 text-sm text-white/75">
               {step === 1 && "Tell us who you are. All information is encrypted end-to-end."}
-              {step === 2 && "Let us know how you heard about Seedin America."}
-              {step === 3 && "Please review and accept to complete your application."}
+              {step === 2 && `Enter the 6-digit code we just sent to ${data.email}.`}
+              {step === 3 && "Let us know how you heard about Seedin America."}
+              {step === 4 && "Please review and accept to complete your application."}
             </p>
           </div>
 
           <div className="p-8">
             {step === 1 && (
-              <Step1Form value={data} onChange={setData} onNext={() => {
-                const parsed = step1Schema.safeParse(data);
-                if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
-                setStep(2);
-              }} />
+              <Step1Form value={data} onChange={setData} submitting={sendingOtp} onNext={requestOtpAndAdvance} />
             )}
             {step === 2 && (
-              <Step2Form
-                hearAbout={hearAbout} setHearAbout={setHearAbout}
-                referralCode={referralCode} setReferralCode={setReferralCode}
-                onBack={() => setStep(1)} onNext={() => setStep(3)}
+              <StepOtp
+                email={data.email}
+                onEditEmail={() => setStep(1)}
+                onResend={async () => {
+                  try {
+                    await doSendOtp({ data: { email: data.email } });
+                    toast.success("New code sent");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Could not resend code");
+                  }
+                }}
+                onVerify={async (code) => {
+                  try {
+                    await doVerifyOtp({ data: { email: data.email, code } });
+                    setEmailVerified(true);
+                    setVerifiedEmail(data.email);
+                    toast.success("Email verified");
+                    setStep(3);
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Invalid code");
+                    throw e;
+                  }
+                }}
               />
             )}
             {step === 3 && (
+              <Step2Form
+                hearAbout={hearAbout} setHearAbout={setHearAbout}
+                referralCode={referralCode} setReferralCode={setReferralCode}
+                onBack={() => setStep(2)} onNext={() => setStep(4)}
+              />
+            )}
+            {step === 4 && (
               <Step3Terms
                 scrolledToEnd={scrolledToEnd} setScrolledToEnd={setScrolledToEnd}
                 accepted={acceptedTerms} setAccepted={setAcceptedTerms}
-                onBack={() => setStep(2)} submitting={submitting}
+                onBack={() => setStep(3)} submitting={submitting}
                 onSubmit={async () => {
+                  if (!emailVerified || verifiedEmail !== data.email) {
+                    toast.error("Please verify your email address first");
+                    setStep(2);
+                    return;
+                  }
                   setSubmitting(true);
 
                   const { error, data: authData } = await supabase.auth.signUp({
@@ -132,9 +186,6 @@ function SignupPage() {
 
                   if (error) { setSubmitting(false); toast.error(error.message); return; }
 
-                  // Pass the fresh session token to the edge function.
-                  // The edge function reads the user's profile (including referral_code)
-                  // from Supabase and sends the welcome email via Resend server-side.
                   const accessToken = authData.session?.access_token;
                   if (accessToken) {
                     await sendWelcomeEmail(accessToken);
@@ -154,7 +205,7 @@ function SignupPage() {
 }
 
 function ProgressBar({ step }: { step: number }) {
-  const steps = ["Personal", "Referral", "Terms"];
+  const steps = ["Personal", "Verify", "Referral", "Terms"];
   return (
     <div className="flex items-center gap-3">
       {steps.map((label, i) => {
@@ -191,7 +242,7 @@ function formatDob(input: string): string {
   return parts.join("/");
 }
 
-function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void }) {
+function Step1Form({ value, onChange, onNext, submitting }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void; submitting?: boolean }) {
   const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value, [k]: e.target.value });
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
@@ -224,9 +275,130 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
         <PasswordField label="Create Password" value={value.password} onChange={set("password")} show={showPw} setShow={setShowPw} />
         <PasswordField label="Confirm Password" value={value.confirm_password} onChange={set("confirm_password")} show={showCpw} setShow={setShowCpw} />
       </div>
-      <button type="submit" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95">
-        Continue <ArrowRight className="h-4 w-4" />
+      <button type="submit" disabled={submitting} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-60">
+        {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Sending code…</>) : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
       </button>
+    </form>
+  );
+}
+
+function StepOtp({ email, onEditEmail, onResend, onVerify }: {
+  email: string;
+  onEditEmail: () => void;
+  onResend: () => Promise<void>;
+  onVerify: (code: string) => Promise<void>;
+}) {
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(45);
+  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    inputs.current[0]?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
+  const setAt = (i: number, v: string) => {
+    const cleaned = v.replace(/\D/g, "").slice(0, 1);
+    setDigits((d) => { const n = [...d]; n[i] = cleaned; return n; });
+    if (cleaned && i < 5) inputs.current[i + 1]?.focus();
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!text) return;
+    e.preventDefault();
+    const next = ["", "", "", "", "", ""];
+    for (let i = 0; i < text.length; i++) next[i] = text[i];
+    setDigits(next);
+    inputs.current[Math.min(text.length, 5)]?.focus();
+  };
+
+  const submit = async () => {
+    const code = digits.join("");
+    if (code.length !== 6) { toast.error("Enter the full 6-digit code"); return; }
+    setVerifying(true);
+    try {
+      await onVerify(code);
+    } catch {
+      setDigits(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resend = async () => {
+    if (cooldown > 0 || resending) return;
+    setResending(true);
+    try {
+      await onResend();
+      setDigits(["", "", "", "", "", ""]);
+      setCooldown(45);
+      inputs.current[0]?.focus();
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-6">
+      <div className="rounded-xl border border-forest/20 bg-forest/5 p-4">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-forest/15 text-forest">
+            <Mail className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Code sent to</p>
+            <p className="truncate text-sm font-semibold text-foreground">{email}</p>
+          </div>
+          <button type="button" onClick={onEditEmail} className="shrink-0 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent">
+            Edit email
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Enter verification code</label>
+        <div className="flex justify-center gap-2 sm:gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputs.current[i] = el; }}
+              value={d}
+              onChange={(e) => setAt(i, e.target.value)}
+              onPaste={onPaste}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
+              }}
+              inputMode="numeric"
+              maxLength={1}
+              className="h-14 w-11 rounded-lg border border-input bg-background text-center text-2xl font-semibold text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20 sm:h-16 sm:w-14"
+            />
+          ))}
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground">The code expires in 10 minutes.</p>
+      </div>
+
+      <button type="submit" disabled={verifying || digits.join("").length !== 6}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-60">
+        {verifying ? (<><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>) : (<>Verify & continue <ArrowRight className="h-4 w-4" /></>)}
+      </button>
+
+      <div className="flex items-center justify-center gap-2 text-sm">
+        <span className="text-muted-foreground">Didn't get it?</span>
+        <button type="button" onClick={resend} disabled={cooldown > 0 || resending}
+          className="inline-flex items-center gap-1.5 font-semibold text-forest hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline">
+          {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
+          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+        </button>
+      </div>
     </form>
   );
 }

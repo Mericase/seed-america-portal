@@ -7,6 +7,8 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendNotification } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Seedin America" }] }),
@@ -232,6 +234,7 @@ function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: st
 }
 
 function NotificationComposer() {
+  const doSend = useServerFn(sendNotification);
   const [allUsers, setAllUsers] = useState<Brief[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -259,12 +262,16 @@ function NotificationComposer() {
     if (!toAll && selected.size === 0) { toast.error("Pick at least one recipient"); return; }
     setSending(true);
     try {
-      let userIds: string[] = toAll ? allUsers.map((u) => u.id) : Array.from(selected);
-      if (userIds.length === 0) throw new Error("No recipients");
-      const rows = userIds.map((uid) => ({ user_id: uid, title: title.trim(), body: body.trim(), link: link.trim() || "/dashboard" }));
-      const { error } = await supabase.from("notifications").insert(rows);
-      if (error) throw new Error(error.message);
-      toast.success(`Sent to ${userIds.length} ${userIds.length === 1 ? "user" : "users"}`);
+      const res = await doSend({
+        data: {
+          title: title.trim(),
+          body: body.trim(),
+          link: link.trim() || "/dashboard",
+          toAll,
+          userIds: toAll ? undefined : Array.from(selected),
+        },
+      });
+      toast.success(`Sent to ${res.recipients} ${res.recipients === 1 ? "user" : "users"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
       setTitle(""); setBody(""); setSelected(new Set());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
@@ -278,7 +285,7 @@ function NotificationComposer() {
       <div className="flex items-center gap-2 border-b border-border px-5 py-4">
         <Bell className="h-4 w-4 text-forest" />
         <h2 className="text-base font-semibold">Send Notification</h2>
-        <span className="ml-auto text-xs text-muted-foreground">Delivered in-app</span>
+        <span className="ml-auto text-xs text-muted-foreground">In-app • Push • Email</span>
       </div>
       <div className="grid gap-5 p-5 lg:grid-cols-2">
         <div className="space-y-3">

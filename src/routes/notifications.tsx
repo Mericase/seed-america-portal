@@ -63,7 +63,7 @@ function NotificationsPage() {
       if (error) {
         toast.error("Could not load notifications");
       } else {
-        setNotifications(data ?? []);
+        setNotifications((data ?? []) as unknown as Notification[]);
       }
       setLoading(false);
     });
@@ -138,10 +138,10 @@ function NotificationsPage() {
       if (!VAPID_PUBLIC_KEY) { toast.success("Push notifications enabled!"); return; }
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       });
       const { endpoint, keys } = sub.toJSON() as any;
-      await doSavePush({ endpoint, p256dh: keys.p256dh, auth: keys.auth });
+      await doSavePush({ data: { endpoint, p256dh: keys.p256dh, auth: keys.auth } });
       toast.success("Push notifications enabled!");
     } catch (e) {
       console.error("[push] subscribe error", e);
