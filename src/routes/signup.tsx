@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Check, Eye, EyeOff, Loader2, Mail, RotateCw, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendSignupOtp, verifySignupOtp } from "@/lib/signup-otp.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -56,6 +58,29 @@ function SignupPage() {
   const [referralCode, setReferralCode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  const doSendOtp = useServerFn(sendSignupOtp);
+  const doVerifyOtp = useServerFn(verifySignupOtp);
+
+  const requestOtpAndAdvance = async () => {
+    const parsed = step1Schema.safeParse(data);
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
+    setSendingOtp(true);
+    try {
+      await doSendOtp({ data: { email: data.email } });
+      toast.success(`Verification code sent to ${data.email}`);
+      setEmailVerified(false);
+      setVerifiedEmail("");
+      setStep(2);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send verification code");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
 
   if (success) return <SuccessScreen />;
 
@@ -78,37 +103,66 @@ function SignupPage() {
             </div>
             <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">
               {step === 1 && "Personal Details"}
-              {step === 2 && "Referral Verification"}
-              {step === 3 && "Terms & Conditions"}
+              {step === 2 && "Verify Your Email"}
+              {step === 3 && "Referral Verification"}
+              {step === 4 && "Terms & Conditions"}
             </h1>
             <p className="mt-1 text-sm text-white/75">
               {step === 1 && "Tell us who you are. All information is encrypted end-to-end."}
-              {step === 2 && "Let us know how you heard about Seedin America."}
-              {step === 3 && "Please review and accept to complete your application."}
+              {step === 2 && `Enter the 6-digit code we just sent to ${data.email}.`}
+              {step === 3 && "Let us know how you heard about Seedin America."}
+              {step === 4 && "Please review and accept to complete your application."}
             </p>
           </div>
 
           <div className="p-8">
             {step === 1 && (
-              <Step1Form value={data} onChange={setData} onNext={() => {
-                const parsed = step1Schema.safeParse(data);
-                if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
-                setStep(2);
-              }} />
+              <Step1Form value={data} onChange={setData} submitting={sendingOtp} onNext={requestOtpAndAdvance} />
             )}
             {step === 2 && (
-              <Step2Form
-                hearAbout={hearAbout} setHearAbout={setHearAbout}
-                referralCode={referralCode} setReferralCode={setReferralCode}
-                onBack={() => setStep(1)} onNext={() => setStep(3)}
+              <StepOtp
+                email={data.email}
+                onEditEmail={() => setStep(1)}
+                onResend={async () => {
+                  try {
+                    await doSendOtp({ data: { email: data.email } });
+                    toast.success("New code sent");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Could not resend code");
+                  }
+                }}
+                onVerify={async (code) => {
+                  try {
+                    await doVerifyOtp({ data: { email: data.email, code } });
+                    setEmailVerified(true);
+                    setVerifiedEmail(data.email);
+                    toast.success("Email verified");
+                    setStep(3);
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Invalid code");
+                    throw e;
+                  }
+                }}
               />
             )}
             {step === 3 && (
+              <Step2Form
+                hearAbout={hearAbout} setHearAbout={setHearAbout}
+                referralCode={referralCode} setReferralCode={setReferralCode}
+                onBack={() => setStep(2)} onNext={() => setStep(4)}
+              />
+            )}
+            {step === 4 && (
               <Step3Terms
                 scrolledToEnd={scrolledToEnd} setScrolledToEnd={setScrolledToEnd}
                 accepted={acceptedTerms} setAccepted={setAcceptedTerms}
-                onBack={() => setStep(2)} submitting={submitting}
+                onBack={() => setStep(3)} submitting={submitting}
                 onSubmit={async () => {
+                  if (!emailVerified || verifiedEmail !== data.email) {
+                    toast.error("Please verify your email address first");
+                    setStep(2);
+                    return;
+                  }
                   setSubmitting(true);
 
                   const { error, data: authData } = await supabase.auth.signUp({
@@ -132,9 +186,6 @@ function SignupPage() {
 
                   if (error) { setSubmitting(false); toast.error(error.message); return; }
 
-                  // Pass the fresh session token to the edge function.
-                  // The edge function reads the user's profile (including referral_code)
-                  // from Supabase and sends the welcome email via Resend server-side.
                   const accessToken = authData.session?.access_token;
                   if (accessToken) {
                     await sendWelcomeEmail(accessToken);
