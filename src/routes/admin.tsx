@@ -285,7 +285,7 @@ function NotificationComposer() {
       <div className="flex items-center gap-2 border-b border-border px-5 py-4">
         <Bell className="h-4 w-4 text-forest" />
         <h2 className="text-base font-semibold">Send Notification</h2>
-        <span className="ml-auto text-xs text-muted-foreground">Delivered in-app</span>
+        <span className="ml-auto text-xs text-muted-foreground">In-app • Push • Email</span>
       </div>
       <div className="grid gap-5 p-5 lg:grid-cols-2">
         <div className="space-y-3">
