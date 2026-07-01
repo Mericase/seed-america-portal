@@ -205,7 +205,7 @@ function SignupPage() {
 }
 
 function ProgressBar({ step }: { step: number }) {
-  const steps = ["Personal", "Referral", "Terms"];
+  const steps = ["Personal", "Verify", "Referral", "Terms"];
   return (
     <div className="flex items-center gap-3">
       {steps.map((label, i) => {
@@ -242,7 +242,7 @@ function formatDob(input: string): string {
   return parts.join("/");
 }
 
-function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void }) {
+function Step1Form({ value, onChange, onNext, submitting }: { value: Step1; onChange: (v: Step1) => void; onNext: () => void; submitting?: boolean }) {
   const set = (k: keyof Step1) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value, [k]: e.target.value });
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
@@ -275,9 +275,130 @@ function Step1Form({ value, onChange, onNext }: { value: Step1; onChange: (v: St
         <PasswordField label="Create Password" value={value.password} onChange={set("password")} show={showPw} setShow={setShowPw} />
         <PasswordField label="Confirm Password" value={value.confirm_password} onChange={set("confirm_password")} show={showCpw} setShow={setShowCpw} />
       </div>
-      <button type="submit" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95">
-        Continue <ArrowRight className="h-4 w-4" />
+      <button type="submit" disabled={submitting} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-60">
+        {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Sending code…</>) : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
       </button>
+    </form>
+  );
+}
+
+function StepOtp({ email, onEditEmail, onResend, onVerify }: {
+  email: string;
+  onEditEmail: () => void;
+  onResend: () => Promise<void>;
+  onVerify: (code: string) => Promise<void>;
+}) {
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(45);
+  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    inputs.current[0]?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
+  const setAt = (i: number, v: string) => {
+    const cleaned = v.replace(/\D/g, "").slice(0, 1);
+    setDigits((d) => { const n = [...d]; n[i] = cleaned; return n; });
+    if (cleaned && i < 5) inputs.current[i + 1]?.focus();
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!text) return;
+    e.preventDefault();
+    const next = ["", "", "", "", "", ""];
+    for (let i = 0; i < text.length; i++) next[i] = text[i];
+    setDigits(next);
+    inputs.current[Math.min(text.length, 5)]?.focus();
+  };
+
+  const submit = async () => {
+    const code = digits.join("");
+    if (code.length !== 6) { toast.error("Enter the full 6-digit code"); return; }
+    setVerifying(true);
+    try {
+      await onVerify(code);
+    } catch {
+      setDigits(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resend = async () => {
+    if (cooldown > 0 || resending) return;
+    setResending(true);
+    try {
+      await onResend();
+      setDigits(["", "", "", "", "", ""]);
+      setCooldown(45);
+      inputs.current[0]?.focus();
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-6">
+      <div className="rounded-xl border border-forest/20 bg-forest/5 p-4">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-forest/15 text-forest">
+            <Mail className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Code sent to</p>
+            <p className="truncate text-sm font-semibold text-foreground">{email}</p>
+          </div>
+          <button type="button" onClick={onEditEmail} className="shrink-0 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent">
+            Edit email
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Enter verification code</label>
+        <div className="flex justify-center gap-2 sm:gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputs.current[i] = el; }}
+              value={d}
+              onChange={(e) => setAt(i, e.target.value)}
+              onPaste={onPaste}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
+              }}
+              inputMode="numeric"
+              maxLength={1}
+              className="h-14 w-11 rounded-lg border border-input bg-background text-center text-2xl font-semibold text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20 sm:h-16 sm:w-14"
+            />
+          ))}
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground">The code expires in 10 minutes.</p>
+      </div>
+
+      <button type="submit" disabled={verifying || digits.join("").length !== 6}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-60">
+        {verifying ? (<><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>) : (<>Verify & continue <ArrowRight className="h-4 w-4" /></>)}
+      </button>
+
+      <div className="flex items-center justify-center gap-2 text-sm">
+        <span className="text-muted-foreground">Didn't get it?</span>
+        <button type="button" onClick={resend} disabled={cooldown > 0 || resending}
+          className="inline-flex items-center gap-1.5 font-semibold text-forest hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline">
+          {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
+          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+        </button>
+      </div>
     </form>
   );
 }
