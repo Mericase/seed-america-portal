@@ -131,59 +131,98 @@ export const sendNotification = createServerFn({ method: "POST" })
 
     // ── email (best-effort) ─────────────────────────────────────────────────
     let emailed = 0;
-    try {
-      const { renderBrandedEmail } = await import("./email.server");
+    const emailFailures: { email: string; status?: number; error: string }[] = [];
 
-      // sendEmail with support@ override
-      const RESEND_API_KEY = process.env.RESEND_API_KEY;
-      const sendNotificationEmail = async (to: string, subject: string, html: string) => {
-        if (!RESEND_API_KEY) return;
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Seedin America <support@seedinamerica.org>",
-            to: [to],
-            subject,
-            html,
-          }),
-        });
-        return res.ok;
-      };
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const RESEND_FROM = process.env.RESEND_FROM || "Seedin America <support@seedinamerica.org>";
 
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", userIds);
+    if (!RESEND_API_KEY) {
+      console.error("[notifications] RESEND_API_KEY is not set — all emails skipped");
+      emailFailures.push({ email: "*", error: "RESEND_API_KEY missing on server" });
+    } else {
+      try {
+        const { renderBrandedEmail } = await import("./email.server");
 
-      const escape = (s: string) =>
-        s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+        const sendNotificationEmail = async (
+          to: string,
+          subject: string,
+          html: string,
+        ): Promise<{ ok: boolean; id?: string; error?: string; status?: number }> => {
+          try {
+            const res = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+              },
+              body: JSON.stringify({
+                from: RESEND_FROM,
+                to: [to],
+                subject,
+                html,
+              }),
+            });
 
-      await Promise.all((profiles ?? []).map(async (p) => {
-        if (!p.email) return;
-        const firstName = (p.full_name || "").split(" ")[0] || "there";
-        const html = renderBrandedEmail({
-          preheader: data.title,
-          heading: data.title,
-          intro: `Hello ${escape(firstName)}, you have a new notification from Seedin America.`,
-          bodyHtml: `
-            <p style="white-space:pre-wrap;margin:0 0 16px;">${escape(data.body)}</p>
-            <p style="margin:0;color:#555;font-size:14px;">
-              Sign in to your dashboard to view the full notification and any further details.
-            </p>
-          `,
-          ctaLabel: "View notification",
-          ctaUrl: `https://seedinamerica.org${data.link ?? "/dashboard"}`,
-        });
-        const ok = await sendNotificationEmail(p.email, data.title, html);
-        if (ok) emailed++;
-      }));
-    } catch (e) {
-      console.error("[notifications] email send error", e);
+            const bodyText = await res.text();
+            let parsed: any = null;
+            try { parsed = JSON.parse(bodyText); } catch { /* non-JSON body */ }
+
+            if (!res.ok) {
+              const errMsg = parsed?.message || bodyText || `HTTP ${res.status}`;
+              console.error(`[notifications] Resend error ${res.status} for ${to}: ${errMsg}`);
+              return { ok: false, status: res.status, error: errMsg };
+            }
+
+            return { ok: true, id: parsed?.id };
+          } catch (networkErr: any) {
+            console.error(`[notifications] Resend request failed for ${to}:`, networkErr);
+            return { ok: false, error: networkErr?.message ?? "network error" };
+          }
+        };
+
+        const { data: profiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+
+        const escape = (s: string) =>
+          s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+        await Promise.all((profiles ?? []).map(async (p) => {
+          if (!p.email) return;
+          const firstName = (p.full_name || "").split(" ")[0] || "there";
+          const html = renderBrandedEmail({
+            preheader: data.title,
+            heading: data.title,
+            intro: `Hello ${escape(firstName)}, you have a new notification from Seedin America.`,
+            bodyHtml: `
+              <p style="white-space:pre-wrap;margin:0 0 16px;">${escape(data.body)}</p>
+              <p style="margin:0;color:#555;font-size:14px;">
+                Sign in to your dashboard to view the full notification and any further details.
+              </p>
+            `,
+            ctaLabel: "View notification",
+            ctaUrl: `https://seedinamerica.org${data.link ?? "/dashboard"}`,
+          });
+
+          const result = await sendNotificationEmail(p.email, data.title, html);
+          if (result.ok) {
+            emailed++;
+          } else {
+            emailFailures.push({ email: p.email, status: result.status, error: result.error ?? "unknown error" });
+          }
+        }));
+      } catch (e: any) {
+        console.error("[notifications] email send error", e);
+        emailFailures.push({ email: "*", error: e?.message ?? "unexpected error" });
+      }
     }
 
-    return { ok: true, recipients: userIds.length, pushed, emailed };
+    return {
+      ok: true,
+      recipients: userIds.length,
+      pushed,
+      emailed,
+      emailFailures, // inspect this in the admin UI / network tab to see exactly why sends failed
+    };
   });
