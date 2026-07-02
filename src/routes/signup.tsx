@@ -7,29 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendSignupOtp, verifySignupOtp } from "@/lib/signup-otp.functions";
+import { sendWelcomeEmail } from "@/lib/welcome.functions";
 
-export const Route = createFileRoute("/signup")({
-  head: () => ({
-    meta: [
-      { title: "Create your account — Seedin America" },
-      { name: "description", content: "Begin your federal grant application in three secure steps." },
-    ],
-  }),
-  component: SignupPage,
-});
-
-// Calls the Supabase Edge Function server-side.
-// The edge function holds the RESEND_API_KEY secret — nothing sensitive is in this file.
-async function sendWelcomeEmail(accessToken: string) {
-  try {
-    const { error } = await supabase.functions.invoke("send-welcome-email", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (error) console.error("[email] edge fn error:", error);
-  } catch (e) {
-    console.error("[email] sendWelcomeEmail failed:", e);
-  }
-}
 
 const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
 
