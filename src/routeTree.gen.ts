@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawalRouteImport } from './routes/withdrawal'
 import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
 import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
-import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -38,11 +37,6 @@ const UpgradeTierRoute = UpgradeTierRouteImport.update({
 const UpdateTier3Route = UpdateTier3RouteImport.update({
   id: '/update-tier-3',
   path: '/update-tier-3',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -112,7 +106,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
@@ -129,7 +122,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
@@ -147,7 +139,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
@@ -166,7 +157,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notifications'
     | '/signin'
-    | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
@@ -183,7 +173,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notifications'
     | '/signin'
-    | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
@@ -200,7 +189,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notifications'
     | '/signin'
-    | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
     | '/withdrawal'
@@ -218,7 +206,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   NotificationsRoute: typeof NotificationsRoute
   SigninRoute: typeof SigninRoute
-  SignupRoute: typeof SignupRoute
   UpdateTier3Route: typeof UpdateTier3Route
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
@@ -248,13 +235,6 @@ declare module '@tanstack/react-router' {
       path: '/update-tier-3'
       fullPath: '/update-tier-3'
       preLoaderRoute: typeof UpdateTier3RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -346,7 +326,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   NotificationsRoute: NotificationsRoute,
   SigninRoute: SigninRoute,
-  SignupRoute: SignupRoute,
   UpdateTier3Route: UpdateTier3Route,
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
