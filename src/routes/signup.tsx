@@ -9,6 +9,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendSignupOtp, verifySignupOtp } from "@/lib/signup-otp.functions";
 import { sendWelcomeEmail } from "@/lib/welcome.functions";
 
+export const Route = createFileRoute("/signup")({
+  head: () => ({
+    meta: [
+      { title: "Create your account — Seedin America" },
+      { name: "description", content: "Begin your federal grant application in three secure steps." },
+    ],
+  }),
+  component: SignupPage,
+});
+
+
 
 const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
 
