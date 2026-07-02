@@ -176,10 +176,10 @@ function SignupPage() {
 
                   if (error) { setSubmitting(false); toast.error(error.message); return; }
 
-                  const accessToken = authData.session?.access_token;
-                  if (accessToken) {
-                    await sendWelcomeEmail(accessToken);
+                  if (authData.session?.access_token) {
+                    try { await sendWelcomeEmail(); } catch (e) { console.error("[welcome] failed:", e); }
                   }
+
 
                   await supabase.auth.signOut();
                   setSubmitting(false);
