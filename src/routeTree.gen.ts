@@ -23,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
 
 const WithdrawalRoute = WithdrawalRouteImport.update({
   id: '/withdrawal',
@@ -95,6 +96,12 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksTier2NudgeRoute =
+  ApiPublicHooksTier2NudgeRouteImport.update({
+    id: '/api/public/hooks/tier2-nudge',
+    path: '/api/public/hooks/tier2-nudge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -126,6 +134,7 @@ export interface FileRoutesByTo {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -143,6 +152,7 @@ export interface FileRoutesById {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
+  '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -193,6 +205,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin_/$userId'
+    | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -210,6 +223,7 @@ export interface RootRouteChildren {
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
+  ApiPublicHooksTier2NudgeRoute: typeof ApiPublicHooksTier2NudgeRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -313,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/tier2-nudge': {
+      id: '/api/public/hooks/tier2-nudge'
+      path: '/api/public/hooks/tier2-nudge'
+      fullPath: '/api/public/hooks/tier2-nudge'
+      preLoaderRoute: typeof ApiPublicHooksTier2NudgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +351,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
+  ApiPublicHooksTier2NudgeRoute: ApiPublicHooksTier2NudgeRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
