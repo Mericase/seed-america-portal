@@ -605,12 +605,24 @@ function ActionBtn({ children, onClick, disabled, tone = "default", icon }: { ch
   return <button onClick={onClick} disabled={disabled} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition disabled:opacity-50 ${cls}`}>{icon}{children}</button>;
 }
 function DocImage({ label, url }: { label: string; url: string | null }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-background">
       <div className="aspect-[4/3] bg-muted">
-        {url ? (
+        {url && !failed ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
-            <img src={url} alt={label} className="h-full w-full object-cover transition hover:opacity-90" />
+            <img src={url} alt={label} onError={() => setFailed(true)} className="h-full w-full object-cover transition hover:opacity-90" />
+          </a>
+        ) : url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-full w-full place-items-center p-4 text-center text-xs text-muted-foreground hover:text-forest">
+            <span>
+              Preview unavailable.<br />Tap to open document.
+            </span>
           </a>
         ) : (
           <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">Not uploaded</div>
