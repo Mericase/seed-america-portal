@@ -271,7 +271,12 @@ function NotificationComposer() {
           userIds: toAll ? undefined : Array.from(selected),
         },
       });
-      toast.success(`Sent to ${res.recipients} ${res.recipients === 1 ? "user" : "users"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
+      const failures = res.emailFailures?.length ?? 0;
+      if (failures > 0) {
+        toast.warning(`Notification sent in-app • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered • ${failures} email issue${failures === 1 ? "" : "s"}`);
+      } else {
+        toast.success(`Sent to ${res.recipients} ${res.recipients === 1 ? "user" : "users"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
+      }
       setTitle(""); setBody(""); setSelected(new Set());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
