@@ -1,4 +1,5 @@
 import "./lib/error-capture";
+import process from "node:process";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -6,6 +7,16 @@ import { renderErrorPage } from "./lib/error-page";
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
+
+function installCloudflareEnv(env: unknown) {
+  if (!env || typeof env !== "object") return;
+
+  const bindings = env as Record<string, unknown>;
+  for (const [key, value] of Object.entries(bindings)) {
+    if (typeof value !== "string") continue;
+    process.env[key] = value;
+  }
+}
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -40,6 +51,11 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // Cloudflare Workers provides secrets as the per-request `env` object,
+      // while TanStack server functions and Supabase helpers read `process.env`.
+      // Bridge them before loading the server entry so Resend/Supabase secrets
+      // are available on deployed Cloudflare builds exactly like local preview.
+      installCloudflareEnv(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
