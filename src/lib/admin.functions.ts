@@ -14,6 +14,45 @@ async function assertAdmin(userId: string) {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
+function normalizeVerificationPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let path = value.trim();
+  if (!path) return null;
+
+  try {
+    const parsed = new URL(path);
+    path = parsed.pathname;
+  } catch {
+    // Already a storage object path.
+  }
+
+  path = path.split("?")[0] ?? path;
+
+  const markers = [
+    "/storage/v1/object/sign/verification/",
+    "/storage/v1/object/public/verification/",
+    "/object/sign/verification/",
+    "/object/public/verification/",
+    "verification/",
+  ];
+  for (const marker of markers) {
+    const idx = path.indexOf(marker);
+    if (idx >= 0) {
+      path = path.slice(idx + marker.length);
+      break;
+    }
+  }
+
+  path = path.replace(/^\/+/, "");
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // Keep original if it is not valid percent-encoding.
+  }
+
+  return path || null;
+}
+
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -106,12 +145,18 @@ export const getUserDetail = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("referred_by", profile.referral_code);
 
-    // Signed URLs for verification documents
+    // Signed URLs for verification documents. Profiles may contain either the
+    // raw storage path used by new uploads or an older public/signed URL. Always
+    // normalize back to the object path before signing so current and legacy Tier
+    // 2 uploads open correctly in the admin console.
     const signed: Record<string, string | null> = { id_front_url: null, id_back_url: null, ssn_card_url: null, selfie_url: null };
     for (const key of ["id_front_url", "id_back_url", "ssn_card_url", "selfie_url"] as const) {
-      const path = (profile as Record<string, unknown>)[key] as string | null;
+      const path = normalizeVerificationPath((profile as Record<string, unknown>)[key]);
       if (path) {
-        const { data: s } = await supabaseAdmin.storage.from("verification").createSignedUrl(path, 60 * 60);
+        const { data: s, error: signError } = await supabaseAdmin.storage
+          .from("verification")
+          .createSignedUrl(path, 60 * 60 * 24);
+        if (signError) console.error(`[admin] failed to sign verification file ${key}:`, signError.message);
         signed[key] = s?.signedUrl ?? null;
       }
     }
