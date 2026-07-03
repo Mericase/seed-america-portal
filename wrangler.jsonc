@@ -9,6 +9,9 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+  "vars": {
+    "RESEND_FROM": "Seedin America <info@seedinamerica.org>"
+  },
   "observability": {
     "enabled": true
   }
