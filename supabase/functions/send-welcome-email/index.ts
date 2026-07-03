@@ -1,6 +1,6 @@
 // supabase/functions/send-welcome-email/index.ts
 // Deploy with: supabase functions deploy send-welcome-email
-// Set secret with: supabase secrets set RESEND_API_KEY=re_7pB2Rfui_LJKQdFJm9ZXRyDomCwbUy2G6
+// Set secret with: supabase secrets set RESEND_API_KEY=<your-active-resend-key>
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

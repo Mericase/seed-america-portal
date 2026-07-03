@@ -44,7 +44,7 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
 
       <p style="margin:0;color:#555;font-size:14px;">
         Questions? Reply to this email or reach us anytime at
-        <a href="mailto:support@seedinamerica.org" style="color:#2d6a4f;">support@seedinamerica.org</a>.
+        <a href="mailto:info@seedinamerica.org" style="color:#2d6a4f;">info@seedinamerica.org</a>.
       </p>
     `;
 
