@@ -114,7 +114,7 @@ function AdminUserDetail() {
         roles: result.roles ?? [],
         referrer: result.referrer,
         referralCount: result.referralCount ?? 0,
-        signedUrls: result.signedUrls,
+        signedUrls: result.signedUrls ?? emptySignedUrls,
       });
     } catch (e) {
       try {
