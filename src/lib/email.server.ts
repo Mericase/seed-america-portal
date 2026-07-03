@@ -145,7 +145,7 @@ export function renderBrandedEmail(opts: {
         <tr><td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;">
           <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">${footerNote}</p>
           <p style="margin:0;font-size:11px;color:#d1d5db;text-align:center;">
-            If you did not create this account, <a href="mailto:support@seedinamerica.org" style="color:#2d6a4f;text-decoration:none;">contact support</a>.
+            If you did not create this account, <a href="mailto:info@seedinamerica.org" style="color:#2d6a4f;text-decoration:none;">contact support</a>.
           </p>
           <p style="margin:8px 0 0;font-size:11px;color:#d1d5db;text-align:center;letter-spacing:0.1em;text-transform:uppercase;">
             &copy; ${new Date().getFullYear()} Seedin America &middot; info@seedinamerica.org
