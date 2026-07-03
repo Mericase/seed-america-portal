@@ -15,7 +15,6 @@ export async function sendEmail(opts: {
 }): Promise<{ ok: boolean; error?: string }> {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  const from = process.env.RESEND_FROM || FROM_ADDRESS;
 
   if (!RESEND_API_KEY) {
     console.error("[email] missing RESEND_API_KEY");
@@ -23,7 +22,7 @@ export async function sendEmail(opts: {
   }
 
   const body = JSON.stringify({
-    from,
+    from: FROM_ADDRESS,
     to: Array.isArray(opts.to) ? opts.to : [opts.to],
     subject: opts.subject,
     html: opts.html,
