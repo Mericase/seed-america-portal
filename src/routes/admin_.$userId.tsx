@@ -8,6 +8,8 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { getUserDetail } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
@@ -32,6 +34,7 @@ type Detail = {
   profile: Profile; applications: Application[]; roles: string[];
   referrer: { full_name: string; email: string; referral_code: string } | null;
   referralCount: number;
+  signedUrls: Record<"id_front_url" | "id_back_url" | "ssn_card_url" | "selfie_url", string | null>;
 };
 
 function AdminUserDetail() {
@@ -40,36 +43,19 @@ function AdminUserDetail() {
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
+  const doGetUserDetail = useServerFn(getUserDetail);
 
   const load = async () => {
     setLoading(true);
     try {
-      const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!profile) throw new Error("User not found");
-
-      const [
-        { data: apps },
-        { data: roles },
-        { count: referralCount },
-      ] = await Promise.all([
-        supabase.from("grant_applications").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", profile.referral_code),
-      ]);
-
-      let referrer = null;
-      if (profile.referred_by) {
-        const { data: r } = await supabase.from("profiles").select("full_name, email, referral_code").eq("referral_code", profile.referred_by).maybeSingle();
-        referrer = r ?? null;
-      }
-
+      const result = await doGetUserDetail({ data: { userId } });
       setDetail({
-        profile: profile as unknown as Profile,
-        applications: (apps ?? []) as Application[],
-        roles: (roles ?? []).map((r) => r.role),
-        referrer,
-        referralCount: referralCount ?? 0,
+        profile: result.profile as unknown as Profile,
+        applications: (result.applications ?? []) as Application[],
+        roles: result.roles ?? [],
+        referrer: result.referrer,
+        referralCount: result.referralCount ?? 0,
+        signedUrls: result.signedUrls,
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load user");
@@ -261,10 +247,10 @@ function AdminUserDetail() {
                 <Info label="SSN Card Provided" value={p.ssn_card_skipped ? "No — user skipped" : "Yes"} />
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <DocImage label="ID Front" url={p.id_front_url} />
-                <DocImage label="ID Back" url={p.id_back_url} />
-                <DocImage label={p.ssn_card_skipped ? "SSN Card (skipped)" : "SSN Card"} url={p.ssn_card_url} />
-                <DocImage label="Selfie with ID" url={p.selfie_url} />
+                <DocImage label="ID Front" url={detail.signedUrls.id_front_url ?? p.id_front_url} />
+                <DocImage label="ID Back" url={detail.signedUrls.id_back_url ?? p.id_back_url} />
+                <DocImage label={p.ssn_card_skipped ? "SSN Card (skipped)" : "SSN Card"} url={detail.signedUrls.ssn_card_url ?? p.ssn_card_url} />
+                <DocImage label="Selfie with ID" url={detail.signedUrls.selfie_url ?? p.selfie_url} />
               </div>
             </>
           )}
