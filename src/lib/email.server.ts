@@ -1,6 +1,7 @@
 // email.server.ts — Server-only. Do NOT import from client code.
 
 const RESEND_URL = "https://api.resend.com/emails";
+const RESEND_GATEWAY_URL = "https://connector-gateway.lovable.dev/resend/emails";
 
 export const FROM_ADDRESS = "Seedin America <info@seedinamerica.org>";
 
@@ -13,29 +14,51 @@ export async function sendEmail(opts: {
   replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+  const from = process.env.RESEND_FROM || FROM_ADDRESS;
+
   if (!RESEND_API_KEY) {
     console.error("[email] missing RESEND_API_KEY");
     return { ok: false, error: "email_not_configured" };
   }
+
+  const body = JSON.stringify({
+    from,
+    to: Array.isArray(opts.to) ? opts.to : [opts.to],
+    subject: opts.subject,
+    html: opts.html,
+    ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+  });
+
+  const useGateway = Boolean(LOVABLE_API_KEY);
+  const url = useGateway ? RESEND_GATEWAY_URL : RESEND_URL;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${useGateway ? LOVABLE_API_KEY : RESEND_API_KEY}`,
+  };
+
+  if (useGateway) {
+    headers["X-Connection-Api-Key"] = RESEND_API_KEY;
+  }
+
   try {
-    const res = await fetch(RESEND_URL, {
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: FROM_ADDRESS,
-        to: Array.isArray(opts.to) ? opts.to : [opts.to],
-        subject: opts.subject,
-        html: opts.html,
-        reply_to: opts.replyTo,
-      }),
+      headers,
+      body,
     });
+
+    const txt = await res.text().catch(() => "");
     if (!res.ok) {
-      const txt = await res.text().catch(() => "");
       console.error("[email] send failed", res.status, txt);
-      return { ok: false, error: `resend_${res.status}` };
+      let message = txt || `HTTP ${res.status}`;
+      try {
+        const parsed = JSON.parse(txt);
+        message = parsed?.message || parsed?.error || message;
+      } catch {
+        // keep plain-text response
+      }
+      return { ok: false, error: `resend_${res.status}: ${message}` };
     }
     return { ok: true };
   } catch (e) {
