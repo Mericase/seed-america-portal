@@ -131,54 +131,10 @@ export const sendNotification = createServerFn({ method: "POST" })
 
     // ── email (best-effort) ─────────────────────────────────────────────────
     let emailed = 0;
-    const emailFailures: { email: string; status?: number; error: string }[] = [];
+    const emailFailures: { email: string; error: string }[] = [];
 
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const RESEND_FROM = process.env.RESEND_FROM || "Seedin America <support@seedinamerica.org>";
-
-    if (!RESEND_API_KEY) {
-      console.error("[notifications] RESEND_API_KEY is not set — all emails skipped");
-      emailFailures.push({ email: "*", error: "RESEND_API_KEY missing on server" });
-    } else {
-      try {
-        const { renderBrandedEmail } = await import("./email.server");
-
-        const sendNotificationEmail = async (
-          to: string,
-          subject: string,
-          html: string,
-        ): Promise<{ ok: boolean; id?: string; error?: string; status?: number }> => {
-          try {
-            const res = await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${RESEND_API_KEY}`,
-              },
-              body: JSON.stringify({
-                from: RESEND_FROM,
-                to: [to],
-                subject,
-                html,
-              }),
-            });
-
-            const bodyText = await res.text();
-            let parsed: any = null;
-            try { parsed = JSON.parse(bodyText); } catch { /* non-JSON body */ }
-
-            if (!res.ok) {
-              const errMsg = parsed?.message || bodyText || `HTTP ${res.status}`;
-              console.error(`[notifications] Resend error ${res.status} for ${to}: ${errMsg}`);
-              return { ok: false, status: res.status, error: errMsg };
-            }
-
-            return { ok: true, id: parsed?.id };
-          } catch (networkErr: any) {
-            console.error(`[notifications] Resend request failed for ${to}:`, networkErr);
-            return { ok: false, error: networkErr?.message ?? "network error" };
-          }
-        };
+    try {
+        const { sendEmail, renderBrandedEmail } = await import("./email.server");
 
         const { data: profiles } = await supabaseAdmin
           .from("profiles")
@@ -205,17 +161,16 @@ export const sendNotification = createServerFn({ method: "POST" })
             ctaUrl: `https://seedinamerica.org${data.link ?? "/dashboard"}`,
           });
 
-          const result = await sendNotificationEmail(p.email, data.title, html);
+          const result = await sendEmail({ to: p.email, subject: data.title, html });
           if (result.ok) {
             emailed++;
           } else {
-            emailFailures.push({ email: p.email, status: result.status, error: result.error ?? "unknown error" });
+            emailFailures.push({ email: p.email, error: result.error ?? "unknown error" });
           }
         }));
-      } catch (e: any) {
-        console.error("[notifications] email send error", e);
-        emailFailures.push({ email: "*", error: e?.message ?? "unexpected error" });
-      }
+    } catch (e: any) {
+      console.error("[notifications] email send error", e);
+      emailFailures.push({ email: "*", error: e?.message ?? "unexpected error" });
     }
 
     return {
