@@ -37,6 +37,65 @@ type Detail = {
   signedUrls: Record<"id_front_url" | "id_back_url" | "ssn_card_url" | "selfie_url", string | null>;
 };
 
+const emptySignedUrls: Detail["signedUrls"] = {
+  id_front_url: null,
+  id_back_url: null,
+  ssn_card_url: null,
+  selfie_url: null,
+};
+
+function normalizeVerificationPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let path = value.trim();
+  if (!path) return null;
+
+  try {
+    path = new URL(path).pathname;
+  } catch {
+    // Already a storage path.
+  }
+
+  path = path.split("?")[0] ?? path;
+  const markers = [
+    "/storage/v1/object/sign/verification/",
+    "/storage/v1/object/public/verification/",
+    "/object/sign/verification/",
+    "/object/public/verification/",
+    "verification/",
+  ];
+  for (const marker of markers) {
+    const idx = path.indexOf(marker);
+    if (idx >= 0) {
+      path = path.slice(idx + marker.length);
+      break;
+    }
+  }
+
+  path = path.replace(/^\/+/, "");
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // Keep original if not percent-encoded.
+  }
+  return path || null;
+}
+
+async function signVerificationDocs(profile: Record<string, unknown>): Promise<Detail["signedUrls"]> {
+  const signed: Detail["signedUrls"] = { ...emptySignedUrls };
+  for (const key of ["id_front_url", "id_back_url", "ssn_card_url", "selfie_url"] as const) {
+    const path = normalizeVerificationPath(profile[key]);
+    if (!path) continue;
+    const { data, error } = await supabase.storage.from("verification").createSignedUrl(path, 60 * 60 * 24);
+    if (error) {
+      console.error(`[admin] failed to sign ${key}`, error.message);
+      signed[key] = typeof profile[key] === "string" ? String(profile[key]) : null;
+    } else {
+      signed[key] = data?.signedUrl ?? null;
+    }
+  }
+  return signed;
+}
+
 function AdminUserDetail() {
   const navigate = useNavigate();
   const { userId } = useParams({ from: "/admin_/$userId" });
@@ -58,8 +117,39 @@ function AdminUserDetail() {
         signedUrls: result.signedUrls,
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load user");
-      navigate({ to: "/admin" });
+      try {
+        const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!profile) throw new Error("User not found");
+
+        const [
+          { data: apps },
+          { data: roles },
+          { count: referralCount },
+        ] = await Promise.all([
+          supabase.from("grant_applications").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+          supabase.from("user_roles").select("role").eq("user_id", userId),
+          supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", profile.referral_code),
+        ]);
+
+        let referrer = null;
+        if (profile.referred_by) {
+          const { data: r } = await supabase.from("profiles").select("full_name, email, referral_code").eq("referral_code", profile.referred_by).maybeSingle();
+          referrer = r ?? null;
+        }
+
+        setDetail({
+          profile: profile as unknown as Profile,
+          applications: (apps ?? []) as Application[],
+          roles: (roles ?? []).map((r) => r.role),
+          referrer,
+          referralCount: referralCount ?? 0,
+          signedUrls: await signVerificationDocs(profile),
+        });
+      } catch (fallbackError) {
+        toast.error(fallbackError instanceof Error ? fallbackError.message : e instanceof Error ? e.message : "Failed to load user");
+        navigate({ to: "/admin" });
+      }
     } finally {
       setLoading(false);
     }
