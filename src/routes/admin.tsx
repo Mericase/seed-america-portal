@@ -22,6 +22,44 @@ type UserRow = {
 };
 type Brief = { id: string; full_name: string; email: string; tier: number };
 
+const notificationTemplates = [
+  {
+    key: "upgrade_reminder",
+    label: "Upgrade reminder",
+    title: "Unlock your next Seedin America benefits",
+    link: "/update-tier-3",
+    body: "You are very close to unlocking a stronger review path for your grant journey. Completing your next tier upgrade gives your application greater priority, faster document review, higher funding consideration, and access to additional member support.\n\nPlease sign in to your dashboard and complete the remaining upgrade steps so your account can continue moving forward without delay.",
+  },
+  {
+    key: "account_change",
+    label: "Account change",
+    title: "Important update on your Seedin America account",
+    link: "/dashboard",
+    body: "A change has been made to your Seedin America account record. Please review your dashboard to confirm that your profile, contact information, balance, and application details are accurate.\n\nIf you did not request or expect this update, contact member support immediately so our team can review your account.",
+  },
+  {
+    key: "application_update",
+    label: "Application update",
+    title: "Your grant application has a new update",
+    link: "/apply-grant",
+    body: "There is a new update connected to your grant application. Please sign in to your dashboard to review the latest status, any pending requirements, and the next action needed from you.\n\nResponding promptly helps our review team keep your application moving without unnecessary delays.",
+  },
+  {
+    key: "payment_update",
+    label: "Balance/payment",
+    title: "Your Seedin America balance has been updated",
+    link: "/dashboard",
+    body: "Your Seedin America member balance or payment status has been updated. Please sign in to your dashboard to review the new details and confirm that everything appears correct.\n\nIf you have questions about this update, contact member support from your dashboard.",
+  },
+  {
+    key: "security_notice",
+    label: "Security notice",
+    title: "Security notice for your Seedin America account",
+    link: "/dashboard",
+    body: "We are sending this notice to help keep your Seedin America account secure. Please review your account information, password, and recent activity from your dashboard.\n\nIf anything looks unfamiliar, contact member support immediately so we can protect your account.",
+  },
+] as const;
+
 function AdminPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -239,6 +277,7 @@ function NotificationComposer() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [link, setLink] = useState("/dashboard");
+  const [templateKey, setTemplateKey] = useState<(typeof notificationTemplates)[number]["key"] | "custom">("custom");
   const [toAll, setToAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -257,6 +296,13 @@ function NotificationComposer() {
 
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const applyTemplate = (template: (typeof notificationTemplates)[number]) => {
+    setTemplateKey(template.key);
+    setTitle(template.title);
+    setBody(template.body);
+    setLink(template.link);
+  };
+
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) { toast.error("Title and message are required"); return; }
     if (!toAll && selected.size === 0) { toast.error("Pick at least one recipient"); return; }
@@ -267,6 +313,7 @@ function NotificationComposer() {
           title: title.trim(),
           body: body.trim(),
           link: link.trim() || "/dashboard",
+          templateKey,
           toAll,
           userIds: toAll ? undefined : Array.from(selected),
         },
@@ -277,7 +324,7 @@ function NotificationComposer() {
       } else {
         toast.success(`Sent to ${res.recipients} ${res.recipients === 1 ? "user" : "users"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
       }
-      setTitle(""); setBody(""); setSelected(new Set());
+      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
     } finally {
@@ -295,14 +342,29 @@ function NotificationComposer() {
       <div className="grid gap-5 p-5 lg:grid-cols-2">
         <div className="space-y-3">
           <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prepared templates</label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {notificationTemplates.map((template) => (
+                <button
+                  key={template.key}
+                  type="button"
+                  onClick={() => applyTemplate(template)}
+                  className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold transition ${templateKey === template.key ? "border-forest bg-forest/10 text-forest" : "border-input bg-background text-foreground hover:bg-accent"}`}
+                >
+                  {template.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120}
+            <input value={title} onChange={(e) => { setTitle(e.target.value); if (templateKey !== "custom") setTemplateKey("custom"); }} maxLength={120}
               className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               placeholder="Grant application update" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} rows={5}
+            <textarea value={body} onChange={(e) => { setBody(e.target.value); if (templateKey !== "custom") setTemplateKey("custom"); }} maxLength={1800} rows={8}
               className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               placeholder="Hi! Your tier upgrade is approved…" />
           </div>

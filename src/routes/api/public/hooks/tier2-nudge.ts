@@ -84,6 +84,7 @@ export const Route = createFileRoute("/api/public/hooks/tier2-nudge")({
               bodyHtml,
               ctaLabel: "Upgrade to Tier 3",
               ctaUrl: "https://seedinamerica.org/update-tier-3",
+              categoryLabel: "Upgrade Reminder",
             });
             const r = await sendEmail({ to: u.email, subject: title, html });
             if (r.ok) emailed++;
