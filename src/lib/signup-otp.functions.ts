@@ -10,7 +10,14 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 function genCode(): string {
-  const n = Math.floor(Math.random() * 1_000_000);
+  const max = 4_294_000_000;
+  const bytes = new Uint32Array(1);
+  let value = 0;
+  do {
+    crypto.getRandomValues(bytes);
+    value = bytes[0] ?? 0;
+  } while (value >= max);
+  const n = value % 1_000_000;
   return n.toString().padStart(6, "0");
 }
 
@@ -56,8 +63,9 @@ export const sendSignupOtp = createServerFn({ method: "POST" })
     z.object({ email: z.string().trim().toLowerCase().email().max(255) }).parse(i),
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
     const { sendEmail } = await import("./email.server");
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Rate limit: 45s between sends for same email
     const { data: recent } = await supabaseAdmin
@@ -100,6 +108,7 @@ export const sendSignupOtp = createServerFn({ method: "POST" })
       to: data.email,
       subject: `Your Seedin America verification code: ${code}`,
       html: renderOtpEmail(code, data.email),
+      text: `Your Seedin America verification code is ${code}. This code expires in 10 minutes.`,
     });
     if (!res.ok) throw new Error("Could not send verification email. Please try again.");
 
@@ -114,7 +123,8 @@ export const verifySignupOtp = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
+    const supabaseAdmin = getSupabaseAdmin();
 
     const { data: row } = await supabaseAdmin
       .from("email_otps")

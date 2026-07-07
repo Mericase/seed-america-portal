@@ -55,7 +55,5 @@ export const listSupportMessages = createServerFn({ method: "GET" })
     return { messages: data ?? [] };
   });
 
-// sendWelcomeEmail has been removed from here.
-// It is now handled entirely by the Supabase Edge Function at:
-// supabase/functions/send-welcome-email/index.ts
-// Called from signup.tsx via: supabase.functions.invoke("send-welcome-email")
+// Welcome email delivery is handled by src/lib/welcome.functions.ts through
+// the same Cloudflare-safe email helper used by OTP and admin notifications.

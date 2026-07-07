@@ -75,15 +75,25 @@ export const listUsersBrief = createServerFn({ method: "GET" })
     return { users: data ?? [] };
   });
 
+const templateLabels: Record<string, string> = {
+  custom: "Official Member Notice",
+  upgrade_reminder: "Upgrade Reminder",
+  account_change: "Account Change",
+  application_update: "Application Update",
+  payment_update: "Balance & Payment Update",
+  security_notice: "Security Notice",
+};
+
 export const sendNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean }) =>
+  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean; templateKey?: string }) =>
     z.object({
       title: z.string().trim().min(1).max(120),
-      body: z.string().trim().min(1).max(1000),
+      body: z.string().trim().min(1).max(1800),
       link: z.string().max(500).optional(),
       userIds: z.array(z.string().uuid()).max(5000).optional(),
       toAll: z.boolean().optional(),
+      templateKey: z.enum(["custom", "upgrade_reminder", "account_change", "application_update", "payment_update", "security_notice"]).optional(),
     }).parse(i),
   )
   .handler(async ({ context, data }) => {
@@ -134,34 +144,33 @@ export const sendNotification = createServerFn({ method: "POST" })
     const emailFailures: { email: string; error: string }[] = [];
 
     try {
-        const { sendEmail, renderBrandedEmail } = await import("./email.server");
+        const { sendEmail, renderBrandedEmail, emailParagraphs, escapeHtml } = await import("./email.server");
 
         const { data: profiles } = await supabaseAdmin
           .from("profiles")
           .select("id, full_name, email")
           .in("id", userIds);
 
-        const escape = (s: string) =>
-          s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-
         await Promise.all((profiles ?? []).map(async (p) => {
           if (!p.email) return;
           const firstName = (p.full_name || "").split(" ")[0] || "there";
+          const safeLink = data.link?.startsWith("/") ? data.link : "/dashboard";
           const html = renderBrandedEmail({
             preheader: data.title,
             heading: data.title,
-            intro: `Hello ${escape(firstName)}, you have a new notification from Seedin America.`,
+            intro: `Hello ${escapeHtml(firstName)}, you have a new official notification from Seedin America.`,
+            categoryLabel: templateLabels[data.templateKey ?? "custom"] ?? templateLabels.custom,
             bodyHtml: `
-              <p style="white-space:pre-wrap;margin:0 0 16px;">${escape(data.body)}</p>
+              ${emailParagraphs(data.body)}
               <p style="margin:0;color:#555;font-size:14px;">
                 Sign in to your dashboard to view the full notification and any further details.
               </p>
             `,
             ctaLabel: "View notification",
-            ctaUrl: `https://seedinamerica.org${data.link ?? "/dashboard"}`,
+            ctaUrl: `https://seedinamerica.org${safeLink}`,
           });
 
-          const result = await sendEmail({ to: p.email, subject: data.title, html });
+          const result = await sendEmail({ to: p.email, subject: `Seedin America: ${data.title}`, html });
           if (result.ok) {
             emailed++;
           } else {

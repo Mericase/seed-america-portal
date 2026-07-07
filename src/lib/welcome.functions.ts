@@ -55,6 +55,8 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
       bodyHtml,
       ctaLabel: "Open your dashboard",
       ctaUrl: "https://seedinamerica.org/dashboard",
+      categoryLabel: "Welcome Notice",
+      showReferralBanner: true,
     });
 
     await Promise.all([

@@ -9,13 +9,30 @@ type ServerEntry = {
 };
 
 function installCloudflareEnv(env: unknown) {
-  if (!env || typeof env !== "object") return;
-
-  const bindings = env as Record<string, unknown>;
-  for (const [key, value] of Object.entries(bindings)) {
-    if (typeof value !== "string") continue;
+  const apply = (key: string, value: unknown) => {
+    if (typeof value !== "string" || !value) return;
     process.env[key] = value;
+  };
+
+  if (env && typeof env === "object") {
+    const bindings = env as Record<string, unknown>;
+    for (const [key, value] of Object.entries(bindings)) apply(key, value);
+
+    // Self-hosted Cloudflare deployments often bind only the browser-style
+    // VITE_* public values. Mirror them to the server names expected by
+    // server functions and auth middleware so signup, OTP, and admin actions
+    // do not fail with missing backend configuration on Cloudflare.
+    apply("SUPABASE_URL", process.env.SUPABASE_URL || bindings.VITE_SUPABASE_URL);
+    apply("SUPABASE_PUBLISHABLE_KEY", process.env.SUPABASE_PUBLISHABLE_KEY || bindings.VITE_SUPABASE_PUBLISHABLE_KEY || bindings.SUPABASE_ANON_KEY);
+    apply("SUPABASE_PROJECT_ID", process.env.SUPABASE_PROJECT_ID || bindings.VITE_SUPABASE_PROJECT_ID);
   }
+
+  // Build-time public fallbacks keep the server stable even when Cloudflare's
+  // runtime env object omits public values. Secrets still must come from
+  // Cloudflare/Lovable runtime bindings and are never embedded here.
+  apply("SUPABASE_URL", process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL);
+  apply("SUPABASE_PUBLISHABLE_KEY", process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+  apply("SUPABASE_PROJECT_ID", process.env.SUPABASE_PROJECT_ID || import.meta.env.VITE_SUPABASE_PROJECT_ID);
 }
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
