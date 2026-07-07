@@ -10,7 +10,13 @@
     "not_found_handling": "single-page-application"
   },
   "vars": {
-    "RESEND_FROM": "Seedin America <info@seedinamerica.org>"
+    "RESEND_FROM": "Seedin America <info@seedinamerica.org>",
+    "SUPABASE_PROJECT_ID": "croiuvvyeyvtehcftxrf",
+    "SUPABASE_URL": "https://croiuvvyeyvtehcftxrf.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_g3QsYAAcd97X4g3VKx43ow_U806nBzx",
+    "VITE_SUPABASE_PROJECT_ID": "croiuvvyeyvtehcftxrf",
+    "VITE_SUPABASE_URL": "https://croiuvvyeyvtehcftxrf.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_g3QsYAAcd97X4g3ow_U806nBzx"
   },
   "observability": {
     "enabled": true
