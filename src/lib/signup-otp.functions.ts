@@ -10,7 +10,6 @@ export const sendSignupOtp = createServerFn({ method: "POST" })
     const { sendEmail } = await import("./email.server");
 
     let canPersistOtp = false;
-    let supabaseAdmin: Awaited<ReturnType<typeof import("./supabase-admin.server")["getSupabaseAdmin"]>> | undefined;
     const code = genCode();
     const codeHash = await sha256Hex(code);
     const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
