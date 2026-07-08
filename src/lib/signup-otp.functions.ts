@@ -22,7 +22,7 @@ export const sendSignupOtp = createServerFn({ method: "POST" })
 
     try {
       const { getSupabaseAdmin } = await import("./supabase-admin.server");
-      supabaseAdmin = getSupabaseAdmin();
+      const supabaseAdmin = getSupabaseAdmin();
 
       // Rate limit: 45s between sends for same email when privileged backend access is available.
       const { data: recent } = await supabaseAdmin
