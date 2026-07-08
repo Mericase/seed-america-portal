@@ -97,8 +97,8 @@ export function renderBrandedEmail(opts: {
 
   const cta =
     ctaLabel && ctaUrl
-      ? `<tr><td align="center" style="padding:8px 0 24px 0;">
-           <a href="${escapeAttr(ctaUrl)}" style="background:#1a3a26;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:999px;display:inline-block;letter-spacing:0.2px;box-shadow:0 4px 20px rgba(29,77,49,0.22);">${escapeHtml(ctaLabel)} &rarr;</a>
+      ? `<tr><td align="center" style="background:#ffffff;padding:10px 42px 34px;">
+           <a href="${escapeAttr(ctaUrl)}" style="background:#102b1b;color:#ffffff;text-decoration:none;font-weight:800;font-size:14px;padding:15px 34px;border-radius:6px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;border:1px solid #c9a84c;box-shadow:0 10px 24px rgba(16,43,27,0.20);">${escapeHtml(ctaLabel)} &rarr;</a>
          </td></tr>`
       : "";
 
@@ -120,36 +120,44 @@ export function renderBrandedEmail(opts: {
     : "";
 
   return `<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${heading}</title></head>
-<body style="margin:0;padding:0;background:#0f2a1a;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a1a;">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(heading)}</title></head>
+<body style="margin:0;padding:0;background:#eef3ef;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a1a;">
   <span style="display:none!important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">${preheader}</span>
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f2a1a;">
-    <tr><td align="center" style="padding:40px 16px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef3ef;">
+    <tr><td align="center" style="padding:34px 14px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-        style="max-width:600px;border-radius:20px;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,0.42);">
+        style="max-width:640px;border-radius:0;overflow:hidden;border:1px solid #d7dfd9;box-shadow:0 18px 50px rgba(16,43,27,0.14);">
 
         <!-- BRAND HEADER -->
-        <tr><td style="background:#102b1b;padding:34px 36px 30px;text-align:center;">
+        <tr><td style="background:#102b1b;padding:28px 38px 26px;text-align:center;border-bottom:4px solid #c9a84c;">
           <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 12px;">
             <tr>
-              <td style="width:52px;height:52px;border-radius:999px;background:#1f5f3b;border:2px solid #c9a84c;text-align:center;vertical-align:middle;font-size:25px;box-shadow:0 10px 28px rgba(0,0,0,0.24);">🌱</td>
+              <td style="width:54px;height:54px;border-radius:999px;background:#1f5f3b;border:2px solid #c9a84c;text-align:center;vertical-align:middle;font-size:25px;box-shadow:0 10px 28px rgba(0,0,0,0.24);">🌱</td>
               <td style="padding-left:12px;text-align:left;vertical-align:middle;">
                 <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:700;color:#ffffff;line-height:1;">Seedin <span style="color:#c9a84c;">America</span></div>
                 <div style="margin-top:6px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.70);">Plant · Grow · Prosper</div>
               </td>
             </tr>
           </table>
-          <div style="display:inline-block;margin:4px 0 18px;padding:7px 12px;border:1px solid rgba(255,255,255,0.18);border-radius:999px;background:rgba(255,255,255,0.08);font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#ffffff;">Endorsed by the Office of the President</div>
-          <div style="margin:0 auto 18px;width:48px;height:2px;background:#c9a84c;border-radius:2px;"></div>
-          <p style="margin:0 0 8px;font-size:11px;font-weight:800;color:#c9a84c;letter-spacing:0.18em;text-transform:uppercase;">${escapeHtml(categoryLabel)}</p>
-          <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;color:#ffffff;text-align:center;line-height:1.2;">${escapeHtml(heading)}</h1>
-          ${intro ? `<p style="margin:10px auto 0;max-width:460px;font-size:14px;color:rgba(255,255,255,0.82);text-align:center;line-height:1.55;">${intro}</p>` : ""}
+          <div style="display:inline-block;margin:4px 0 20px;padding:7px 14px;border:1px solid rgba(201,168,76,0.55);border-radius:3px;background:rgba(255,255,255,0.06);font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#ffffff;">Endorsed by the Office of the President</div>
+          <p style="margin:0 0 9px;font-size:11px;font-weight:900;color:#c9a84c;letter-spacing:0.20em;text-transform:uppercase;">${escapeHtml(categoryLabel)}</p>
+          <h1 style="margin:0 auto;font-family:Georgia,'Times New Roman',serif;font-size:31px;font-weight:700;color:#ffffff;text-align:center;line-height:1.18;max-width:520px;">${escapeHtml(heading)}</h1>
+          ${intro ? `<p style="margin:12px auto 0;max-width:500px;font-size:14px;color:rgba(255,255,255,0.84);text-align:center;line-height:1.62;">${intro}</p>` : ""}
+        </td></tr>
+
+        <tr><td style="background:#ffffff;padding:0 42px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #dce4df;">
+            <tr>
+              <td style="padding:18px 0;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#5f6b64;">Official correspondence</td>
+              <td align="right" style="padding:18px 0;font-size:11px;color:#7a857e;">Member Services</td>
+            </tr>
+          </table>
         </td></tr>
 
         <!-- BODY -->
-        <tr><td style="background:#ffffff;padding:36px 40px 16px;">
-          <div style="font-size:15px;line-height:1.65;color:#333333;">${bodyHtml}</div>
+        <tr><td style="background:#ffffff;padding:34px 42px 18px;">
+          <div style="font-size:15px;line-height:1.72;color:#27322c;">${bodyHtml}</div>
         </td></tr>
 
         <!-- CTA -->
@@ -158,18 +166,18 @@ export function renderBrandedEmail(opts: {
         ${referral}
 
         <!-- FOOTER -->
-        <tr><td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;">
-          <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">${footerNote}</p>
-          <p style="margin:0;font-size:11px;color:#d1d5db;text-align:center;">
-            If you did not create this account, <a href="mailto:info@seedinamerica.org" style="color:#2d6a4f;text-decoration:none;">contact support</a>.
+        <tr><td style="background:#f6f8f6;padding:24px 42px;border-top:1px solid #dce4df;">
+          <p style="margin:0 0 8px;font-size:12px;color:#69756e;text-align:center;line-height:1.6;">${footerNote}</p>
+          <p style="margin:0;font-size:11px;color:#8b958f;text-align:center;line-height:1.55;">
+            This email was sent by Seedin America Member Services. For account support, contact <a href="mailto:info@seedinamerica.org" style="color:#1d4f33;text-decoration:none;font-weight:700;">info@seedinamerica.org</a>.
           </p>
-          <p style="margin:8px 0 0;font-size:11px;color:#d1d5db;text-align:center;letter-spacing:0.1em;text-transform:uppercase;">
+          <p style="margin:12px 0 0;font-size:10px;color:#a6aea9;text-align:center;letter-spacing:0.12em;text-transform:uppercase;">
             &copy; ${new Date().getFullYear()} Seedin America &middot; info@seedinamerica.org
           </p>
         </td></tr>
 
       </table>
-      <p style="margin:20px 0 40px;font-size:11px;color:rgba(255,255,255,0.3);text-align:center;">Seedin America Federal Grant Initiative</p>
+      <p style="margin:18px 0 38px;font-size:11px;color:#7f8b84;text-align:center;">Seedin America Federal Grant Initiative</p>
     </td></tr>
   </table>
 </body></html>`;
