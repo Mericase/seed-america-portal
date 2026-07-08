@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Loader2, Search, ShieldAlert, Users, Clock, Ban, FileText,
-  LogOut, ChevronRight, ArrowLeft, Send, Bell,
+  LogOut, ChevronRight, ArrowLeft, Send, Bell, Upload,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -280,6 +280,7 @@ function NotificationComposer() {
   const [templateKey, setTemplateKey] = useState<(typeof notificationTemplates)[number]["key"] | "custom">("custom");
   const [toAll, setToAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [manualEmailText, setManualEmailText] = useState("");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -296,6 +297,8 @@ function NotificationComposer() {
 
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const manualEmails = useMemo(() => extractEmails(manualEmailText), [manualEmailText]);
+
   const applyTemplate = (template: (typeof notificationTemplates)[number]) => {
     setTemplateKey(template.key);
     setTitle(template.title);
@@ -305,7 +308,7 @@ function NotificationComposer() {
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) { toast.error("Title and message are required"); return; }
-    if (!toAll && selected.size === 0) { toast.error("Pick at least one recipient"); return; }
+    if (!toAll && selected.size === 0 && manualEmails.length === 0) { toast.error("Pick at least one member or enter at least one email recipient"); return; }
     setSending(true);
     try {
       const res = await doSend({
@@ -316,15 +319,16 @@ function NotificationComposer() {
           templateKey,
           toAll,
           userIds: toAll ? undefined : Array.from(selected),
+          manualEmails,
         },
       });
       const failures = res.emailFailures?.length ?? 0;
       if (failures > 0) {
         toast.warning(`Notification sent in-app • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered • ${failures} email issue${failures === 1 ? "" : "s"}`);
       } else {
-        toast.success(`Sent to ${res.recipients} ${res.recipients === 1 ? "user" : "users"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
+        toast.success(`Sent to ${res.recipients} member${res.recipients === 1 ? "" : "s"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
       }
-      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set());
+      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set()); setManualEmailText("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
     } finally {
@@ -381,7 +385,7 @@ function NotificationComposer() {
           <button onClick={handleSend} disabled={sending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-4 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {sending ? "Sending…" : toAll ? "Send to all members" : `Send to ${selected.size} selected`}
+            {sending ? "Sending…" : toAll ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}` : `Send to ${selected.size + manualEmails.length} recipient${selected.size + manualEmails.length === 1 ? "" : "s"}`}
           </button>
         </div>
         <div className={`flex flex-col rounded-lg border border-border ${toAll ? "opacity-50" : ""}`}>
@@ -409,8 +413,49 @@ function NotificationComposer() {
             ))}
             {filtered.length === 0 && <p className="px-3 py-8 text-center text-sm text-muted-foreground">No members.</p>}
           </div>
+          <div className="border-t border-border bg-background/60 p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email-only recipients</p>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs font-semibold text-forest hover:bg-accent">
+                <Upload className="h-3.5 w-3.5" /> Upload file
+                <input
+                  type="file"
+                  accept=".csv,.txt,text/csv,text/plain"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const text = await file.text();
+                    const next = [manualEmailText, text].filter(Boolean).join("\n");
+                    setManualEmailText(next);
+                    toast.success(`${extractEmails(text).length} email${extractEmails(text).length === 1 ? "" : "s"} found in file`);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <textarea
+              value={manualEmailText}
+              onChange={(e) => setManualEmailText(e.target.value)}
+              rows={4}
+              placeholder="Type or paste email addresses separated by commas, spaces, or new lines. These receive email only — no in-app notification."
+              className="w-full resize-none rounded-md border border-input bg-card px-2.5 py-2 text-sm outline-none focus:ring-2 focus:ring-forest/20"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {manualEmails.length} valid email{manualEmails.length === 1 ? "" : "s"} ready. Manual addresses are email-only and do not create in-app notifications.
+            </p>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function extractEmails(input: string): string[] {
+  return Array.from(
+    new Set(
+      (input.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? [])
+        .map((email) => email.trim().toLowerCase()),
+    ),
   );
 }

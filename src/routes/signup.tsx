@@ -51,6 +51,7 @@ function SignupPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
 
   const doSendOtp = useServerFn(sendSignupOtp);
   const doVerifyOtp = useServerFn(verifySignupOtp);
@@ -60,10 +61,11 @@ function SignupPage() {
     if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
     setSendingOtp(true);
     try {
-      await doSendOtp({ data: { email: data.email } });
+      const res = await doSendOtp({ data: { email: data.email } });
       toast.success(`Verification code sent to ${data.email}`);
       setEmailVerified(false);
       setVerifiedEmail("");
+      setOtpToken(res.otpToken ?? "");
       setStep(2);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not send verification code");
@@ -115,7 +117,8 @@ function SignupPage() {
                 onEditEmail={() => setStep(1)}
                 onResend={async () => {
                   try {
-                    await doSendOtp({ data: { email: data.email } });
+                    const res = await doSendOtp({ data: { email: data.email } });
+                    setOtpToken(res.otpToken ?? "");
                     toast.success("New code sent");
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Could not resend code");
@@ -123,7 +126,7 @@ function SignupPage() {
                 }}
                 onVerify={async (code) => {
                   try {
-                    await doVerifyOtp({ data: { email: data.email, code } });
+                    await doVerifyOtp({ data: { email: data.email, code, otpToken } });
                     setEmailVerified(true);
                     setVerifiedEmail(data.email);
                     toast.success("Email verified");

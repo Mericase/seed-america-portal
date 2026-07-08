@@ -30,3 +30,25 @@ export function getSupabaseAdmin() {
     },
   });
 }
+
+export function getSupabaseServerClient() {
+  const SUPABASE_URL = readPublicEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
+  const SUPABASE_PUBLISHABLE_KEY = readPublicEnv("SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY");
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
+    ];
+    console.error(`[backend] Missing required public backend environment: ${missing.join(", ")}`);
+    throw new Error("Backend service is not configured yet. Please contact support.");
+  }
+
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: undefined,
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
