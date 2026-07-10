@@ -281,6 +281,7 @@ function NotificationComposer() {
   const [toAll, setToAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualEmailText, setManualEmailText] = useState("");
+  const [manualPhoneText, setManualPhoneText] = useState("");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
 
