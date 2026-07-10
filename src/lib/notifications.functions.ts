@@ -104,7 +104,13 @@ export const sendNotification = createServerFn({ method: "POST" })
       userIds = data.userIds ?? [];
     }
     const manualEmails = Array.from(new Set(data.manualEmails ?? []));
-    if (userIds.length === 0 && manualEmails.length === 0) throw new Error("Select at least one member or enter at least one email recipient");
+    const { normalizePhone } = await import("./sms.server");
+    const manualPhones = Array.from(new Set((data.manualPhones ?? [])
+      .map((p) => normalizePhone(p))
+      .filter((p): p is string => Boolean(p))));
+    if (userIds.length === 0 && manualEmails.length === 0 && manualPhones.length === 0) {
+      throw new Error("Select at least one member or enter at least one email or phone recipient");
+    }
 
     // ── insert in-app notifications ─────────────────────────────────────────
     if (userIds.length > 0) {
