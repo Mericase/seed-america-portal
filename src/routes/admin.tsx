@@ -395,7 +395,9 @@ function NotificationComposer() {
           <button onClick={handleSend} disabled={sending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-4 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {sending ? "Sending…" : toAll ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}` : `Send to ${selected.size + manualEmails.length} recipient${selected.size + manualEmails.length === 1 ? "" : "s"}`}
+            {sending ? "Sending…" : toAll
+              ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}${manualPhones.length ? ` + ${manualPhones.length} SMS` : ""}`
+              : `Send to ${selected.size + manualEmails.length + manualPhones.length} recipient${selected.size + manualEmails.length + manualPhones.length === 1 ? "" : "s"}`}
           </button>
         </div>
         <div className={`flex flex-col rounded-lg border border-border ${toAll ? "opacity-50" : ""}`}>
