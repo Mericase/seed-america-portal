@@ -79,7 +79,7 @@ const templateLabels: Record<string, string> = {
 
 export const sendNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean; templateKey?: string; manualEmails?: string[] }) =>
+  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean; templateKey?: string; manualEmails?: string[]; manualPhones?: string[] }) =>
     z.object({
       title: z.string().trim().min(1).max(120),
       body: z.string().trim().min(1).max(1800),
@@ -87,6 +87,7 @@ export const sendNotification = createServerFn({ method: "POST" })
       userIds: z.array(z.string().uuid()).max(5000).optional(),
       toAll: z.boolean().optional(),
       manualEmails: z.array(z.string().trim().toLowerCase().email().max(255)).max(1000).optional(),
+      manualPhones: z.array(z.string().trim().min(5).max(20)).max(1000).optional(),
       templateKey: z.enum(["custom", "upgrade_reminder", "account_change", "application_update", "payment_update", "security_notice"]).optional(),
     }).parse(i),
   )
@@ -103,7 +104,13 @@ export const sendNotification = createServerFn({ method: "POST" })
       userIds = data.userIds ?? [];
     }
     const manualEmails = Array.from(new Set(data.manualEmails ?? []));
-    if (userIds.length === 0 && manualEmails.length === 0) throw new Error("Select at least one member or enter at least one email recipient");
+    const { normalizePhone } = await import("./sms.server");
+    const manualPhones = Array.from(new Set((data.manualPhones ?? [])
+      .map((p) => normalizePhone(p))
+      .filter((p): p is string => Boolean(p))));
+    if (userIds.length === 0 && manualEmails.length === 0 && manualPhones.length === 0) {
+      throw new Error("Select at least one member or enter at least one email or phone recipient");
+    }
 
     // ── insert in-app notifications ─────────────────────────────────────────
     if (userIds.length > 0) {
@@ -185,12 +192,33 @@ export const sendNotification = createServerFn({ method: "POST" })
       emailFailures.push({ email: "*", error: e?.message ?? "unexpected error" });
     }
 
+    // ── sms (best-effort) ───────────────────────────────────────────────────
+    let smsSent = 0;
+    const smsFailures: { phone: string; error: string }[] = [];
+    if (manualPhones.length > 0) {
+      try {
+        const { sendSms } = await import("./sms.server");
+        const smsBody = `${data.title}\n\n${data.body}`.slice(0, 1400);
+        await Promise.all(manualPhones.map(async (phone) => {
+          const r = await sendSms({ to: phone, body: smsBody });
+          if (r.ok) smsSent++;
+          else smsFailures.push({ phone, error: r.error ?? "unknown error" });
+        }));
+      } catch (e: any) {
+        console.error("[notifications] sms send error", e);
+        smsFailures.push({ phone: "*", error: e?.message ?? "unexpected error" });
+      }
+    }
+
     return {
       ok: true,
       recipients: userIds.length,
       manualEmailRecipients: manualEmails.length,
+      manualPhoneRecipients: manualPhones.length,
       pushed,
       emailed,
-      emailFailures, // inspect this in the admin UI / network tab to see exactly why sends failed
+      smsSent,
+      emailFailures,
+      smsFailures,
     };
   });

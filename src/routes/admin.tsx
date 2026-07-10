@@ -281,6 +281,7 @@ function NotificationComposer() {
   const [toAll, setToAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualEmailText, setManualEmailText] = useState("");
+  const [manualPhoneText, setManualPhoneText] = useState("");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -298,6 +299,7 @@ function NotificationComposer() {
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const manualEmails = useMemo(() => extractEmails(manualEmailText), [manualEmailText]);
+  const manualPhones = useMemo(() => extractPhones(manualPhoneText), [manualPhoneText]);
 
   const applyTemplate = (template: (typeof notificationTemplates)[number]) => {
     setTemplateKey(template.key);
@@ -308,7 +310,9 @@ function NotificationComposer() {
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) { toast.error("Title and message are required"); return; }
-    if (!toAll && selected.size === 0 && manualEmails.length === 0) { toast.error("Pick at least one member or enter at least one email recipient"); return; }
+    if (!toAll && selected.size === 0 && manualEmails.length === 0 && manualPhones.length === 0) {
+      toast.error("Pick at least one member or enter at least one email or phone recipient"); return;
+    }
     setSending(true);
     try {
       const res = await doSend({
@@ -320,15 +324,21 @@ function NotificationComposer() {
           toAll,
           userIds: toAll ? undefined : Array.from(selected),
           manualEmails,
+          manualPhones,
         },
       });
-      const failures = res.emailFailures?.length ?? 0;
-      if (failures > 0) {
-        toast.warning(`Notification sent in-app • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered • ${failures} email issue${failures === 1 ? "" : "s"}`);
+      const emailFailures = res.emailFailures?.length ?? 0;
+      const smsFailures = res.smsFailures?.length ?? 0;
+      const parts = [
+        `${res.emailed} email${res.emailed === 1 ? "" : "s"}`,
+        `${res.smsSent ?? 0} SMS`,
+      ];
+      if (emailFailures + smsFailures > 0) {
+        toast.warning(`Sent • ${parts.join(" • ")} • ${emailFailures} email issue${emailFailures === 1 ? "" : "s"} • ${smsFailures} SMS issue${smsFailures === 1 ? "" : "s"}`);
       } else {
-        toast.success(`Sent to ${res.recipients} member${res.recipients === 1 ? "" : "s"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
+        toast.success(`Sent to ${res.recipients} member${res.recipients === 1 ? "" : "s"} • ${parts.join(" • ")} delivered`);
       }
-      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set()); setManualEmailText("");
+      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set()); setManualEmailText(""); setManualPhoneText("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
     } finally {
@@ -385,7 +395,9 @@ function NotificationComposer() {
           <button onClick={handleSend} disabled={sending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-4 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {sending ? "Sending…" : toAll ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}` : `Send to ${selected.size + manualEmails.length} recipient${selected.size + manualEmails.length === 1 ? "" : "s"}`}
+            {sending ? "Sending…" : toAll
+              ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}${manualPhones.length ? ` + ${manualPhones.length} SMS` : ""}`
+              : `Send to ${selected.size + manualEmails.length + manualPhones.length} recipient${selected.size + manualEmails.length + manualPhones.length === 1 ? "" : "s"}`}
           </button>
         </div>
         <div className={`flex flex-col rounded-lg border border-border ${toAll ? "opacity-50" : ""}`}>
@@ -445,6 +457,38 @@ function NotificationComposer() {
               {manualEmails.length} valid email{manualEmails.length === 1 ? "" : "s"} ready. Manual addresses are email-only and do not create in-app notifications.
             </p>
           </div>
+          <div className="border-t border-border bg-background/60 p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SMS-only recipients (phone numbers)</p>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs font-semibold text-forest hover:bg-accent">
+                <Upload className="h-3.5 w-3.5" /> Upload file
+                <input
+                  type="file"
+                  accept=".csv,.txt,text/csv,text/plain"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const text = await file.text();
+                    const next = [manualPhoneText, text].filter(Boolean).join("\n");
+                    setManualPhoneText(next);
+                    toast.success(`${extractPhones(text).length} phone number${extractPhones(text).length === 1 ? "" : "s"} found in file`);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <textarea
+              value={manualPhoneText}
+              onChange={(e) => setManualPhoneText(e.target.value)}
+              rows={4}
+              placeholder="Type or paste phone numbers separated by commas, spaces, or new lines. Use E.164 format (e.g. +15551234567). 10-digit US numbers get +1 automatically. SMS only — no in-app notification."
+              className="w-full resize-none rounded-md border border-input bg-card px-2.5 py-2 text-sm outline-none focus:ring-2 focus:ring-forest/20"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {manualPhones.length} valid number{manualPhones.length === 1 ? "" : "s"} ready. SMS delivery requires a linked Twilio connection.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -458,4 +502,25 @@ function extractEmails(input: string): string[] {
         .map((email) => email.trim().toLowerCase()),
     ),
   );
+}
+
+function normalizePhone(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const hasPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/[^\d]/g, "");
+  if (digits.length < 7 || digits.length > 15) return null;
+  if (hasPlus) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`;
+}
+
+function extractPhones(input: string): string[] {
+  const parts = input.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+  const out = new Set<string>();
+  for (const p of parts) {
+    const n = normalizePhone(p);
+    if (n) out.add(n);
+  }
+  return Array.from(out);
 }
