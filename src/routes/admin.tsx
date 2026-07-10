@@ -503,3 +503,24 @@ function extractEmails(input: string): string[] {
     ),
   );
 }
+
+function normalizePhone(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const hasPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/[^\d]/g, "");
+  if (digits.length < 7 || digits.length > 15) return null;
+  if (hasPlus) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`;
+}
+
+function extractPhones(input: string): string[] {
+  const parts = input.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+  const out = new Set<string>();
+  for (const p of parts) {
+    const n = normalizePhone(p);
+    if (n) out.add(n);
+  }
+  return Array.from(out);
+}
