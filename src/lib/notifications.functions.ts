@@ -79,7 +79,7 @@ const templateLabels: Record<string, string> = {
 
 export const sendNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean; templateKey?: string; manualEmails?: string[] }) =>
+  .inputValidator((i: { title: string; body: string; link?: string; userIds?: string[]; toAll?: boolean; templateKey?: string; manualEmails?: string[]; manualPhones?: string[] }) =>
     z.object({
       title: z.string().trim().min(1).max(120),
       body: z.string().trim().min(1).max(1800),
@@ -87,6 +87,7 @@ export const sendNotification = createServerFn({ method: "POST" })
       userIds: z.array(z.string().uuid()).max(5000).optional(),
       toAll: z.boolean().optional(),
       manualEmails: z.array(z.string().trim().toLowerCase().email().max(255)).max(1000).optional(),
+      manualPhones: z.array(z.string().trim().min(5).max(20)).max(1000).optional(),
       templateKey: z.enum(["custom", "upgrade_reminder", "account_change", "application_update", "payment_update", "security_notice"]).optional(),
     }).parse(i),
   )
