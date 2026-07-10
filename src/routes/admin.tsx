@@ -310,7 +310,9 @@ function NotificationComposer() {
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) { toast.error("Title and message are required"); return; }
-    if (!toAll && selected.size === 0 && manualEmails.length === 0) { toast.error("Pick at least one member or enter at least one email recipient"); return; }
+    if (!toAll && selected.size === 0 && manualEmails.length === 0 && manualPhones.length === 0) {
+      toast.error("Pick at least one member or enter at least one email or phone recipient"); return;
+    }
     setSending(true);
     try {
       const res = await doSend({
@@ -322,15 +324,21 @@ function NotificationComposer() {
           toAll,
           userIds: toAll ? undefined : Array.from(selected),
           manualEmails,
+          manualPhones,
         },
       });
-      const failures = res.emailFailures?.length ?? 0;
-      if (failures > 0) {
-        toast.warning(`Notification sent in-app • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered • ${failures} email issue${failures === 1 ? "" : "s"}`);
+      const emailFailures = res.emailFailures?.length ?? 0;
+      const smsFailures = res.smsFailures?.length ?? 0;
+      const parts = [
+        `${res.emailed} email${res.emailed === 1 ? "" : "s"}`,
+        `${res.smsSent ?? 0} SMS`,
+      ];
+      if (emailFailures + smsFailures > 0) {
+        toast.warning(`Sent • ${parts.join(" • ")} • ${emailFailures} email issue${emailFailures === 1 ? "" : "s"} • ${smsFailures} SMS issue${smsFailures === 1 ? "" : "s"}`);
       } else {
-        toast.success(`Sent to ${res.recipients} member${res.recipients === 1 ? "" : "s"} • ${res.emailed} email${res.emailed === 1 ? "" : "s"} delivered`);
+        toast.success(`Sent to ${res.recipients} member${res.recipients === 1 ? "" : "s"} • ${parts.join(" • ")} delivered`);
       }
-      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set()); setManualEmailText("");
+      setTitle(""); setBody(""); setTemplateKey("custom"); setSelected(new Set()); setManualEmailText(""); setManualPhoneText("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send");
     } finally {
