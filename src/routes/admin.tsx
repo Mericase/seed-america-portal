@@ -299,6 +299,7 @@ function NotificationComposer() {
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const manualEmails = useMemo(() => extractEmails(manualEmailText), [manualEmailText]);
+  const manualPhones = useMemo(() => extractPhones(manualPhoneText), [manualPhoneText]);
 
   const applyTemplate = (template: (typeof notificationTemplates)[number]) => {
     setTemplateKey(template.key);
