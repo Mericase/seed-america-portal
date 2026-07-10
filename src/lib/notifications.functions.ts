@@ -192,12 +192,33 @@ export const sendNotification = createServerFn({ method: "POST" })
       emailFailures.push({ email: "*", error: e?.message ?? "unexpected error" });
     }
 
+    // ── sms (best-effort) ───────────────────────────────────────────────────
+    let smsSent = 0;
+    const smsFailures: { phone: string; error: string }[] = [];
+    if (manualPhones.length > 0) {
+      try {
+        const { sendSms } = await import("./sms.server");
+        const smsBody = `${data.title}\n\n${data.body}`.slice(0, 1400);
+        await Promise.all(manualPhones.map(async (phone) => {
+          const r = await sendSms({ to: phone, body: smsBody });
+          if (r.ok) smsSent++;
+          else smsFailures.push({ phone, error: r.error ?? "unknown error" });
+        }));
+      } catch (e: any) {
+        console.error("[notifications] sms send error", e);
+        smsFailures.push({ phone: "*", error: e?.message ?? "unexpected error" });
+      }
+    }
+
     return {
       ok: true,
       recipients: userIds.length,
       manualEmailRecipients: manualEmails.length,
+      manualPhoneRecipients: manualPhones.length,
       pushed,
       emailed,
-      emailFailures, // inspect this in the admin UI / network tab to see exactly why sends failed
+      smsSent,
+      emailFailures,
+      smsFailures,
     };
   });
