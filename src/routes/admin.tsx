@@ -457,6 +457,38 @@ function NotificationComposer() {
               {manualEmails.length} valid email{manualEmails.length === 1 ? "" : "s"} ready. Manual addresses are email-only and do not create in-app notifications.
             </p>
           </div>
+          <div className="border-t border-border bg-background/60 p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SMS-only recipients (phone numbers)</p>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs font-semibold text-forest hover:bg-accent">
+                <Upload className="h-3.5 w-3.5" /> Upload file
+                <input
+                  type="file"
+                  accept=".csv,.txt,text/csv,text/plain"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const text = await file.text();
+                    const next = [manualPhoneText, text].filter(Boolean).join("\n");
+                    setManualPhoneText(next);
+                    toast.success(`${extractPhones(text).length} phone number${extractPhones(text).length === 1 ? "" : "s"} found in file`);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <textarea
+              value={manualPhoneText}
+              onChange={(e) => setManualPhoneText(e.target.value)}
+              rows={4}
+              placeholder="Type or paste phone numbers separated by commas, spaces, or new lines. Use E.164 format (e.g. +15551234567). 10-digit US numbers get +1 automatically. SMS only — no in-app notification."
+              className="w-full resize-none rounded-md border border-input bg-card px-2.5 py-2 text-sm outline-none focus:ring-2 focus:ring-forest/20"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {manualPhones.length} valid number{manualPhones.length === 1 ? "" : "s"} ready. SMS delivery requires a linked Twilio connection.
+            </p>
+          </div>
         </div>
       </div>
     </section>
