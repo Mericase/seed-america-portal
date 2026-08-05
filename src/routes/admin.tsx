@@ -66,7 +66,7 @@ function AdminPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated">("all");
+  const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated" | "pending_apps">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
   const [authChecked, setAuthChecked] = useState(false);
 
