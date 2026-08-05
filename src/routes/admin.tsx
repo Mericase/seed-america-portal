@@ -276,21 +276,26 @@ function AdminPage() {
   );
 }
 
-function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: "gold" | "forest" | "danger" }) {
+function Stat({ icon, label, value, accent, onClick, active }: { icon: React.ReactNode; label: string; value: number; accent?: "gold" | "forest" | "danger"; onClick?: () => void; active?: boolean }) {
   const colors = accent === "gold" ? "from-gold/15 to-gold/0 border-gold/30"
     : accent === "forest" ? "from-forest/15 to-forest/0 border-forest/30"
     : accent === "danger" ? "from-destructive/15 to-destructive/0 border-destructive/30"
     : "from-primary/10 to-transparent border-border";
   return (
-    <div className={`rounded-2xl border bg-gradient-to-br p-5 shadow-card ${colors}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl border bg-gradient-to-br p-5 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-lg ${colors} ${active ? "ring-2 ring-primary/40" : ""}`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
         {icon}
       </div>
       <p className="mt-3 font-display text-3xl font-semibold text-foreground">{value}</p>
-    </div>
+    </button>
   );
 }
+
 
 function NotificationComposer() {
   const doSend = useServerFn(sendNotification);
