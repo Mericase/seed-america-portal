@@ -201,7 +201,7 @@ function AdminPage() {
 
         <NotificationComposer />
 
-        <section className="mt-8 rounded-2xl border border-border bg-card shadow-card">
+        <section id="members-table" className="mt-8 scroll-mt-24 rounded-2xl border border-border bg-card shadow-card">
           <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -212,15 +212,16 @@ function AdminPage() {
                 className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               />
             </div>
-            <div className="flex gap-1 rounded-lg border border-input bg-background p-1 text-xs">
-              {(["all", "pending_tier", "terminated"] as const).map((f) => (
+            <div className="flex flex-wrap gap-1 rounded-lg border border-input bg-background p-1 text-xs">
+              {(["all", "pending_tier", "pending_apps", "terminated"] as const).map((f) => (
                 <button key={f} onClick={() => setFilter(f)}
                   className={`rounded-md px-3 py-1.5 font-medium capitalize ${filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  {f === "pending_tier" ? "Tier pending" : f}
+                  {f === "pending_tier" ? "Tier pending" : f === "pending_apps" ? "Apps pending" : f}
                 </button>
               ))}
             </div>
           </div>
+
           <div className="overflow-x-auto">
             {loading ? (
               <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-forest" /></div>
