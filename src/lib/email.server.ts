@@ -64,16 +64,15 @@ export async function sendEmail(opts: {
     headers["X-Connection-Api-Key"] = RESEND_API_KEY;
   }
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body,
-    });
+  let lastError = "unknown";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await rateLimitSlot();
+    try {
+      const res = await fetch(url, { method: "POST", headers, body });
+      const txt = await res.text().catch(() => "");
 
-    const txt = await res.text().catch(() => "");
-    if (!res.ok) {
-      console.error("[email] send failed", res.status, txt);
+      if (res.ok) return { ok: true };
+
       let message = txt || `HTTP ${res.status}`;
       try {
         const parsed = JSON.parse(txt);
@@ -81,14 +80,27 @@ export async function sendEmail(opts: {
       } catch {
         // keep plain-text response
       }
-      return { ok: false, error: `resend_${res.status}: ${message}` };
+      lastError = `resend_${res.status}: ${message}`;
+
+      // Rate limited or transient upstream error → back off and retry.
+      if (res.status === 429 || res.status >= 500) {
+        const retryAfter = Number(res.headers.get("retry-after")) || 0;
+        await sleep(retryAfter > 0 ? retryAfter * 1000 : 1200 * (attempt + 1));
+        continue;
+      }
+
+      console.error("[email] send failed", res.status, txt);
+      return { ok: false, error: lastError };
+    } catch (e) {
+      console.error("[email] send error", e);
+      lastError = "network";
+      await sleep(900 * (attempt + 1));
     }
-    return { ok: true };
-  } catch (e) {
-    console.error("[email] send error", e);
-    return { ok: false, error: "network" };
   }
+  console.error("[email] send exhausted retries", lastError);
+  return { ok: false, error: lastError };
 }
+
 
 export function renderBrandedEmail(opts: {
   preheader?: string;
