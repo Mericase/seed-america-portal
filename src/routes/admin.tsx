@@ -183,11 +183,16 @@ function AdminPage() {
         <p className="mt-2 text-muted-foreground">Manage signups, verify tier upgrades, review grant applications, and moderate accounts.</p>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={<Users className="h-5 w-5" />} label="Total members" value={s.totalUsers} />
-          <Stat icon={<Clock className="h-5 w-5" />} label="Tier upgrades pending" value={s.pendingTierUpgrades} accent="gold" />
-          <Stat icon={<FileText className="h-5 w-5" />} label="Applications pending" value={s.pendingApplications} accent="forest" />
-          <Stat icon={<Ban className="h-5 w-5" />} label="Terminated" value={s.terminated} accent="danger" />
+          <Stat icon={<Users className="h-5 w-5" />} label="Total members" value={s.totalUsers}
+            active={filter === "all"} onClick={() => selectFilter("all")} />
+          <Stat icon={<Clock className="h-5 w-5" />} label="Tier upgrades pending" value={s.pendingTierUpgrades} accent="gold"
+            active={filter === "pending_tier"} onClick={() => selectFilter("pending_tier")} />
+          <Stat icon={<FileText className="h-5 w-5" />} label="Applications pending" value={s.pendingApplications} accent="forest"
+            active={filter === "pending_apps"} onClick={() => selectFilter("pending_apps")} />
+          <Stat icon={<Ban className="h-5 w-5" />} label="Terminated" value={s.terminated} accent="danger"
+            active={filter === "terminated"} onClick={() => selectFilter("terminated")} />
         </section>
+
 
         <NotificationComposer />
 
