@@ -66,7 +66,7 @@ function AdminPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated">("all");
+  const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated" | "pending_apps">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -120,6 +120,17 @@ function AdminPage() {
       }
       if (filter === "terminated") q = q.eq("profile_status", "terminated");
       if (filter === "pending_tier") q = q.eq("tier_status", "pending");
+      if (filter === "pending_apps") {
+        const { data: pendingApps } = await supabase
+          .from("grant_applications").select("user_id").eq("status", "pending");
+        const ids = Array.from(new Set((pendingApps ?? []).map((a) => a.user_id)));
+        if (ids.length === 0) {
+          setUsers([]);
+          setLoading(false);
+          return;
+        }
+        q = q.in("id", ids);
+      }
       const { data: rows, error } = await q;
       if (error) throw new Error(error.message);
       setUsers((rows ?? []) as UserRow[]);
@@ -142,6 +153,11 @@ function AdminPage() {
     const t = setTimeout(refresh, 250);
     return () => clearTimeout(t);
   }, [search, filter, authChecked]);
+  const selectFilter = (f: "all" | "pending_tier" | "terminated" | "pending_apps") => {
+    setFilter(f);
+    setTimeout(() => document.getElementById("members-table")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
@@ -172,15 +188,20 @@ function AdminPage() {
         <p className="mt-2 text-muted-foreground">Manage signups, verify tier upgrades, review grant applications, and moderate accounts.</p>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={<Users className="h-5 w-5" />} label="Total members" value={s.totalUsers} />
-          <Stat icon={<Clock className="h-5 w-5" />} label="Tier upgrades pending" value={s.pendingTierUpgrades} accent="gold" />
-          <Stat icon={<FileText className="h-5 w-5" />} label="Applications pending" value={s.pendingApplications} accent="forest" />
-          <Stat icon={<Ban className="h-5 w-5" />} label="Terminated" value={s.terminated} accent="danger" />
+          <Stat icon={<Users className="h-5 w-5" />} label="Total members" value={s.totalUsers}
+            active={filter === "all"} onClick={() => selectFilter("all")} />
+          <Stat icon={<Clock className="h-5 w-5" />} label="Tier upgrades pending" value={s.pendingTierUpgrades} accent="gold"
+            active={filter === "pending_tier"} onClick={() => selectFilter("pending_tier")} />
+          <Stat icon={<FileText className="h-5 w-5" />} label="Applications pending" value={s.pendingApplications} accent="forest"
+            active={filter === "pending_apps"} onClick={() => selectFilter("pending_apps")} />
+          <Stat icon={<Ban className="h-5 w-5" />} label="Terminated" value={s.terminated} accent="danger"
+            active={filter === "terminated"} onClick={() => selectFilter("terminated")} />
         </section>
+
 
         <NotificationComposer />
 
-        <section className="mt-8 rounded-2xl border border-border bg-card shadow-card">
+        <section id="members-table" className="mt-8 scroll-mt-24 rounded-2xl border border-border bg-card shadow-card">
           <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -191,15 +212,16 @@ function AdminPage() {
                 className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               />
             </div>
-            <div className="flex gap-1 rounded-lg border border-input bg-background p-1 text-xs">
-              {(["all", "pending_tier", "terminated"] as const).map((f) => (
+            <div className="flex flex-wrap gap-1 rounded-lg border border-input bg-background p-1 text-xs">
+              {(["all", "pending_tier", "pending_apps", "terminated"] as const).map((f) => (
                 <button key={f} onClick={() => setFilter(f)}
                   className={`rounded-md px-3 py-1.5 font-medium capitalize ${filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  {f === "pending_tier" ? "Tier pending" : f}
+                  {f === "pending_tier" ? "Tier pending" : f === "pending_apps" ? "Apps pending" : f}
                 </button>
               ))}
             </div>
           </div>
+
           <div className="overflow-x-auto">
             {loading ? (
               <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-forest" /></div>
@@ -255,21 +277,26 @@ function AdminPage() {
   );
 }
 
-function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: "gold" | "forest" | "danger" }) {
+function Stat({ icon, label, value, accent, onClick, active }: { icon: React.ReactNode; label: string; value: number; accent?: "gold" | "forest" | "danger"; onClick?: () => void; active?: boolean }) {
   const colors = accent === "gold" ? "from-gold/15 to-gold/0 border-gold/30"
     : accent === "forest" ? "from-forest/15 to-forest/0 border-forest/30"
     : accent === "danger" ? "from-destructive/15 to-destructive/0 border-destructive/30"
     : "from-primary/10 to-transparent border-border";
   return (
-    <div className={`rounded-2xl border bg-gradient-to-br p-5 shadow-card ${colors}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl border bg-gradient-to-br p-5 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-lg ${colors} ${active ? "ring-2 ring-primary/40" : ""}`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
         {icon}
       </div>
       <p className="mt-3 font-display text-3xl font-semibold text-foreground">{value}</p>
-    </div>
+    </button>
   );
 }
+
 
 function NotificationComposer() {
   const doSend = useServerFn(sendNotification);
