@@ -7,6 +7,23 @@ export const FROM_ADDRESS = "Seedin America <info@seedinamerica.org>";
 
 const HERO_URL = "https://seedinamerica.org/email-assets/hero-seedling.jpeg";
 
+// ── global rate limiter ───────────────────────────────────────────────────
+// Resend allows ~2 requests/second. Sending a large batch in parallel makes
+// everything past the first handful fail with 429, which is why only a dozen
+// emails were landing. Every send is funnelled through this serial gate.
+const MIN_SEND_INTERVAL_MS = 550;
+let sendChain: Promise<void> = Promise.resolve();
+
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+function rateLimitSlot(): Promise<void> {
+  const slot = sendChain.then(() => sleep(MIN_SEND_INTERVAL_MS));
+  sendChain = slot.catch(() => undefined);
+  return slot;
+}
+
 export async function sendEmail(opts: {
   to: string | string[];
   subject: string;
@@ -14,6 +31,7 @@ export async function sendEmail(opts: {
   text?: string;
   replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
+
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
   const from = process.env.RESEND_FROM || FROM_ADDRESS;
