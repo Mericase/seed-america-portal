@@ -7,6 +7,23 @@ export const FROM_ADDRESS = "Seedin America <info@seedinamerica.org>";
 
 const HERO_URL = "https://seedinamerica.org/email-assets/hero-seedling.jpeg";
 
+// ── global rate limiter ───────────────────────────────────────────────────
+// Resend allows ~2 requests/second. Sending a large batch in parallel makes
+// everything past the first handful fail with 429, which is why only a dozen
+// emails were landing. Every send is funnelled through this serial gate.
+const MIN_SEND_INTERVAL_MS = 550;
+let sendChain: Promise<void> = Promise.resolve();
+
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+function rateLimitSlot(): Promise<void> {
+  const slot = sendChain.then(() => sleep(MIN_SEND_INTERVAL_MS));
+  sendChain = slot.catch(() => undefined);
+  return slot;
+}
+
 export async function sendEmail(opts: {
   to: string | string[];
   subject: string;
@@ -14,6 +31,7 @@ export async function sendEmail(opts: {
   text?: string;
   replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
+
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
   const from = process.env.RESEND_FROM || FROM_ADDRESS;
@@ -46,16 +64,15 @@ export async function sendEmail(opts: {
     headers["X-Connection-Api-Key"] = RESEND_API_KEY;
   }
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body,
-    });
+  let lastError = "unknown";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await rateLimitSlot();
+    try {
+      const res = await fetch(url, { method: "POST", headers, body });
+      const txt = await res.text().catch(() => "");
 
-    const txt = await res.text().catch(() => "");
-    if (!res.ok) {
-      console.error("[email] send failed", res.status, txt);
+      if (res.ok) return { ok: true };
+
       let message = txt || `HTTP ${res.status}`;
       try {
         const parsed = JSON.parse(txt);
@@ -63,14 +80,27 @@ export async function sendEmail(opts: {
       } catch {
         // keep plain-text response
       }
-      return { ok: false, error: `resend_${res.status}: ${message}` };
+      lastError = `resend_${res.status}: ${message}`;
+
+      // Rate limited or transient upstream error → back off and retry.
+      if (res.status === 429 || res.status >= 500) {
+        const retryAfter = Number(res.headers.get("retry-after")) || 0;
+        await sleep(retryAfter > 0 ? retryAfter * 1000 : 1200 * (attempt + 1));
+        continue;
+      }
+
+      console.error("[email] send failed", res.status, txt);
+      return { ok: false, error: lastError };
+    } catch (e) {
+      console.error("[email] send error", e);
+      lastError = "network";
+      await sleep(900 * (attempt + 1));
     }
-    return { ok: true };
-  } catch (e) {
-    console.error("[email] send error", e);
-    return { ok: false, error: "network" };
   }
+  console.error("[email] send exhausted retries", lastError);
+  return { ok: false, error: lastError };
 }
+
 
 export function renderBrandedEmail(opts: {
   preheader?: string;
