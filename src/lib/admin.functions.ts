@@ -329,13 +329,32 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
+    const { data: updated, error } = await supabaseAdmin
       .from("grant_applications")
       .update({ status: data.status, admin_notes: data.notes ?? null, updated_at: new Date().toISOString() })
-      .eq("id", data.applicationId);
+      .eq("id", data.applicationId)
+      .select("user_id, grant_type, amount_requested")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (updated?.user_id) {
+      const { notifyAccountChange, formatUsd } = await import("./account-alerts.server");
+      const statusText: Record<string, string> = {
+        pending: "is back under review",
+        approved: "has been approved",
+        rejected: "was not approved",
+        disbursed: "has been marked as disbursed",
+      };
+      const amount = updated.amount_requested ? ` (${formatUsd(Number(updated.amount_requested))})` : "";
+      await notifyAccountChange({
+        userId: updated.user_id,
+        title: `Grant application update: ${data.status}`,
+        body: `Your grant application${amount} ${statusText[data.status] ?? "has been updated"}.\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Please sign in and review your dashboard for the full details of this change.`,
+        categoryLabel: "Application Update",
+      });
+    }
     return { ok: true };
   });
+
 
 export const grantAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
