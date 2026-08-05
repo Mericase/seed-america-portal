@@ -120,6 +120,17 @@ function AdminPage() {
       }
       if (filter === "terminated") q = q.eq("profile_status", "terminated");
       if (filter === "pending_tier") q = q.eq("tier_status", "pending");
+      if (filter === "pending_apps") {
+        const { data: pendingApps } = await supabase
+          .from("grant_applications").select("user_id").eq("status", "pending");
+        const ids = Array.from(new Set((pendingApps ?? []).map((a) => a.user_id)));
+        if (ids.length === 0) {
+          setUsers([]);
+          setLoading(false);
+          return;
+        }
+        q = q.in("id", ids);
+      }
       const { data: rows, error } = await q;
       if (error) throw new Error(error.message);
       setUsers((rows ?? []) as UserRow[]);
