@@ -153,6 +153,11 @@ function AdminPage() {
     const t = setTimeout(refresh, 250);
     return () => clearTimeout(t);
   }, [search, filter, authChecked]);
+  const selectFilter = (f: "all" | "pending_tier" | "terminated" | "pending_apps") => {
+    setFilter(f);
+    setTimeout(() => document.getElementById("members-table")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
