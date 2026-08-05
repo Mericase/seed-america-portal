@@ -185,6 +185,13 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
       .update({ tier: newTier, tier_status: "active", requested_tier: null })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: `Tier ${newTier} verification approved`,
+      body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
+      categoryLabel: "Account Change",
+    });
     return { ok: true, tier: newTier };
   });
 
@@ -199,6 +206,13 @@ export const rejectTierUpgrade = createServerFn({ method: "POST" })
       .update({ tier_status: "rejected", requested_tier: null })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: "Tier upgrade request not approved",
+      body: `Your recent tier upgrade request could not be approved at this time.\n\nThis is usually due to unclear or incomplete verification documents. You may submit a new request with clearer documents at any time.\n\nPlease sign in and review your account for details.`,
+      categoryLabel: "Account Change",
+    });
     return { ok: true };
   });
 
@@ -215,6 +229,13 @@ export const setUserTier = createServerFn({ method: "POST" })
       .update({ tier: data.tier, tier_status: "active", requested_tier: null })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: `Your account tier is now Tier ${data.tier}`,
+      body: `Member Services has updated your membership tier to Tier ${data.tier}.\n\nYour grant eligibility and limits have been adjusted accordingly.\n\nPlease sign in and review your dashboard to confirm this change.`,
+      categoryLabel: "Account Change",
+    });
     return { ok: true };
   });
 
@@ -226,8 +247,21 @@ export const updateBalance = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: before } = await supabaseAdmin.from("profiles").select("balance").eq("id", data.userId).maybeSingle();
     const { error } = await supabaseAdmin.from("profiles").update({ balance: data.balance }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange, formatUsd } = await import("./account-alerts.server");
+    const prev = Number(before?.balance ?? 0);
+    const diff = data.balance - prev;
+    const movement = diff === 0
+      ? "Your balance was reviewed and confirmed."
+      : `${diff > 0 ? "Credit" : "Adjustment"}: ${diff > 0 ? "+" : "-"}${formatUsd(Math.abs(diff))}`;
+    await notifyAccountChange({
+      userId: data.userId,
+      title: "Your account balance has been updated",
+      body: `Member Services has updated the available balance on your Seedin America account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
+      categoryLabel: "Balance & Payment Update",
+    });
     return { ok: true };
   });
 
@@ -240,6 +274,13 @@ export const terminateUser = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "terminated" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: "Your membership has been suspended",
+      body: `Your Seedin America membership has been suspended by Member Services and access to your dashboard is currently restricted.\n\nIf you believe this was done in error, reply to this message or contact Member Services at info@seedinamerica.org for a review.`,
+      categoryLabel: "Security Notice",
+    });
     // Also sign them out of all sessions
     await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
     return { ok: true };
@@ -253,8 +294,16 @@ export const restoreUser = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "active" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: "Your membership has been reinstated",
+      body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
+      categoryLabel: "Account Change",
+    });
     return { ok: true };
   });
+
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
