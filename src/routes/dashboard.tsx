@@ -89,6 +89,14 @@ function Dashboard() {
           <Logo />
           <div className="flex items-center gap-2">
             <NotificationBell userId={profile.id} />
+            <button
+              onClick={() => navigate({ to: "/settings" })}
+              aria-label="Settings"
+              title="Settings"
+              className="grid h-10 w-10 place-items-center rounded-full border border-input bg-background hover:bg-accent"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
             {isAdmin && (
               <button
                 onClick={() => navigate({ to: "/admin" })}
@@ -97,6 +105,7 @@ function Dashboard() {
                 <ShieldAlert className="h-4 w-4" /> Admin
               </button>
             )}
+
             <button
               onClick={async () => { await supabase.auth.signOut(); }}
               className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
