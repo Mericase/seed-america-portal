@@ -381,6 +381,8 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot revoke your own admin role");
+    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be revoked");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
     if (error) throw new Error(error.message);
