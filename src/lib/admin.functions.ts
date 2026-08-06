@@ -337,6 +337,14 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: existing } = await supabaseAdmin
+      .from("grant_applications")
+      .select("status")
+      .eq("id", data.applicationId)
+      .maybeSingle();
+    const wasCredited = existing?.status === "approved" || existing?.status === "disbursed";
+
     const { data: updated, error } = await supabaseAdmin
       .from("grant_applications")
       .update({ status: data.status, admin_notes: data.notes ?? null, updated_at: new Date().toISOString() })
@@ -344,24 +352,57 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
       .select("user_id, grant_type, amount_requested")
       .maybeSingle();
     if (error) throw new Error(error.message);
+
     if (updated?.user_id) {
       const { notifyAccountChange, formatUsd } = await import("./account-alerts.server");
-      const statusText: Record<string, string> = {
-        pending: "is back under review",
-        approved: "has been approved",
-        rejected: "was not approved",
-        disbursed: "has been marked as disbursed",
-      };
-      const amount = updated.amount_requested ? ` (${formatUsd(Number(updated.amount_requested))})` : "";
-      await notifyAccountChange({
-        userId: updated.user_id,
-        title: `Grant application update: ${data.status}`,
-        body: `Your grant application${amount} ${statusText[data.status] ?? "has been updated"}.\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Please sign in and review your dashboard for the full details of this change.`,
-        categoryLabel: "Application Update",
-      });
+      const amountNum = Number(updated.amount_requested ?? 0);
+      const amount = amountNum ? ` (${formatUsd(amountNum)})` : "";
+
+      if (data.status === "approved" && !wasCredited && amountNum > 0) {
+        // Credit the approved grant amount to the member's available balance.
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("balance, tier")
+          .eq("id", updated.user_id)
+          .maybeSingle();
+        const prev = Number(prof?.balance ?? 0);
+        const next = prev + amountNum;
+        const { error: balErr } = await supabaseAdmin
+          .from("profiles")
+          .update({ balance: next })
+          .eq("id", updated.user_id);
+        if (balErr) throw new Error(balErr.message);
+
+        const isTier3 = Number(prof?.tier ?? 1) >= 3;
+        const nextSteps = isTier3
+          ? `Your account is already verified at Tier 3, so you may proceed with a withdrawal right away.\n\nSign in, open your dashboard and select "Withdraw" to send the funds to your linked bank account. Withdrawal reviews are typically completed within 24-72 hours.`
+          : `To release these funds to your bank account, you must first complete your Tier 3 verification.\n\nSign in, open your dashboard and select "Withdraw" — you will be guided through the Tier 3 upgrade. Once Tier 3 verification is approved, you can withdraw your full available balance.`;
+
+        await notifyAccountChange({
+          userId: updated.user_id,
+          title: "Your grant application has been approved",
+          body: `Congratulations — your grant application${amount} has been approved by the Seedin America review committee.\n\nApproved amount: ${formatUsd(amountNum)}\nPrevious balance: ${formatUsd(prev)}\nNew available balance: ${formatUsd(next)}\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Next step — withdrawing your funds:\n${nextSteps}\n\nRemember: Seedin America grants are pure grants, not loans. There is nothing to repay.`,
+          categoryLabel: "Grant Approved",
+          link: isTier3 ? "/withdrawal" : "/update-tier-3",
+        });
+      } else {
+        const statusText: Record<string, string> = {
+          pending: "is back under review",
+          approved: "has been approved",
+          rejected: "was not approved",
+          disbursed: "has been marked as disbursed",
+        };
+        await notifyAccountChange({
+          userId: updated.user_id,
+          title: `Grant application update: ${data.status}`,
+          body: `Your grant application${amount} ${statusText[data.status] ?? "has been updated"}.\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Please sign in and review your dashboard for the full details of this change.`,
+          categoryLabel: "Application Update",
+        });
+      }
     }
     return { ok: true };
   });
+
 
 
 export const grantAdminRole = createServerFn({ method: "POST" })
