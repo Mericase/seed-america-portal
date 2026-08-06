@@ -55,26 +55,46 @@ function SignInPage() {
         <div className="flex flex-1 items-center justify-center p-6">
           <div className="w-full max-w-md">
             <h1 className="font-display text-4xl font-semibold">Welcome back.</h1>
-            <p className="mt-2 text-muted-foreground">Sign in to your member dashboard.</p>
+            <p className="mt-2 text-muted-foreground">Sign in with your email address or username.</p>
 
             <form
               className="mt-8 space-y-5"
               onSubmit={async (e) => {
                 e.preventDefault();
                 setLoading(true);
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                setLoading(false);
-                if (error) return toast.error(error.message);
-                toast.success("Welcome back");
-                navigate({ to: "/dashboard" });
+                const identifier = email.trim();
+                try {
+                  if (identifier.includes("@")) {
+                    const { error } = await supabase.auth.signInWithPassword({ email: identifier, password });
+                    if (error) throw new Error(error.message);
+                  } else {
+                    const tokens = await signInWithUsername({ data: { username: identifier, password } });
+                    const { error } = await supabase.auth.setSession({
+                      access_token: tokens.access_token,
+                      refresh_token: tokens.refresh_token,
+                    });
+                    if (error) throw new Error(error.message);
+                  }
+                  toast.success("Welcome back");
+                  navigate({ to: "/dashboard" });
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Could not sign you in");
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</span>
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email or username</span>
+                <input type="text" autoCapitalize="none" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</span>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</span>
+                  <button type="button" onClick={() => setForgotOpen(true)} className="text-xs font-semibold text-forest hover:underline">
+                    Forgot password?
+                  </button>
+                </div>
                 <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
               </label>
               <button disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-60">
@@ -86,6 +106,9 @@ function SignInPage() {
               New to Seedin America?{" "}
               <Link to="/signup" className="font-semibold text-forest hover:underline">Create an account</Link>
             </p>
+
+            {forgotOpen && <ForgotPasswordModal onClose={() => setForgotOpen(false)} />}
+
           </div>
         </div>
       </main>
