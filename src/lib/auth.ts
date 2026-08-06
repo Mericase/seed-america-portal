@@ -5,6 +5,8 @@ import type { Session, User } from "@supabase/supabase-js";
 export interface Profile {
   id: string;
   full_name: string;
+  username?: string | null;
+
   email: string;
   phone: string;
   address: string;
