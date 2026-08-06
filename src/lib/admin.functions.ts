@@ -2,6 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// Permanent, non-removable administrator (Seedin America member account).
+export const PERMANENT_ADMIN_ID = "ce351161-d991-425f-8d9f-e671c9e96861";
+
+
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
@@ -271,6 +275,8 @@ export const terminateUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot terminate yourself");
+    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be suspended");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "terminated" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
@@ -311,6 +317,8 @@ export const deleteUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot delete yourself");
+    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
@@ -373,6 +381,8 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot revoke your own admin role");
+    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be revoked");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
     if (error) throw new Error(error.message);
