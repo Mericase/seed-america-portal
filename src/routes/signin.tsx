@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Mail, ShieldCheck, X } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { signInWithUsername } from "@/lib/account.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signin")({
@@ -20,6 +21,8 @@ function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
