@@ -14,6 +14,8 @@ import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
 import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
@@ -48,6 +50,16 @@ const SignupRoute = SignupRouteImport.update({
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -111,6 +123,8 @@ export interface FileRoutesByFullPath {
   '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -128,6 +142,8 @@ export interface FileRoutesByTo {
   '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -146,6 +162,8 @@ export interface FileRoutesById {
   '/apply-grant-form': typeof ApplyGrantFormRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
@@ -165,6 +183,8 @@ export interface FileRouteTypes {
     | '/apply-grant-form'
     | '/dashboard'
     | '/notifications'
+    | '/reset-password'
+    | '/settings'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -182,6 +202,8 @@ export interface FileRouteTypes {
     | '/apply-grant-form'
     | '/dashboard'
     | '/notifications'
+    | '/reset-password'
+    | '/settings'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -199,6 +221,8 @@ export interface FileRouteTypes {
     | '/apply-grant-form'
     | '/dashboard'
     | '/notifications'
+    | '/reset-password'
+    | '/settings'
     | '/signin'
     | '/signup'
     | '/update-tier-3'
@@ -217,6 +241,8 @@ export interface RootRouteChildren {
   ApplyGrantFormRoute: typeof ApplyGrantFormRoute
   DashboardRoute: typeof DashboardRoute
   NotificationsRoute: typeof NotificationsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   UpdateTier3Route: typeof UpdateTier3Route
@@ -262,6 +288,20 @@ declare module '@tanstack/react-router' {
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -345,6 +385,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyGrantFormRoute: ApplyGrantFormRoute,
   DashboardRoute: DashboardRoute,
   NotificationsRoute: NotificationsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   UpdateTier3Route: UpdateTier3Route,

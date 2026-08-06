@@ -9,7 +9,7 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getUserDetail } from "@/lib/admin.functions";
+import { getUserDetail, updateApplicationStatus } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
@@ -477,9 +477,7 @@ function ApplicationCard({ app, onRefresh }: { app: Application; onRefresh: () =
   const setStatus = async (status: "pending" | "approved" | "rejected" | "disbursed") => {
     setSaving(true);
     try {
-      const { error } = await supabase.from("grant_applications")
-        .update({ status, admin_notes: notes, updated_at: new Date().toISOString() }).eq("id", app.id);
-      if (error) throw new Error(error.message);
+      await updateApplicationStatus({ data: { applicationId: app.id, status, notes } });
       toast.success(`Application marked as ${status}`);
       await onRefresh();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }

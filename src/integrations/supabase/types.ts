@@ -224,6 +224,7 @@ export type Database = {
           tier: number
           tier_status: string
           updated_at: string
+          username: string | null
           verification_submitted_at: string | null
           withdrawal_status: string | null
           withdrawal_submitted_at: string | null
@@ -254,6 +255,7 @@ export type Database = {
           tier?: number
           tier_status?: string
           updated_at?: string
+          username?: string | null
           verification_submitted_at?: string | null
           withdrawal_status?: string | null
           withdrawal_submitted_at?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           tier?: number
           tier_status?: string
           updated_at?: string
+          username?: string | null
           verification_submitted_at?: string | null
           withdrawal_status?: string | null
           withdrawal_submitted_at?: string | null
