@@ -115,3 +115,63 @@ function SignInPage() {
     </div>
   );
 }
+
+function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-primary/60 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-card p-8 shadow-elegant" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-gold">Account recovery</p>
+            <h3 className="mt-1 font-display text-2xl font-semibold">Reset your password</h3>
+          </div>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="mt-6">
+            <p className="text-sm text-muted-foreground">
+              If an account exists for <strong className="text-foreground">{email}</strong>, a secure password reset
+              link is on its way. The link expires in 60 minutes — check your inbox and spam folder.
+            </p>
+            <button onClick={onClose} className="mt-6 w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground">
+              Done
+            </button>
+          </div>
+        ) : (
+          <form
+            className="mt-6 space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setSending(true);
+              const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+                redirectTo: `${window.location.origin}/reset-password`,
+              });
+              setSending(false);
+              if (error) return toast.error(error.message);
+              setSent(true);
+            }}
+          >
+            <p className="text-sm text-muted-foreground">
+              Enter the email address on your Seedin America account and we'll send you a confirmation link to set a
+              new password.
+            </p>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email address</span>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
+            </label>
+            <button disabled={sending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant disabled:opacity-60">
+              {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Mail className="h-4 w-4" /> Send reset link</>}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
