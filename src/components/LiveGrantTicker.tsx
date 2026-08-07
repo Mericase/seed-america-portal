@@ -114,7 +114,7 @@ export function LiveGrantTicker() {
         <div className="relative flex-1 overflow-hidden">
           <div
             key={winner.id}
-            onAnimationIteration={handleIterationEnd}
+            onAnimationEnd={handleAnimationEnd}
             className="animate-marquee whitespace-nowrap text-sm font-medium text-foreground/90"
           >
             {message}
