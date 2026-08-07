@@ -82,7 +82,7 @@ export function LiveGrantTicker() {
 
   // Continuous stream: as soon as one message finishes scrolling out,
   // the next winner comes in after a varied beat.
-  const handleIterationEnd = () => {
+  const handleAnimationEnd = () => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setWinner(makeWinner()), nextDelay());
   };
