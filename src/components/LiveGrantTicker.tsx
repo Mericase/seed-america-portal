@@ -44,47 +44,29 @@ function makeWinner() {
 }
 
 export function LiveGrantTicker() {
-  const [winner, setWinner] = useState<ReturnType<typeof makeWinner> | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [winner, setWinner] = useState(() => makeWinner());
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Continuous stream: as soon as one message finishes scrolling out,
+  // the next winner comes in after at most a 2s beat.
+  const handleIterationEnd = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setWinner(makeWinner()), 500 + Math.random() * 1500);
+  };
 
-    const schedule = (delay: number) => {
-      const t = setTimeout(() => {
-        if (cancelled) return;
-        setWinner(makeWinner());
-        const hide = setTimeout(() => {
-          if (cancelled) return;
-          setWinner(null);
-          schedule(12000 + Math.random() * 14000);
-        }, 14000);
-        timers.current.push(hide);
-      }, delay);
-      timers.current.push(t);
-    };
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-    schedule(4000);
-    return () => {
-      cancelled = true;
-      timers.current.forEach(clearTimeout);
-      timers.current = [];
-    };
-  }, []);
-
-  const message = useMemo(() => {
-    if (!winner) return "";
-    return `🎉 Congratulations ${winner.name} (${winner.state}) — approved for a $${winner.amount.toLocaleString("en-US")} ${winner.category} grant. 🌱 Your seed can be next.`;
-  }, [winner]);
-
-  if (!winner) return null;
+  const message = useMemo(
+    () =>
+      `🎉 Congratulations ${winner.name} (${winner.state}) — approved for a $${winner.amount.toLocaleString("en-US")} ${winner.category} grant. 🌱 Your seed can be next.`,
+    [winner],
+  );
 
   return (
     <div
-      key={winner.id}
       role="status"
       aria-live="polite"
-      className="animate-fade-in mt-6 overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-r from-forest/10 via-gold/10 to-transparent shadow-card"
+      className="mt-6 overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-r from-forest/10 via-gold/10 to-transparent shadow-card"
     >
       <div className="flex items-center gap-3 px-4 py-2.5">
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-forest px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-forest-foreground">
@@ -96,7 +78,11 @@ export function LiveGrantTicker() {
         </span>
         <PartyPopper className="h-4 w-4 shrink-0 text-gold" />
         <div className="relative flex-1 overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap text-sm font-medium text-foreground/90">
+          <div
+            key={winner.id}
+            onAnimationIteration={handleIterationEnd}
+            className="animate-marquee whitespace-nowrap text-sm font-medium text-foreground/90"
+          >
             {message}
           </div>
         </div>
@@ -104,3 +90,4 @@ export function LiveGrantTicker() {
     </div>
   );
 }
+
