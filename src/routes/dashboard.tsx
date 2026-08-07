@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ChatWidget } from "@/components/ChatWidget";
+import { LiveGrantTicker } from "@/components/LiveGrantTicker";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -117,6 +118,8 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 pt-10">
+        <LiveGrantTicker />
+
         {/* Greeting & primary CTA */}
         <section>
           <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Welcome back</p>
