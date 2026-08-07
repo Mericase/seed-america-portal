@@ -118,6 +118,8 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 pt-10">
+        <LiveGrantTicker />
+
         {/* Greeting & primary CTA */}
         <section>
           <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Welcome back</p>
