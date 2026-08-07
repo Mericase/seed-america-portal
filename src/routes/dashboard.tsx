@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ChatWidget } from "@/components/ChatWidget";
+import { LiveGrantTicker } from "@/components/LiveGrantTicker";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
