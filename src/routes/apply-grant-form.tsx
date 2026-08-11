@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Sprout, ShieldCheck, Landmark, CheckCircle2 } from 
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportMemberEvent } from "@/lib/admin-bot.functions";
 
 export const Route = createFileRoute("/apply-grant-form")({
   head: () => ({
@@ -112,6 +113,13 @@ function ApplyGrant() {
         routing_number: form.routingNumber,
       });
       if (error) throw error;
+      reportMemberEvent({
+        data: {
+          kind: "grant_application",
+          amount: form.amountRequested ? Number(form.amountRequested) : null,
+          detail: form.grantType === "Other" ? form.grantTypeOther : form.grantType,
+        },
+      }).catch(() => null);
       toast.success("Grant application submitted", { description: "We'll review and respond within 14 business days." });
       navigate({ to: "/dashboard" });
     } catch (err) {

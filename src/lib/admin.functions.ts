@@ -6,6 +6,45 @@ import { z } from "zod";
 export const PERMANENT_ADMIN_ID = "ce351161-d991-425f-8d9f-e671c9e96861";
 
 
+async function adminActor(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+  return `${data?.full_name ?? "Admin"} (${data?.email ?? userId})`;
+}
+
+async function alertAdminAction(opts: {
+  actorId: string;
+  targetId?: string;
+  emoji?: string;
+  title: string;
+  extra?: Array<[string, string | number | null | undefined]>;
+  urgent?: boolean;
+  note?: string;
+}) {
+  try {
+    const { sendAdminAlert, memberIdentity } = await import("./admin-bot.server");
+    const actor = await adminActor(opts.actorId);
+    const fields: Array<[string, string | number | null | undefined]> = [["Performed by", actor]];
+    if (opts.targetId) {
+      const who = await memberIdentity(opts.targetId);
+      fields.push(["Member", who.name], ["Email", who.email]);
+    }
+    await sendAdminAlert({
+      emoji: opts.emoji ?? "🛠️",
+      title: opts.title,
+      fields: [...fields, ...(opts.extra ?? [])],
+      urgent: opts.urgent,
+      note: opts.note,
+    });
+  } catch (e) {
+    console.error("[admin-bot] action alert failed", e);
+  }
+}
+
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
@@ -196,6 +235,12 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
       body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
       categoryLabel: "Account Change",
     });
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "✅",
+      title: `Tier ${newTier} upgrade approved`,
+    });
     return { ok: true, tier: newTier };
   });
 
@@ -266,6 +311,13 @@ export const updateBalance = createServerFn({ method: "POST" })
       body: `Member Services has updated the available balance on your Seedin America account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
       categoryLabel: "Balance & Payment Update",
     });
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "💰",
+      title: "Member balance changed",
+      extra: [["Previous", formatUsd(prev)], ["New", formatUsd(data.balance)]],
+    });
     return { ok: true };
   });
 
@@ -289,6 +341,13 @@ export const terminateUser = createServerFn({ method: "POST" })
     });
     // Also sign them out of all sessions
     await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "⛔",
+      title: "Member account suspended",
+      urgent: true,
+    });
     return { ok: true };
   });
 
@@ -307,6 +366,12 @@ export const restoreUser = createServerFn({ method: "POST" })
       body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
       categoryLabel: "Account Change",
     });
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "♻️",
+      title: "Member account reinstated",
+    });
     return { ok: true };
   });
 
@@ -320,8 +385,20 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendAdminAlert, memberIdentity } = await import("./admin-bot.server");
+    const target = await memberIdentity(data.userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+    await sendAdminAlert({
+      emoji: "🗑️",
+      title: "Member account permanently deleted",
+      fields: [
+        ["Performed by", await adminActor(context.userId)],
+        ["Member", target.name],
+        ["Email", target.email],
+      ],
+      urgent: true,
+    });
     return { ok: true };
   });
 
@@ -399,6 +476,18 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
           categoryLabel: "Application Update",
         });
       }
+
+      await alertAdminAction({
+        actorId: context.userId,
+        targetId: updated.user_id,
+        emoji: "📄",
+        title: `Grant application marked ${data.status}`,
+        extra: [
+          ["Grant type", updated.grant_type],
+          ["Amount", formatUsd(Number(updated.amount_requested ?? 0))],
+          ["Notes", data.notes ?? null],
+        ],
+      });
     }
     return { ok: true };
   });
@@ -413,6 +502,13 @@ export const grantAdminRole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "👑",
+      title: "Admin access GRANTED to a member",
+      urgent: true,
+    });
     return { ok: true };
   });
 
@@ -422,11 +518,41 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot revoke your own admin role");
-    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be revoked");
+
+    if (data.userId === PERMANENT_ADMIN_ID) {
+      await alertAdminAction({
+        actorId: context.userId,
+        targetId: data.userId,
+        emoji: "⛔",
+        title: "BLOCKED: attempt to revoke the main admin account",
+        urgent: true,
+        note: "The permanent administrator role cannot be removed. Review this admin's access.",
+      });
+      throw new Error("This account is a permanent administrator and cannot be revoked");
+    }
+
+    if (context.userId !== PERMANENT_ADMIN_ID) {
+      await alertAdminAction({
+        actorId: context.userId,
+        targetId: data.userId,
+        emoji: "⛔",
+        title: "BLOCKED: non-primary admin tried to revoke another admin",
+        urgent: true,
+        note: "Only the main Seedin America admin account can remove admin access.",
+      });
+      throw new Error("Only the main administrator can revoke admin access");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
     if (error) throw new Error(error.message);
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "🔻",
+      title: "Admin access revoked",
+      urgent: true,
+    });
     return { ok: true };
   });
 

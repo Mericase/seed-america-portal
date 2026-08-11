@@ -7,6 +7,7 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportMemberEvent } from "@/lib/admin-bot.functions";
 import type { Profile } from "@/lib/auth";
 
 export const Route = createFileRoute("/withdrawal")({
@@ -66,6 +67,13 @@ function Withdrawal() {
         withdrawal_status: "pending_admin_approval",
       } as any).eq("id", profile.id);
       if (error) throw error;
+      reportMemberEvent({
+        data: {
+          kind: "withdrawal_request",
+          amount: numAmount,
+          detail: (profile as any)?.linked_bank_name ?? null,
+        },
+      }).catch(() => null);
       setStep("confirmation");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to submit withdrawal");
