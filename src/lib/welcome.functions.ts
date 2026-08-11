@@ -69,5 +69,20 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
       }),
     ]);
 
+    try {
+      const { sendAdminAlert, usd } = await import("./admin-bot.server");
+      await sendAdminAlert({
+        emoji: "🌱",
+        title: "New member sign-up",
+        fields: [
+          ["Name", profile.full_name],
+          ["Email", profile.email],
+          ["Starting balance", usd(Number(profile.balance ?? 0))],
+        ],
+      });
+    } catch (e) {
+      console.error("[welcome] admin alert failed", e);
+    }
+
     return { ok: true };
   });
