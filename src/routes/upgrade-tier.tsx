@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, IdCard, Loader2, ShieldCheck, Upload, User } f
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportMemberEvent } from "@/lib/admin-bot.functions";
 
 export const Route = createFileRoute("/upgrade-tier")({
   head: () => ({ meta: [{ title: "Upgrade to Tier 2 — Seedin America" }] }),
@@ -87,6 +88,7 @@ function UpgradeTier() {
         })
         .eq("id", userId);
       if (updErr) throw updErr;
+      reportMemberEvent({ data: { kind: "tier_upgrade_request", tier: 2, detail: skipSsnCard ? "SSN card upload skipped" : "Full document set uploaded" } }).catch(() => null);
       toast.success("Verification submitted! We'll review within 24 hours.");
       navigate({ to: "/dashboard" });
     } catch (e) {
