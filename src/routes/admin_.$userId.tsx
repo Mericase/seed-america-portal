@@ -103,6 +103,9 @@ function AdminUserDetail() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
   const doGetUserDetail = useServerFn(getUserDetail);
+  const grantAdminFn = useServerFn(grantAdminRole);
+  const revokeAdminFn = useServerFn(revokeAdminRole);
+
 
   const load = async () => {
     setLoading(true);
