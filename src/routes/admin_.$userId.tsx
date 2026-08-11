@@ -9,7 +9,7 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getUserDetail, updateApplicationStatus } from "@/lib/admin.functions";
+import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
@@ -103,6 +103,9 @@ function AdminUserDetail() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
   const doGetUserDetail = useServerFn(getUserDetail);
+  const grantAdminFn = useServerFn(grantAdminRole);
+  const revokeAdminFn = useServerFn(revokeAdminRole);
+
 
   const load = async () => {
     setLoading(true);
@@ -213,13 +216,12 @@ function AdminUserDetail() {
     navigate({ to: "/admin" });
   };
   const grantAdmin = async () => {
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
-    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    await grantAdminFn({ data: { userId } });
   };
   const revokeAdmin = async () => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
-    if (error) throw new Error(error.message);
+    await revokeAdminFn({ data: { userId } });
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
