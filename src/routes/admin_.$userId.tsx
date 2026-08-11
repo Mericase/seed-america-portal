@@ -213,13 +213,12 @@ function AdminUserDetail() {
     navigate({ to: "/admin" });
   };
   const grantAdmin = async () => {
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
-    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    await grantAdminFn({ data: { userId } });
   };
   const revokeAdmin = async () => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
-    if (error) throw new Error(error.message);
+    await revokeAdminFn({ data: { userId } });
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
