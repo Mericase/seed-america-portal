@@ -341,6 +341,13 @@ export const terminateUser = createServerFn({ method: "POST" })
     });
     // Also sign them out of all sessions
     await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "⛔",
+      title: "Member account suspended",
+      urgent: true,
+    });
     return { ok: true };
   });
 
@@ -358,6 +365,12 @@ export const restoreUser = createServerFn({ method: "POST" })
       title: "Your membership has been reinstated",
       body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
       categoryLabel: "Account Change",
+    });
+    await alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "♻️",
+      title: "Member account reinstated",
     });
     return { ok: true };
   });
