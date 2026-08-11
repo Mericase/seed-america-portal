@@ -463,6 +463,18 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
           categoryLabel: "Application Update",
         });
       }
+
+      await alertAdminAction({
+        actorId: context.userId,
+        targetId: updated.user_id,
+        emoji: "📄",
+        title: `Grant application marked ${data.status}`,
+        extra: [
+          ["Grant type", updated.grant_type],
+          ["Amount", formatUsd(Number(updated.amount_requested ?? 0))],
+          ["Notes", data.notes ?? null],
+        ],
+      });
     }
     return { ok: true };
   });
