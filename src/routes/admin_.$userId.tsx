@@ -9,7 +9,7 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole } from "@/lib/admin.functions";
+import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole, approveTierUpgrade } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
