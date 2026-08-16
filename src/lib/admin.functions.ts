@@ -225,16 +225,23 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
     const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
     const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
-    const patch: Record<string, unknown> = { tier: newTier, tier_status: "active", requested_tier: null };
-    if (data.liveLink) {
-      patch['tier2_live_link'] = data.liveLink;
-      patch['tier2_live_sent_at'] = new Date().toISOString();
-      patch['tier2_live_completed_at'] = null;
-    }
+    const patch = {
+      tier: newTier,
+      tier_status: "active",
+      requested_tier: null,
+      ...(data.liveLink
+        ? {
+            tier2_live_link: data.liveLink,
+            tier2_live_sent_at: new Date().toISOString(),
+            tier2_live_completed_at: null,
+          }
+        : {}),
+    };
     const { error } = await supabaseAdmin
       .from("profiles")
       .update(patch)
       .eq("id", data.userId);
+
     if (error) throw new Error(error.message);
     const { notifyAccountChange } = await import("./account-alerts.server");
     if (data.liveLink) {
