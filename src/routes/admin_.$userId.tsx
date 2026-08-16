@@ -267,9 +267,18 @@ function AdminUserDetail() {
         <section className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {pending ? (
             <>
-              <ActionBtn onClick={() => wrap(approveTier, `Tier upgraded to ${p.requested_tier}`)} disabled={busy} tone="forest" icon={<CheckCircle2 className="h-4 w-4" />}>
+              <ActionBtn
+                onClick={() => {
+                  if (p.requested_tier === 2) { setTierLink(String(p.tier2_live_link ?? "")); setTierLinkOpen(true); return; }
+                  wrap(() => approveTier(), `Tier upgraded to ${p.requested_tier}`);
+                }}
+                disabled={busy}
+                tone="forest"
+                icon={<CheckCircle2 className="h-4 w-4" />}
+              >
                 Approve Tier {p.requested_tier}
               </ActionBtn>
+
               <ActionBtn onClick={() => wrap(rejectTier, "Tier request rejected")} disabled={busy} tone="danger" icon={<Ban className="h-4 w-4" />}>
                 Reject Upgrade
               </ActionBtn>
