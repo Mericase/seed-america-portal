@@ -197,11 +197,10 @@ function AdminUserDetail() {
   const pending = p.tier_status === "pending" && p.requested_tier && p.requested_tier > p.tier;
   const isAdmin = detail.roles.includes("admin");
 
-  const approveTier = async () => {
-    const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
-    const { error } = await supabase.from("profiles").update({ tier: newTier, tier_status: "active", requested_tier: null }).eq("id", userId);
-    if (error) throw new Error(error.message);
+  const approveTier = async (liveLink?: string) => {
+    await approveTierFn({ data: liveLink ? { userId, liveLink } : { userId } });
   };
+
   const rejectTier = async () => {
     const { error } = await supabase.from("profiles").update({ tier_status: "rejected", requested_tier: null }).eq("id", userId);
     if (error) throw new Error(error.message);
