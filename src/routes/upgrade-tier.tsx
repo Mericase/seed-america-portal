@@ -89,8 +89,8 @@ function UpgradeTier() {
         .eq("id", userId);
       if (updErr) throw updErr;
       reportMemberEvent({ data: { kind: "tier_upgrade_request", tier: 2, detail: skipSsnCard ? "SSN card upload skipped" : "Full document set uploaded" } }).catch(() => null);
-      toast.success("Verification submitted! We'll review within 24 hours.");
-      navigate({ to: "/dashboard" });
+      setSubmitted(true);
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
