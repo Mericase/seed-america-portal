@@ -216,33 +216,67 @@ export const getUserDetail = createServerFn({ method: "POST" })
 
 export const approveTierUpgrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .inputValidator((i: { userId: string; liveLink?: string }) =>
+    z.object({ userId: z.string().uuid(), liveLink: z.string().url().optional() }).parse(i),
+  )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
     const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
+    const patch: Record<string, unknown> = { tier: newTier, tier_status: "active", requested_tier: null };
+    if (data.liveLink) {
+      patch['tier2_live_link'] = data.liveLink;
+      patch['tier2_live_sent_at'] = new Date().toISOString();
+      patch['tier2_live_completed_at'] = null;
+    }
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ tier: newTier, tier_status: "active", requested_tier: null })
+      .update(patch)
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
     const { notifyAccountChange } = await import("./account-alerts.server");
-    await notifyAccountChange({
-      userId: data.userId,
-      title: `Tier ${newTier} verification approved`,
-      body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
-      categoryLabel: "Account Change",
-    });
+    if (data.liveLink) {
+      await notifyAccountChange({
+        userId: data.userId,
+        title: "URGENT: Complete your final Tier 2 live verification",
+        body:
+          `Your Tier ${newTier} documents have been reviewed and approved. One final step remains: a live verification session with our compliance team.\n\n` +
+          `Please treat this message as urgent — your Tier ${newTier} benefits remain limited until the live verification is completed.\n\n` +
+          `IMPORTANT: This session can ONLY be completed on a laptop, desktop computer, tablet or iPad with a working webcam. Mobile phones are not permitted and the session will not open on a phone.\n\n` +
+          `Sign in to your dashboard on an approved device and tap "Proceed" on the verification prompt to begin.`,
+        categoryLabel: "Urgent — Action Required",
+      });
+    } else {
+      await notifyAccountChange({
+        userId: data.userId,
+        title: `Tier ${newTier} verification approved`,
+        body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
+        categoryLabel: "Account Change",
+      });
+    }
     await alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "✅",
       title: `Tier ${newTier} upgrade approved`,
+      extra: data.liveLink ? [["Live verification link", data.liveLink]] : undefined,
     });
     return { ok: true, tier: newTier };
   });
+
+export const markTier2LiveStarted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("profiles")
+      .update({ tier2_live_completed_at: new Date().toISOString() })
+      .eq("id", context.userId);
+    return { ok: true };
+  });
+
 
 export const rejectTierUpgrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
