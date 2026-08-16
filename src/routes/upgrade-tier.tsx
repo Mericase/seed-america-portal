@@ -23,6 +23,7 @@ function UpgradeTier() {
   const [skipSsnCard, setSkipSsnCard] = useState(false);
   const [showSkipOption, setShowSkipOption] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -100,6 +101,44 @@ function UpgradeTier() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/30 to-background pb-20">
+      {submitted && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
+            <div className="bg-gradient-primary px-7 py-6 text-primary-foreground">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Submission received
+              </div>
+              <h2 className="mt-2 font-display text-2xl font-semibold">Congratulations — you're almost there!</h2>
+              <p className="mt-1 text-sm text-white/80">
+                Your Tier 2 upgrade is now <strong className="text-gold">pending review</strong>. Our verification team is
+                reviewing your documents.
+              </p>
+            </div>
+            <div className="space-y-4 p-7 text-sm">
+              <p className="text-muted-foreground">
+                Our team will reach out to you shortly with a secure link to complete the final live verification
+                required for Tier 2. Keep an eye on your notifications and email inbox.
+              </p>
+              <div className="rounded-xl border border-gold/40 bg-gold/10 p-4">
+                <p className="font-semibold text-foreground">Important — device requirement</p>
+                <p className="mt-1 text-muted-foreground">
+                  The final verification can only be completed on a <strong className="text-foreground">laptop, desktop
+                  computer, tablet or iPad</strong> with a working webcam.{" "}
+                  <strong className="text-destructive">Mobile phones are not allowed</strong> and the session will not
+                  open on a phone.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant"
+              >
+                Back to dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="mx-auto flex max-w-4xl items-center justify-between px-6 py-6">
         <Logo />
         <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
