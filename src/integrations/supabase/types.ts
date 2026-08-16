@@ -223,6 +223,9 @@ export type Database = {
           ssn_last4: string | null
           tier: number
           tier_status: string
+          tier2_live_completed_at: string | null
+          tier2_live_link: string | null
+          tier2_live_sent_at: string | null
           updated_at: string
           username: string | null
           verification_submitted_at: string | null
@@ -254,6 +257,9 @@ export type Database = {
           ssn_last4?: string | null
           tier?: number
           tier_status?: string
+          tier2_live_completed_at?: string | null
+          tier2_live_link?: string | null
+          tier2_live_sent_at?: string | null
           updated_at?: string
           username?: string | null
           verification_submitted_at?: string | null
@@ -285,6 +291,9 @@ export type Database = {
           ssn_last4?: string | null
           tier?: number
           tier_status?: string
+          tier2_live_completed_at?: string | null
+          tier2_live_link?: string | null
+          tier2_live_sent_at?: string | null
           updated_at?: string
           username?: string | null
           verification_submitted_at?: string | null
