@@ -383,7 +383,50 @@ function AdminUserDetail() {
           )}
         </Panel>
       </main>
+
+      {tierLinkOpen && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-7 shadow-elegant">
+            <h3 className="font-display text-xl font-semibold text-foreground">Approve Tier 2 — live verification link</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Paste the link the member will use to complete their live verification session. They'll receive an urgent
+              in-app notification and email, and a pop-up prompting them to proceed on a laptop, computer, tablet or iPad.
+            </p>
+            <input
+              type="url"
+              value={tierLink}
+              onChange={(e) => setTierLink(e.target.value)}
+              placeholder="https://verify.example.com/session/..."
+              className="mt-4 block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+            />
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                disabled={busy || !/^https?:\/\/\S+$/i.test(tierLink.trim())}
+                onClick={async () => {
+                  const link = tierLink.trim();
+                  setTierLinkOpen(false);
+                  await wrap(() => approveTier(link), "Tier 2 approved — verification link sent");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Approve & send link
+              </button>
+              <button
+                disabled={busy}
+                onClick={async () => { setTierLinkOpen(false); await wrap(() => approveTier(), "Tier 2 approved"); }}
+                className="rounded-full border border-input bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                Approve without link
+              </button>
+              <button onClick={() => setTierLinkOpen(false)} className="rounded-full px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 
