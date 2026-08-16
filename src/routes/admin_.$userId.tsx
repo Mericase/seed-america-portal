@@ -171,6 +171,10 @@ function AdminUserDetail() {
     })();
   }, [userId]);
 
+  const approveTierFn = useServerFn(approveTierUpgrade);
+  const [tierLinkOpen, setTierLinkOpen] = useState(false);
+  const [tierLink, setTierLink] = useState("");
+
   const wrap = async (fn: () => Promise<unknown>, success: string) => {
     setBusy(true);
     try { await fn(); toast.success(success); await load(); }
