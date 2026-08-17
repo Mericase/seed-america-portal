@@ -172,8 +172,11 @@ function AdminUserDetail() {
   }, [userId]);
 
   const approveTierFn = useServerFn(approveTierUpgrade);
+  const confirmLiveFn = useServerFn(confirmTier2LiveVerification);
+  const resetLiveFn = useServerFn(resetTier2LiveVerification);
   const [tierLinkOpen, setTierLinkOpen] = useState(false);
   const [tierLink, setTierLink] = useState("");
+
 
   const wrap = async (fn: () => Promise<unknown>, success: string) => {
     setBusy(true);
