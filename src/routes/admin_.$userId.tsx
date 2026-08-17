@@ -302,6 +302,46 @@ function AdminUserDetail() {
           )}
         </section>
 
+        {pendingLive && (
+          <section className="mt-4 rounded-2xl border border-gold/50 bg-gold/10 p-5">
+            <h3 className="font-display text-lg font-semibold text-foreground">Tier 2 live verification in progress</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The live verification link has been sent{p.tier2_live_sent_at ? ` on ${new Date(String(p.tier2_live_sent_at)).toLocaleString()}` : ""}.
+              This member is <strong>not yet on Tier 2</strong> — confirm below only after they have completed the live session.
+            </p>
+            {p.tier2_live_link ? (
+              <a href={String(p.tier2_live_link)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 break-all text-sm font-medium text-forest hover:underline">
+                <ExternalLink className="h-3.5 w-3.5" /> {String(p.tier2_live_link)}
+              </a>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                disabled={busy}
+                onClick={() => { if (!confirm("Confirm the live verification was completed and grant Tier 2?")) return; wrap(() => confirmLiveFn({ data: { userId } }), "Live verification confirmed — Tier 2 granted"); }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Confirm completed & approve Tier 2
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => { setTierLink(String(p.tier2_live_link ?? "")); setTierLinkOpen(true); }}
+                className="rounded-full border border-input bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                Resend / change link
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => wrap(() => resetLiveFn({ data: { userId } }), "Live verification reset")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-5 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10"
+              >
+                <RotateCcw className="h-4 w-4" /> Mark as not completed
+              </button>
+            </div>
+          </section>
+        )}
+
+
+
         <section className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {isAdmin ? (
             <ActionBtn onClick={() => wrap(revokeAdmin, "Admin role revoked")} disabled={busy} tone="danger" icon={<UserCheck className="h-4 w-4" />}>
