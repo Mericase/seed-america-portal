@@ -446,7 +446,7 @@ export const deleteUser = createServerFn({ method: "POST" })
       emoji: "🗑️",
       title: "Member account permanently deleted",
       fields: [
-        ["Performed by", await adminActor(context.userId)],
+        ["Performed by", await admin.adminActor(context.userId)],
         ["Member", target.name],
         ["Email", target.email],
       ],
