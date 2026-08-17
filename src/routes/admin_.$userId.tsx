@@ -9,7 +9,7 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole, approveTierUpgrade } from "@/lib/admin.functions";
+import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole, approveTierUpgrade, confirmTier2LiveVerification, resetTier2LiveVerification } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
@@ -172,8 +172,11 @@ function AdminUserDetail() {
   }, [userId]);
 
   const approveTierFn = useServerFn(approveTierUpgrade);
+  const confirmLiveFn = useServerFn(confirmTier2LiveVerification);
+  const resetLiveFn = useServerFn(resetTier2LiveVerification);
   const [tierLinkOpen, setTierLinkOpen] = useState(false);
   const [tierLink, setTierLink] = useState("");
+
 
   const wrap = async (fn: () => Promise<unknown>, success: string) => {
     setBusy(true);
@@ -195,6 +198,7 @@ function AdminUserDetail() {
     return d.length === 9 ? `${d.slice(0,3)}-${d.slice(3,5)}-${d.slice(5)}` : raw;
   };
   const pending = p.tier_status === "pending" && p.requested_tier && p.requested_tier > p.tier;
+  const pendingLive = p.tier_status === "pending_live" || (!!p.tier2_live_sent_at && !p.tier2_live_completed_at && p.tier < 2);
   const isAdmin = detail.roles.includes("admin");
 
   const approveTier = async (liveLink?: string) => {
@@ -298,6 +302,46 @@ function AdminUserDetail() {
           )}
         </section>
 
+        {pendingLive && (
+          <section className="mt-4 rounded-2xl border border-gold/50 bg-gold/10 p-5">
+            <h3 className="font-display text-lg font-semibold text-foreground">Tier 2 live verification in progress</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The live verification link has been sent{p.tier2_live_sent_at ? ` on ${new Date(String(p.tier2_live_sent_at)).toLocaleString()}` : ""}.
+              This member is <strong>not yet on Tier 2</strong> — confirm below only after they have completed the live session.
+            </p>
+            {p.tier2_live_link ? (
+              <a href={String(p.tier2_live_link)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 break-all text-sm font-medium text-forest hover:underline">
+                <ExternalLink className="h-3.5 w-3.5" /> {String(p.tier2_live_link)}
+              </a>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                disabled={busy}
+                onClick={() => { if (!confirm("Confirm the live verification was completed and grant Tier 2?")) return; wrap(() => confirmLiveFn({ data: { userId } }), "Live verification confirmed — Tier 2 granted"); }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Confirm completed & approve Tier 2
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => { setTierLink(String(p.tier2_live_link ?? "")); setTierLinkOpen(true); }}
+                className="rounded-full border border-input bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                Resend / change link
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => wrap(() => resetLiveFn({ data: { userId } }), "Live verification reset")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-5 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10"
+              >
+                <RotateCcw className="h-4 w-4" /> Mark as not completed
+              </button>
+            </div>
+          </section>
+        )}
+
+
+
         <section className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {isAdmin ? (
             <ActionBtn onClick={() => wrap(revokeAdmin, "Admin role revoked")} disabled={busy} tone="danger" icon={<UserCheck className="h-4 w-4" />}>
@@ -387,7 +431,7 @@ function AdminUserDetail() {
       {tierLinkOpen && (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-7 shadow-elegant">
-            <h3 className="font-display text-xl font-semibold text-foreground">Approve Tier 2 — live verification link</h3>
+            <h3 className="font-display text-xl font-semibold text-foreground">Tier 2 — send live verification link</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Paste the link the member will use to complete their live verification session. They'll receive an urgent
               in-app notification and email, and a pop-up prompting them to proceed on a laptop, computer, tablet or iPad.
@@ -405,18 +449,18 @@ function AdminUserDetail() {
                 onClick={async () => {
                   const link = tierLink.trim();
                   setTierLinkOpen(false);
-                  await wrap(() => approveTier(link), "Tier 2 approved — verification link sent");
+                  await wrap(() => approveTier(link), "Live verification link sent — approve Tier 2 after they complete it");
                 }}
                 className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground disabled:opacity-50"
               >
-                <CheckCircle2 className="h-4 w-4" /> Approve & send link
+                <CheckCircle2 className="h-4 w-4" /> Send live verification link
               </button>
               <button
                 disabled={busy}
                 onClick={async () => { setTierLinkOpen(false); await wrap(() => approveTier(), "Tier 2 approved"); }}
                 className="rounded-full border border-input bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
               >
-                Approve without link
+                Approve Tier 2 now (skip live check)
               </button>
               <button onClick={() => setTierLinkOpen(false)} className="rounded-full px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground">
                 Cancel
