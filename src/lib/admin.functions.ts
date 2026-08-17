@@ -131,67 +131,164 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier").eq("id", data.userId).maybeSingle();
+    const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier, full_name, email").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
     const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
-    const patch = {
-      tier: newTier,
-      tier_status: "active",
-      requested_tier: null,
-      ...(data.liveLink
-        ? {
-            tier2_live_link: data.liveLink,
-            tier2_live_sent_at: new Date().toISOString(),
-            tier2_live_completed_at: null,
-          }
-        : {}),
-    };
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update(patch)
-      .eq("id", data.userId);
-
-    if (error) throw new Error(error.message);
     const { notifyAccountChange } = await import("./account-alerts.server");
+
+    // With a live-verification link the upgrade is NOT granted yet: the member
+    // must complete the live session, after which an admin confirms it.
     if (data.liveLink) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          tier_status: "pending_live",
+          requested_tier: p.requested_tier ?? newTier,
+          tier2_live_link: data.liveLink,
+          tier2_live_sent_at: new Date().toISOString(),
+          tier2_live_completed_at: null,
+        })
+        .eq("id", data.userId);
+      if (error) throw new Error(error.message);
       await notifyAccountChange({
         userId: data.userId,
         title: "URGENT: Complete your final Tier 2 live verification",
         body:
-          `Your Tier ${newTier} documents have been reviewed and approved. One final step remains: a live verification session with our compliance team.\n\n` +
-          `Please treat this message as urgent — your Tier ${newTier} benefits remain limited until the live verification is completed.\n\n` +
+          `Your Tier 2 documents have been reviewed and approved. One final step remains: a live verification session with our compliance team.\n\n` +
+          `Please treat this message as urgent — your Tier 2 upgrade is not active until the live verification is completed and confirmed by our team.\n\n` +
           `IMPORTANT: This session can ONLY be completed on a laptop, desktop computer, tablet or iPad with a working webcam. Mobile phones are not permitted and the session will not open on a phone.\n\n` +
           `Sign in to your dashboard on an approved device and tap "Proceed" on the verification prompt to begin.`,
         categoryLabel: "Urgent — Action Required",
       });
-    } else {
-      await notifyAccountChange({
-        userId: data.userId,
-        title: `Tier ${newTier} verification approved`,
-        body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
-        categoryLabel: "Account Change",
+      await admin.alertAdminAction({
+        actorId: context.userId,
+        targetId: data.userId,
+        emoji: "🔗",
+        title: "Tier 2 live verification link sent (upgrade still pending)",
+        extra: [["Live verification link", data.liveLink]],
       });
+      return { ok: true, tier: p.tier, pendingLive: true };
     }
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ tier: newTier, tier_status: "active", requested_tier: null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    await notifyAccountChange({
+      userId: data.userId,
+      title: `Tier ${newTier} verification approved`,
+      body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
+      categoryLabel: "Account Change",
+    });
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "✅",
       title: `Tier ${newTier} upgrade approved`,
-      extra: data.liveLink ? [["Live verification link", data.liveLink]] : undefined,
     });
-    return { ok: true, tier: newTier };
+    return { ok: true, tier: newTier, pendingLive: false };
   });
 
+// Member tapped "Proceed" on the live verification prompt. This only records
+// that the session was opened — it never grants the tier.
 export const markTier2LiveStarted = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
+    const { data: p } = await supabaseAdmin
       .from("profiles")
-      .update({ tier2_live_completed_at: new Date().toISOString() })
-      .eq("id", context.userId);
+      .select("full_name, email")
+      .eq("id", context.userId)
+      .maybeSingle();
+    try {
+      const { sendAdminAlert } = await import("./admin-bot.server");
+      await sendAdminAlert({
+        emoji: "🎥",
+        title: "Member opened their Tier 2 live verification link",
+        fields: [
+          ["Member", p?.full_name ?? "Member"],
+          ["Email", p?.email ?? context.userId],
+        ],
+        note: "Confirm the live session, then approve Tier 2 from the member's admin page.",
+      });
+    } catch (e) {
+      console.error("[admin-bot] live start alert failed", e);
+    }
     return { ok: true };
   });
+
+// Admin confirms the live session actually happened and grants Tier 2.
+export const confirmTier2LiveVerification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin
+      .from("profiles")
+      .select("tier, requested_tier")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (!p) throw new Error("User not found");
+    const newTier = Math.max(p.tier ?? 1, p.requested_tier ?? 2, 2);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        tier: newTier,
+        tier_status: "active",
+        requested_tier: null,
+        tier2_live_completed_at: new Date().toISOString(),
+        tier2_live_link: null,
+      })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: `Live verification complete — Tier ${newTier} is now active`,
+      body: `Congratulations — your live identity verification has been reviewed and confirmed by our compliance team.\n\nYour account is now fully upgraded to Tier ${newTier}, and your new grant limits are active immediately.\n\nPlease sign in to your dashboard to review your updated benefits.`,
+      categoryLabel: "Account Change",
+    });
+    await admin.alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "✅",
+      title: `Tier ${newTier} granted after live verification`,
+    });
+    return { ok: true, tier: newTier };
+  });
+
+// Admin marks the live verification as failed / needs to be redone.
+export const resetTier2LiveVerification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ tier_status: "pending", tier2_live_link: null, tier2_live_sent_at: null, tier2_live_completed_at: null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    const { notifyAccountChange } = await import("./account-alerts.server");
+    await notifyAccountChange({
+      userId: data.userId,
+      title: "Your Tier 2 live verification must be repeated",
+      body: `Our compliance team was unable to complete your live identity verification.\n\nA new session link will be issued to you shortly. Remember: the session can only be completed on a laptop, desktop computer, tablet or iPad with a working webcam.\n\nPlease sign in and review your account for details.`,
+      categoryLabel: "Urgent — Action Required",
+    });
+    await admin.alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "↩️",
+      title: "Tier 2 live verification reset",
+    });
+    return { ok: true };
+  });
+
 
 
 export const rejectTierUpgrade = createServerFn({ method: "POST" })
