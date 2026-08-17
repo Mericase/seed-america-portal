@@ -195,6 +195,7 @@ function AdminUserDetail() {
     return d.length === 9 ? `${d.slice(0,3)}-${d.slice(3,5)}-${d.slice(5)}` : raw;
   };
   const pending = p.tier_status === "pending" && p.requested_tier && p.requested_tier > p.tier;
+  const pendingLive = p.tier_status === "pending_live" || (!!p.tier2_live_sent_at && !p.tier2_live_completed_at && p.tier < 2);
   const isAdmin = detail.roles.includes("admin");
 
   const approveTier = async (liveLink?: string) => {
