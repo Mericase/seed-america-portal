@@ -2,100 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-// Permanent, non-removable administrator (Seedin America member account).
-export const PERMANENT_ADMIN_ID = "ce351161-d991-425f-8d9f-e671c9e96861";
-
-
-async function adminActor(userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("full_name, email")
-    .eq("id", userId)
-    .maybeSingle();
-  return `${data?.full_name ?? "Admin"} (${data?.email ?? userId})`;
-}
-
-async function alertAdminAction(opts: {
-  actorId: string;
-  targetId?: string;
-  emoji?: string;
-  title: string;
-  extra?: Array<[string, string | number | null | undefined]>;
-  urgent?: boolean;
-  note?: string;
-}) {
-  try {
-    const { sendAdminAlert, memberIdentity } = await import("./admin-bot.server");
-    const actor = await adminActor(opts.actorId);
-    const fields: Array<[string, string | number | null | undefined]> = [["Performed by", actor]];
-    if (opts.targetId) {
-      const who = await memberIdentity(opts.targetId);
-      fields.push(["Member", who.name], ["Email", who.email]);
-    }
-    await sendAdminAlert({
-      emoji: opts.emoji ?? "🛠️",
-      title: opts.title,
-      fields: [...fields, ...(opts.extra ?? [])],
-      urgent: opts.urgent,
-      note: opts.note,
-    });
-  } catch (e) {
-    console.error("[admin-bot] action alert failed", e);
-  }
-}
-
-async function assertAdmin(userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin only");
-}
-
-function normalizeVerificationPath(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  let path = value.trim();
-  if (!path) return null;
-
-  try {
-    const parsed = new URL(path);
-    path = parsed.pathname;
-  } catch {
-    // Already a storage object path.
-  }
-
-  path = path.split("?")[0] ?? path;
-
-  const markers = [
-    "/storage/v1/object/sign/verification/",
-    "/storage/v1/object/public/verification/",
-    "/object/sign/verification/",
-    "/object/public/verification/",
-    "verification/",
-  ];
-  for (const marker of markers) {
-    const idx = path.indexOf(marker);
-    if (idx >= 0) {
-      path = path.slice(idx + marker.length);
-      break;
-    }
-  }
-
-  path = path.replace(/^\/+/, "");
-  try {
-    path = decodeURIComponent(path);
-  } catch {
-    // Keep original if it is not valid percent-encoding.
-  }
-
-  return path || null;
-}
-
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -113,7 +19,8 @@ export const listUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { search?: string; status?: string; tierFilter?: string }) => i ?? {})
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let q = supabaseAdmin
       .from("profiles")
@@ -149,7 +56,8 @@ export const getUserDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: profile, error } = await supabaseAdmin
@@ -194,7 +102,7 @@ export const getUserDetail = createServerFn({ method: "POST" })
     // 2 uploads open correctly in the admin console.
     const signed: Record<string, string | null> = { id_front_url: null, id_back_url: null, ssn_card_url: null, selfie_url: null };
     for (const key of ["id_front_url", "id_back_url", "ssn_card_url", "selfie_url"] as const) {
-      const path = normalizeVerificationPath((profile as Record<string, unknown>)[key]);
+      const path = admin.normalizeVerificationPath((profile as Record<string, unknown>)[key]);
       if (path) {
         const { data: s, error: signError } = await supabaseAdmin.storage
           .from("verification")
@@ -220,7 +128,8 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid(), liveLink: z.string().url().optional() }).parse(i),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
@@ -263,7 +172,7 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
         categoryLabel: "Account Change",
       });
     }
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "✅",
@@ -289,7 +198,8 @@ export const rejectTierUpgrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -312,7 +222,8 @@ export const setUserTier = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid(), tier: z.number().int().min(1).max(3) }).parse(i),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -335,7 +246,8 @@ export const updateBalance = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid(), balance: z.number().min(0) }).parse(i),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: before } = await supabaseAdmin.from("profiles").select("balance").eq("id", data.userId).maybeSingle();
     const { error } = await supabaseAdmin.from("profiles").update({ balance: data.balance }).eq("id", data.userId);
@@ -352,7 +264,7 @@ export const updateBalance = createServerFn({ method: "POST" })
       body: `Member Services has updated the available balance on your Seedin America account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
       categoryLabel: "Balance & Payment Update",
     });
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "💰",
@@ -366,9 +278,10 @@ export const terminateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot terminate yourself");
-    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be suspended");
+    if (data.userId === admin.PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be suspended");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "terminated" }).eq("id", data.userId);
@@ -382,7 +295,7 @@ export const terminateUser = createServerFn({ method: "POST" })
     });
     // Also sign them out of all sessions
     await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "⛔",
@@ -396,7 +309,8 @@ export const restoreUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "active" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
@@ -407,7 +321,7 @@ export const restoreUser = createServerFn({ method: "POST" })
       body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
       categoryLabel: "Account Change",
     });
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "♻️",
@@ -421,9 +335,10 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot delete yourself");
-    if (data.userId === PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
+    if (data.userId === admin.PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendAdminAlert, memberIdentity } = await import("./admin-bot.server");
@@ -453,7 +368,8 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: existing } = await supabaseAdmin
@@ -518,7 +434,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
         });
       }
 
-      await alertAdminAction({
+      await admin.alertAdminAction({
         actorId: context.userId,
         targetId: updated.user_id,
         emoji: "📄",
@@ -539,11 +455,12 @@ export const grantAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "👑",
@@ -557,11 +474,12 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     if (data.userId === context.userId) throw new Error("You cannot revoke your own admin role");
 
-    if (data.userId === PERMANENT_ADMIN_ID) {
-      await alertAdminAction({
+    if (data.userId === admin.PERMANENT_ADMIN_ID) {
+      await admin.alertAdminAction({
         actorId: context.userId,
         targetId: data.userId,
         emoji: "⛔",
@@ -572,8 +490,8 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
       throw new Error("This account is a permanent administrator and cannot be revoked");
     }
 
-    if (context.userId !== PERMANENT_ADMIN_ID) {
-      await alertAdminAction({
+    if (context.userId !== admin.PERMANENT_ADMIN_ID) {
+      await admin.alertAdminAction({
         actorId: context.userId,
         targetId: data.userId,
         emoji: "⛔",
@@ -587,7 +505,7 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
     if (error) throw new Error(error.message);
-    await alertAdminAction({
+    await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "🔻",
@@ -600,7 +518,8 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
 export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
