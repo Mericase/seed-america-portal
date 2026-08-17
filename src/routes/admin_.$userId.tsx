@@ -431,7 +431,7 @@ function AdminUserDetail() {
       {tierLinkOpen && (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-7 shadow-elegant">
-            <h3 className="font-display text-xl font-semibold text-foreground">Approve Tier 2 — live verification link</h3>
+            <h3 className="font-display text-xl font-semibold text-foreground">Tier 2 — send live verification link</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Paste the link the member will use to complete their live verification session. They'll receive an urgent
               in-app notification and email, and a pop-up prompting them to proceed on a laptop, computer, tablet or iPad.
@@ -449,18 +449,18 @@ function AdminUserDetail() {
                 onClick={async () => {
                   const link = tierLink.trim();
                   setTierLinkOpen(false);
-                  await wrap(() => approveTier(link), "Tier 2 approved — verification link sent");
+                  await wrap(() => approveTier(link), "Live verification link sent — approve Tier 2 after they complete it");
                 }}
                 className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-forest-foreground disabled:opacity-50"
               >
-                <CheckCircle2 className="h-4 w-4" /> Approve & send link
+                <CheckCircle2 className="h-4 w-4" /> Send live verification link
               </button>
               <button
                 disabled={busy}
                 onClick={async () => { setTierLinkOpen(false); await wrap(() => approveTier(), "Tier 2 approved"); }}
                 className="rounded-full border border-input bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
               >
-                Approve without link
+                Approve Tier 2 now (skip live check)
               </button>
               <button onClick={() => setTierLinkOpen(false)} className="rounded-full px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground">
                 Cancel
