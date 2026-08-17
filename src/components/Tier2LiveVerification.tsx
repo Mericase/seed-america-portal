@@ -68,7 +68,7 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
           </div>
           <h2 className="mt-2 font-display text-2xl font-semibold">Final Tier 2 live verification</h2>
           <p className="mt-1 text-sm text-white/80">
-            Your documents were approved. One last live identity session is required to fully activate Tier 2.
+            Your documents were approved. One last live identity session is required — Tier 2 activates once our team confirms your session.
           </p>
         </div>
 
