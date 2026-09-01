@@ -134,10 +134,11 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
 
           <button
             onClick={proceed}
-            disabled={phone}
+            disabled={phone || busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
           >
-            Proceed to live verification
+            {busy ? "Fetching your secure link…" : "Proceed to live verification"}
+
           </button>
           <button onClick={() => setOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">
             Remind me later
