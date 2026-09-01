@@ -19,23 +19,46 @@ export function isMobilePhone(): boolean {
 export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
   const [link, setLink] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   const markStarted = useServerFn(markTier2LiveStarted);
 
-  useEffect(() => {
-    let active = true;
-    supabase
+  const fetchLink = async (): Promise<string | null> => {
+    const { data } = await supabase
       .from("profiles")
       .select("tier2_live_link, tier2_live_completed_at")
       .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
-        if (data.tier2_live_link && !data.tier2_live_completed_at) {
-          setLink(data.tier2_live_link);
-          setOpen(true);
-        }
-      });
-    return () => { active = false; };
+      .maybeSingle();
+    if (!data || data.tier2_live_completed_at) return null;
+    return data.tier2_live_link ?? null;
+  };
+
+  useEffect(() => {
+    let active = true;
+    fetchLink().then((l) => {
+      if (!active) return;
+      if (l) { setLink(l); setOpen(true); }
+    });
+
+    // Keep the link fresh if the admin re-issues it while the member is here
+    const channel = supabase
+      .channel(`tier2-live-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as { tier2_live_link: string | null; tier2_live_completed_at: string | null };
+          if (row.tier2_live_completed_at || !row.tier2_live_link) {
+            setLink(null);
+            setOpen(false);
+          } else {
+            setLink(row.tier2_live_link);
+            setOpen(true);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => { active = false; supabase.removeChannel(channel); };
   }, [userId]);
 
   if (!open || !link) return null;
@@ -47,10 +70,30 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
       toast.error("Mobile phones are not permitted. Please sign in on a laptop, computer, tablet or iPad with a webcam.");
       return;
     }
-    markStarted({}).catch(() => null);
-    window.open(link, "_blank", "noopener,noreferrer");
-    setOpen(false);
+    setBusy(true);
+    try {
+      // Always open the link that exists at this exact moment, not the cached one
+      const fresh = await fetchLink();
+      if (!fresh) {
+        setLink(null);
+        setOpen(false);
+        toast.error("This verification session is no longer active. Our team will send you a new link shortly.");
+        return;
+      }
+      setLink(fresh);
+      // Open synchronously-ish to avoid popup blockers, then notify admin
+      const win = window.open(fresh, "_blank", "noopener,noreferrer");
+      if (!win) {
+        toast.error("Please allow pop-ups, then tap Proceed again.");
+        return;
+      }
+      markStarted({}).catch(() => null);
+      setOpen(false);
+    } finally {
+      setBusy(false);
+    }
   };
+
 
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
