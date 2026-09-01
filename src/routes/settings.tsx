@@ -343,6 +343,24 @@ function PreferencesCard() {
   );
 }
 
+/* ── Connect email ────────────────────────────────────────── */
+
+function ConnectEmailCard() {
+  return (
+    <Card icon={<Mail className="h-4 w-4" />} title="Connected email">
+      <p className="text-sm text-muted-foreground">
+        Link your everyday email inbox to Seedin America for faster verification and secure correspondence.
+      </p>
+      <button
+        onClick={() => toast.info("Email connection is coming soon.", { description: "We'll notify you the moment it's available." })}
+        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-forest px-5 py-3 text-sm font-semibold text-forest-foreground hover:opacity-95"
+      >
+        <Mail className="h-4 w-4" /> Connect email
+      </button>
+    </Card>
+  );
+}
+
 /* ── Summary ──────────────────────────────────────────────── */
 
 function AccountSummary({ profile }: { profile: ProfileRow }) {
