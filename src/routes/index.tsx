@@ -39,7 +39,7 @@ function Landing() {
         <div className="absolute inset-0 bg-gradient-hero-overlay" style={{ backgroundImage: "var(--gradient-hero-overlay)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at top, transparent 0%, oklch(0.12 0.05 260 / 0.6) 70%)" }} />
 
-        <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-5 sm:px-6 sm:py-6">
           <Logo variant="light" />
           <div className="flex items-center gap-2">
             <Link to="/signin" className="rounded-full px-5 py-2 text-sm font-medium text-white/90 hover:text-white">
@@ -54,12 +54,12 @@ function Landing() {
           </div>
         </nav>
 
-        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-start px-6 pb-24 pt-20 md:pt-32">
+        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-start px-4 pb-20 pt-16 sm:px-6 sm:pb-24 sm:pt-20 md:pt-32">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             Endorsed by the Office of the President
           </span>
-          <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[1.05] text-white text-balance md:text-7xl">
+          <h1 className="max-w-4xl font-display text-4xl font-semibold leading-[1.08] text-white text-balance sm:text-5xl md:text-7xl">
             Plant the seed. <span className="text-gold">Grow the dream.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 md:text-xl">
@@ -83,7 +83,7 @@ function Landing() {
             </Link>
           </div>
 
-          <div className="mt-16 grid w-full max-w-3xl grid-cols-3 gap-6 border-t border-white/15 pt-8">
+          <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3 border-t border-white/15 pt-8">
             <Stat value="$4.2B" label="Funds Deployed" />
             <Stat value="312,000+" label="Americans Helped" />
             <Stat value="All 50" label="States Served" />

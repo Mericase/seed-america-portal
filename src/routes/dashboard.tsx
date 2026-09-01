@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowUpRight, Award, Copy, Gift, Loader2, LogOut, Plus, Send,
+  ArrowUpRight, Award, Copy, Gift, Loader2, Plus, Send,
   Sparkles, TrendingUp, Wallet, X, FileText, ShieldCheck, ChevronRight, ShieldAlert, Settings
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -88,10 +88,21 @@ function Dashboard() {
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
       {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
           <Logo />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <NotificationBell userId={profile.id} />
+            {isAdmin && (
+              <button
+                onClick={() => navigate({ to: "/admin" })}
+                aria-label="Admin portal"
+                title="Admin portal"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 sm:px-4"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </button>
+            )}
             <button
               onClick={() => navigate({ to: "/settings" })}
               aria-label="Settings"
@@ -100,32 +111,17 @@ function Dashboard() {
             >
               <Settings className="h-4 w-4" />
             </button>
-            {isAdmin && (
-              <button
-                onClick={() => navigate({ to: "/admin" })}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              >
-                <ShieldAlert className="h-4 w-4" /> Admin
-              </button>
-            )}
-
-            <button
-              onClick={async () => { await supabase.auth.signOut(); }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
-            >
-              <LogOut className="h-4 w-4" /> Sign out
-            </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 pt-10">
+      <main className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 sm:pt-10">
         <LiveGrantTicker />
 
         {/* Greeting & primary CTA */}
         <section>
           <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Welcome back</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold md:text-5xl">
+          <h1 className="mt-1 font-display text-3xl font-semibold sm:text-4xl md:text-5xl">
             {firstName}, <span className="text-forest">your seed is planted.</span>
           </h1>
           <p className="mt-2 text-muted-foreground">{profile.full_name}</p>
@@ -160,7 +156,7 @@ function Dashboard() {
 
         {/* Referral banner */}
         {showBanner && (
-          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-gold/30 bg-gradient-to-r from-gold/15 via-gold/5 to-transparent p-5">
+          <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-gold/30 bg-gradient-to-r from-gold/15 via-gold/5 to-transparent p-5">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-gold text-primary shadow-gold">
               <Gift className="h-6 w-6" />
             </div>
@@ -179,18 +175,18 @@ function Dashboard() {
 
         {/* Balance card */}
         <section className="mt-8 grid gap-5 md:grid-cols-3">
-          <div className="md:col-span-2 overflow-hidden rounded-2xl bg-gradient-primary p-7 text-primary-foreground shadow-elegant">
+          <div className="md:col-span-2 overflow-hidden rounded-2xl bg-gradient-primary p-5 sm:p-7 text-primary-foreground shadow-elegant">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-gold">Available Balance</p>
-                <p className="mt-3 font-display text-5xl font-semibold">
+                <p className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
                   ${profile.balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="mt-2 text-sm text-white/70">Bonus & referral credits</p>
               </div>
               <Wallet className="h-7 w-7 text-gold" />
             </div>
-            <div className="mt-8 flex gap-2">
+            <div className="mt-8 flex flex-wrap gap-2">
               <ActionPill icon={<Send className="h-4 w-4" />} label="Withdraw" onClick={() => navigate({ to: "/withdrawal" })} />
               <ActionPill icon={<Plus className="h-4 w-4" />} label="Add" />
               <ActionPill icon={<TrendingUp className="h-4 w-4" />} label="Activity" />
@@ -207,7 +203,7 @@ function Dashboard() {
               <Sparkles className="h-3.5 w-3.5 text-gold" /> Your Referral Code
             </div>
             <div className="mt-4 rounded-xl border border-dashed border-gold/40 bg-gradient-to-br from-gold/10 to-transparent p-5 text-center">
-              <p className="font-display text-4xl font-semibold tracking-[0.35em] text-primary">{profile.referral_code}</p>
+              <p className="font-display text-3xl font-semibold tracking-[0.25em] text-primary sm:text-4xl sm:tracking-[0.35em]">{profile.referral_code}</p>
             </div>
             <button
               onClick={() => {
