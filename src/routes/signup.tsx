@@ -78,18 +78,18 @@ function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/40 to-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6 sm:py-6">
         <Logo />
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to home
         </Link>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 pb-20">
+      <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-6">
         <ProgressBar step={step} />
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-          <div className="border-b border-border bg-gradient-primary px-8 py-6 text-primary-foreground">
+          <div className="border-b border-border bg-gradient-primary px-5 py-5 text-primary-foreground sm:px-8 sm:py-6">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold">
               <ShieldCheck className="h-3.5 w-3.5" /> Secure Application
             </div>
@@ -546,7 +546,7 @@ function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, on
 function SuccessScreen() {
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-to-br from-primary via-primary to-forest px-6 py-12">
-      <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-white/5 p-10 text-center text-white backdrop-blur-xl">
+      <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-white/5 p-6 text-center sm:p-10 text-white backdrop-blur-xl">
         <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-gradient-gold shadow-gold">
           <Check className="h-10 w-10 text-primary" strokeWidth={3} />
         </div>
