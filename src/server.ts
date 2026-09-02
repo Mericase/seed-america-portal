@@ -10,6 +10,9 @@ type ServerEntry = {
 };
 
 function installCloudflareEnv(env: unknown) {
+  // Keep a copy of the raw Cloudflare bindings so helpers can resolve secrets
+  // even when writing to process.env is not possible.
+  captureRuntimeEnv(env);
   const apply = (key: string, value: unknown) => {
     if (typeof value !== "string" || !value) return;
     process.env[key] = value;
