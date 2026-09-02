@@ -55,9 +55,18 @@ export const signInWithUsername = createServerFn({ method: "POST" })
     });
 
     const { data: signIn, error } = await anon.auth.signInWithPassword({ email, password: data.password });
-    if (error || !signIn.session) throw new Error(GENERIC);
+    if (error || !signIn.session) {
+      // Log the real cause server-side; show the user a safe message.
+      console.warn("[signin] username sign-in rejected:", error?.message ?? "no session returned");
+      const raw = (error?.message ?? "").toLowerCase();
+      const message = raw.includes("not confirmed")
+        ? "Please verify your email address before signing in."
+        : GENERIC;
+      return { ok: false as const, message };
+    }
 
     return {
+      ok: true as const,
       access_token: signIn.session.access_token,
       refresh_token: signIn.session.refresh_token,
     };
