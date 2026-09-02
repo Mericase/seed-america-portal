@@ -1,6 +1,7 @@
 // admin-bot.server.ts — Server-only. Pushes every important site activity to the
 // Seedin America admin Telegram bot.
 
+import { serverEnv } from "./runtime-env.server";
 export const ADMIN_ALERT_CHAT_ID = "6048752790";
 
 function escapeHtml(s: string) {
@@ -10,7 +11,7 @@ function escapeHtml(s: string) {
 }
 
 async function postToBot(text: string): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = serverEnv("TELEGRAM_BOT_TOKEN");
   if (token) {
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -32,8 +33,8 @@ async function postToBot(text: string): Promise<boolean> {
   }
 
   // Fallback: Lovable connector gateway.
-  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
+  const LOVABLE_API_KEY = serverEnv("LOVABLE_API_KEY");
+  const TELEGRAM_API_KEY = serverEnv("TELEGRAM_API_KEY");
   if (!LOVABLE_API_KEY || !TELEGRAM_API_KEY) return false;
   try {
     const res = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {

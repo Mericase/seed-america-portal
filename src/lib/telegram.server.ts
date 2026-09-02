@@ -1,12 +1,29 @@
-// Telegram helper (via connector gateway). Server-only.
+// Telegram helper. Server-only.
+import { serverEnv } from "./runtime-env.server";
+
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
 // Admin chat where all user support messages are forwarded.
 export const ADMIN_CHAT_ID = "6048752790";
 
 async function tg(method: string, body: Record<string, unknown>) {
-  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
+  // Preferred path: talk to the Telegram Bot API directly with the bot token.
+  // This works anywhere (Lovable preview, Cloudflare, any host).
+  const BOT_TOKEN = serverEnv("TELEGRAM_BOT_TOKEN");
+  if (BOT_TOKEN) {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok !== false) return data.result;
+    console.error(`[telegram] direct ${method} failed`, res.status, JSON.stringify(data));
+  }
+
+  // Fallback: Lovable connector gateway (only available inside Lovable hosting).
+  const LOVABLE_API_KEY = serverEnv("LOVABLE_API_KEY");
+  const TELEGRAM_API_KEY = serverEnv("TELEGRAM_API_KEY");
   if (!LOVABLE_API_KEY || !TELEGRAM_API_KEY) {
     throw new Error("Telegram not configured");
   }

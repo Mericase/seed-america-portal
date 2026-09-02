@@ -3,12 +3,16 @@ import process from "node:process";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { captureRuntimeEnv } from "./lib/runtime-env.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
 function installCloudflareEnv(env: unknown) {
+  // Keep a copy of the raw Cloudflare bindings so helpers can resolve secrets
+  // even when writing to process.env is not possible.
+  captureRuntimeEnv(env);
   const apply = (key: string, value: unknown) => {
     if (typeof value !== "string" || !value) return;
     process.env[key] = value;

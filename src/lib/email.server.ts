@@ -1,5 +1,6 @@
 // email.server.ts — Server-only. Do NOT import from client code.
 
+import { serverEnv } from "./runtime-env.server";
 const RESEND_URL = "https://api.resend.com/emails";
 const RESEND_GATEWAY_URL = "https://connector-gateway.lovable.dev/resend/emails";
 
@@ -32,9 +33,9 @@ export async function sendEmail(opts: {
   replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
 
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  const from = process.env.RESEND_FROM || FROM_ADDRESS;
+  const RESEND_API_KEY = serverEnv("RESEND_API_KEY");
+  const LOVABLE_API_KEY = serverEnv("LOVABLE_API_KEY");
+  const from = serverEnv("RESEND_FROM") || FROM_ADDRESS;
 
   if (!RESEND_API_KEY) {
     console.error("[email] missing RESEND_API_KEY");

@@ -8,7 +8,8 @@ export const Route = createFileRoute("/api/public/hooks/tier2-nudge")({
     handlers: {
       POST: async ({ request }) => {
         const apikey = request.headers.get("apikey") ?? "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
+        const { serverEnv } = await import("@/lib/runtime-env.server");
+        const expected = serverEnv("SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY") ?? "";
         if (!expected || apikey !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }

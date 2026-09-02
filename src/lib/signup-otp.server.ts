@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 
 import { escapeHtml, renderBrandedEmail } from "./email.server";
+import { serverEnv } from "./runtime-env.server";
 
 type OtpPayload = {
   email: string;
@@ -30,7 +31,8 @@ export function genCode(): string {
 }
 
 function getSigningSecret(): string {
-  const secret = process.env.SIGNUP_OTP_SECRET || process.env.RESEND_API_KEY || process.env.LOVABLE_API_KEY;
+  const secret =
+    serverEnv("SIGNUP_OTP_SECRET", "RESEND_API_KEY", "LOVABLE_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_PUBLISHABLE_KEY");
   if (!secret) {
     throw new Error("Email verification is not configured. Please contact support.");
   }

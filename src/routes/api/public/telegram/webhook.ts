@@ -15,12 +15,22 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
-        if (!TELEGRAM_API_KEY) return new Response("Not configured", { status: 500 });
+        const { serverEnv } = await import("@/lib/runtime-env.server");
+        const TELEGRAM_API_KEY = serverEnv("TELEGRAM_API_KEY");
+        const TELEGRAM_BOT_TOKEN = serverEnv("TELEGRAM_BOT_TOKEN");
+        if (!TELEGRAM_API_KEY && !TELEGRAM_BOT_TOKEN) {
+          return new Response("Not configured", { status: 500 });
+        }
 
-        const expected = deriveWebhookSecret(TELEGRAM_API_KEY);
+        // Accept a secret derived from either credential so the webhook keeps
+        // working on Cloudflare, where only the bot token is available.
+        const candidates = [TELEGRAM_API_KEY, TELEGRAM_BOT_TOKEN]
+          .filter(Boolean)
+          .map((k) => deriveWebhookSecret(k as string));
         const got = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
-        if (!safeEqual(got, expected)) return new Response("Unauthorized", { status: 401 });
+        if (!candidates.some((expected) => safeEqual(got, expected))) {
+          return new Response("Unauthorized", { status: 401 });
+        }
 
         const update = await request.json().catch(() => null);
         const message = update?.message ?? update?.edited_message;
