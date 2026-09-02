@@ -20,6 +20,7 @@ export const signInWithUsername = createServerFn({ method: "POST" })
     const GENERIC = "Invalid username or password";
 
     const { getSupabaseAdmin } = await import("./supabase-admin.server");
+    const { serverEnv } = await import("./runtime-env.server");
     const supabaseAdmin = getSupabaseAdmin();
 
     const { data: profile } = await supabaseAdmin
@@ -32,11 +33,8 @@ export const signInWithUsername = createServerFn({ method: "POST" })
     if (!email) throw new Error(GENERIC);
 
     const { createClient } = await import("@supabase/supabase-js");
-    const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-    const key =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["SUPABASE_ANON_KEY"] ??
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+    const url = serverEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
+    const key = serverEnv("SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY");
     if (!url || !key) throw new Error("Sign-in is temporarily unavailable. Please use your email address.");
 
     const anon = createClient(url, key, {

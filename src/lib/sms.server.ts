@@ -1,15 +1,16 @@
 // sms.server.ts — Server-only. Do NOT import from client code.
 // Sends SMS via Twilio through the Lovable connector gateway.
 
+import { serverEnv } from "./runtime-env.server";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 export async function sendSms(opts: {
   to: string;
   body: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  const TWILIO_API_KEY = process.env.TWILIO_API_KEY;
-  const from = process.env.TWILIO_FROM || process.env.TWILIO_PHONE_NUMBER;
+  const LOVABLE_API_KEY = serverEnv("LOVABLE_API_KEY");
+  const TWILIO_API_KEY = serverEnv("TWILIO_API_KEY");
+  const from = serverEnv("TWILIO_FROM", "TWILIO_PHONE_NUMBER");
 
   if (!TWILIO_API_KEY || !LOVABLE_API_KEY) {
     return { ok: false, error: "sms_not_configured" };
