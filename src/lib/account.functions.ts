@@ -30,7 +30,10 @@ export const signInWithUsername = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const email = (profile as { email?: string } | null)?.email;
-    if (!email) throw new Error(GENERIC);
+    if (!email) {
+      console.warn("[signin] no profile matched username");
+      return { ok: false as const, message: GENERIC };
+    }
 
     const { createClient } = await import("@supabase/supabase-js");
     const url = serverEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
