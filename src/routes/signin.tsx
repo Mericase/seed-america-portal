@@ -69,6 +69,7 @@ function SignInPage() {
                     if (error) throw new Error(error.message);
                   } else {
                     const tokens = await signInWithUsername({ data: { username: identifier, password } });
+                    if (!tokens.ok) throw new Error(tokens.message);
                     const { error } = await supabase.auth.setSession({
                       access_token: tokens.access_token,
                       refresh_token: tokens.refresh_token,

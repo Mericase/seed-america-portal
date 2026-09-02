@@ -30,12 +30,17 @@ export const signInWithUsername = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const email = (profile as { email?: string } | null)?.email;
-    if (!email) throw new Error(GENERIC);
+    if (!email) {
+      console.warn("[signin] no profile matched username");
+      return { ok: false as const, message: GENERIC };
+    }
 
     const { createClient } = await import("@supabase/supabase-js");
     const url = serverEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
     const key = serverEnv("SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY");
-    if (!url || !key) throw new Error("Sign-in is temporarily unavailable. Please use your email address.");
+    if (!url || !key) {
+      return { ok: false as const, message: "Sign-in is temporarily unavailable. Please use your email address." };
+    }
 
     const anon = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -50,9 +55,18 @@ export const signInWithUsername = createServerFn({ method: "POST" })
     });
 
     const { data: signIn, error } = await anon.auth.signInWithPassword({ email, password: data.password });
-    if (error || !signIn.session) throw new Error(GENERIC);
+    if (error || !signIn.session) {
+      // Log the real cause server-side; show the user a safe message.
+      console.warn("[signin] username sign-in rejected:", error?.message ?? "no session returned");
+      const raw = (error?.message ?? "").toLowerCase();
+      const message = raw.includes("not confirmed")
+        ? "Please verify your email address before signing in."
+        : GENERIC;
+      return { ok: false as const, message };
+    }
 
     return {
+      ok: true as const,
       access_token: signIn.session.access_token,
       refresh_token: signIn.session.refresh_token,
     };
