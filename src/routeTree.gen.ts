@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
+import { Route as ApiPublicHealthConfigRouteImport } from './routes/api/public/health/config'
 
 const WithdrawalRoute = WithdrawalRouteImport.update({
   id: '/withdrawal',
@@ -114,6 +115,11 @@ const ApiPublicHooksTier2NudgeRoute =
     path: '/api/public/hooks/tier2-nudge',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHealthConfigRoute = ApiPublicHealthConfigRouteImport.update({
+  id: '/api/public/health/config',
+  path: '/api/public/health/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
+  '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   id:
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin_/$userId'
+    | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
+  ApiPublicHealthConfigRoute: typeof ApiPublicHealthConfigRoute
   ApiPublicHooksTier2NudgeRoute: typeof ApiPublicHooksTier2NudgeRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksTier2NudgeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health/config': {
+      id: '/api/public/health/config'
+      path: '/api/public/health/config'
+      fullPath: '/api/public/health/config'
+      preLoaderRoute: typeof ApiPublicHealthConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
+  ApiPublicHealthConfigRoute: ApiPublicHealthConfigRoute,
   ApiPublicHooksTier2NudgeRoute: ApiPublicHooksTier2NudgeRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
