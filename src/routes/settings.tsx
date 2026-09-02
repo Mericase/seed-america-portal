@@ -81,7 +81,7 @@ function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-5 sm:py-4">
           <Logo />
           <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
             <ArrowLeft className="h-4 w-4" /> Dashboard
@@ -89,7 +89,7 @@ function SettingsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-5 pt-8">
+      <main className="mx-auto max-w-3xl space-y-6 px-4 pt-8 sm:px-5">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Member Settings</p>
           <h1 className="mt-1 font-display text-3xl font-semibold md:text-4xl">Account & Preferences</h1>
@@ -100,6 +100,7 @@ function SettingsPage() {
         <ContactCard profile={profile} onSaved={(patch) => setProfile({ ...profile, ...patch })} />
         <PasswordCard />
         <PreferencesCard />
+        <ConnectEmailCard />
         <AccountSummary profile={profile} />
 
         <button
@@ -385,7 +386,7 @@ function AccountSummary({ profile }: { profile: ProfileRow }) {
 
 function Card({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
       <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-forest">{icon}</span> {title}
       </div>
