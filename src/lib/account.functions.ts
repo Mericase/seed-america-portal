@@ -38,7 +38,9 @@ export const signInWithUsername = createServerFn({ method: "POST" })
     const { createClient } = await import("@supabase/supabase-js");
     const url = serverEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
     const key = serverEnv("SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY");
-    if (!url || !key) throw new Error("Sign-in is temporarily unavailable. Please use your email address.");
+    if (!url || !key) {
+      return { ok: false as const, message: "Sign-in is temporarily unavailable. Please use your email address." };
+    }
 
     const anon = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
