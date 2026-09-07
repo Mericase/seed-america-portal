@@ -18,6 +18,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConnectEmailRouteImport } from './routes/connect-email'
 import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
 import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
@@ -72,6 +73,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectEmailRoute = ConnectEmailRouteImport.update({
+  id: '/connect-email',
+  path: '/connect-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplyGrantFormRoute = ApplyGrantFormRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   ApplyGrantRoute: typeof ApplyGrantRoute
   ApplyGrantFormRoute: typeof ApplyGrantFormRoute
+  ConnectEmailRoute: typeof ConnectEmailRoute
   DashboardRoute: typeof DashboardRoute
   NotificationsRoute: typeof NotificationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connect-email': {
+      id: '/connect-email'
+      path: '/connect-email'
+      fullPath: '/connect-email'
+      preLoaderRoute: typeof ConnectEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/apply-grant-form': {
       id: '/apply-grant-form'
       path: '/apply-grant-form'
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   ApplyGrantRoute: ApplyGrantRoute,
   ApplyGrantFormRoute: ApplyGrantFormRoute,
+  ConnectEmailRoute: ConnectEmailRoute,
   DashboardRoute: DashboardRoute,
   NotificationsRoute: NotificationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
