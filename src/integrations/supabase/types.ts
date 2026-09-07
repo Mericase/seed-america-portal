@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_link_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_otps: {
         Row: {
           attempts: number
@@ -164,6 +197,39 @@ export type Database = {
           user_id?: string
           veteran?: string | null
           zip?: string | null
+        }
+        Relationships: []
+      }
+      linked_emails: {
+        Row: {
+          connection_key_ciphertext: string | null
+          created_at: string
+          email: string
+          method: string
+          provider: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          connection_key_ciphertext?: string | null
+          created_at?: string
+          email: string
+          method?: string
+          provider: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          connection_key_ciphertext?: string | null
+          created_at?: string
+          email?: string
+          method?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
         }
         Relationships: []
       }

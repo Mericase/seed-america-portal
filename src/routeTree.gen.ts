@@ -18,12 +18,14 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConnectEmailRouteImport } from './routes/connect-email'
 import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
 import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
+import { Route as OauthProviderReturnRouteImport } from './routes/oauth.$provider.return'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
 import { Route as ApiPublicHealthConfigRouteImport } from './routes/api/public/health/config'
@@ -73,6 +75,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectEmailRoute = ConnectEmailRouteImport.update({
+  id: '/connect-email',
+  path: '/connect-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApplyGrantFormRoute = ApplyGrantFormRouteImport.update({
   id: '/apply-grant-form',
   path: '/apply-grant-form',
@@ -103,6 +110,11 @@ const AdminUserIdRoute = AdminUserIdRouteImport.update({
   path: '/admin/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthProviderReturnRoute = OauthProviderReturnRouteImport.update({
+  id: '/oauth/$provider/return',
+  path: '/oauth/$provider/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -127,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -137,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -147,6 +161,7 @@ export interface FileRoutesByTo {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -157,6 +172,7 @@ export interface FileRoutesByTo {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -168,6 +184,7 @@ export interface FileRoutesById {
   '/admin-login': typeof AdminLoginRoute
   '/apply-grant': typeof ApplyGrantRoute
   '/apply-grant-form': typeof ApplyGrantFormRoute
+  '/connect-email': typeof ConnectEmailRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -178,6 +195,7 @@ export interface FileRoutesById {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -190,6 +208,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -200,6 +219,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -210,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -220,6 +241,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -230,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/apply-grant'
     | '/apply-grant-form'
+    | '/connect-email'
     | '/dashboard'
     | '/notifications'
     | '/reset-password'
@@ -240,6 +263,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin_/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -251,6 +275,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   ApplyGrantRoute: typeof ApplyGrantRoute
   ApplyGrantFormRoute: typeof ApplyGrantFormRoute
+  ConnectEmailRoute: typeof ConnectEmailRoute
   DashboardRoute: typeof DashboardRoute
   NotificationsRoute: typeof NotificationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -261,6 +286,7 @@ export interface RootRouteChildren {
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
+  OauthProviderReturnRoute: typeof OauthProviderReturnRoute
   ApiPublicHealthConfigRoute: typeof ApiPublicHealthConfigRoute
   ApiPublicHooksTier2NudgeRoute: typeof ApiPublicHooksTier2NudgeRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -331,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connect-email': {
+      id: '/connect-email'
+      path: '/connect-email'
+      fullPath: '/connect-email'
+      preLoaderRoute: typeof ConnectEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/apply-grant-form': {
       id: '/apply-grant-form'
       path: '/apply-grant-form'
@@ -373,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/$provider/return': {
+      id: '/oauth/$provider/return'
+      path: '/oauth/$provider/return'
+      fullPath: '/oauth/$provider/return'
+      preLoaderRoute: typeof OauthProviderReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -403,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   ApplyGrantRoute: ApplyGrantRoute,
   ApplyGrantFormRoute: ApplyGrantFormRoute,
+  ConnectEmailRoute: ConnectEmailRoute,
   DashboardRoute: DashboardRoute,
   NotificationsRoute: NotificationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -413,6 +454,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
+  OauthProviderReturnRoute: OauthProviderReturnRoute,
   ApiPublicHealthConfigRoute: ApiPublicHealthConfigRoute,
   ApiPublicHooksTier2NudgeRoute: ApiPublicHooksTier2NudgeRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
