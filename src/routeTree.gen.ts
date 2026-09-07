@@ -24,6 +24,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
+import { Route as OauthProviderReturnRouteImport } from './routes/oauth.$provider.return'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
 import { Route as ApiPublicHealthConfigRouteImport } from './routes/api/public/health/config'
@@ -103,6 +104,11 @@ const AdminUserIdRoute = AdminUserIdRouteImport.update({
   path: '/admin/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthProviderReturnRoute = OauthProviderReturnRouteImport.update({
+  id: '/oauth/$provider/return',
+  path: '/oauth/$provider/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/upgrade-tier': typeof UpgradeTierRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
+  '/oauth/$provider/return': typeof OauthProviderReturnRoute
   '/api/public/health/config': typeof ApiPublicHealthConfigRoute
   '/api/public/hooks/tier2-nudge': typeof ApiPublicHooksTier2NudgeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/upgrade-tier'
     | '/withdrawal'
     | '/admin_/$userId'
+    | '/oauth/$provider/return'
     | '/api/public/health/config'
     | '/api/public/hooks/tier2-nudge'
     | '/api/public/telegram/webhook'
@@ -261,6 +273,7 @@ export interface RootRouteChildren {
   UpgradeTierRoute: typeof UpgradeTierRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
+  OauthProviderReturnRoute: typeof OauthProviderReturnRoute
   ApiPublicHealthConfigRoute: typeof ApiPublicHealthConfigRoute
   ApiPublicHooksTier2NudgeRoute: typeof ApiPublicHooksTier2NudgeRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/$provider/return': {
+      id: '/oauth/$provider/return'
+      path: '/oauth/$provider/return'
+      fullPath: '/oauth/$provider/return'
+      preLoaderRoute: typeof OauthProviderReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -413,6 +433,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeTierRoute: UpgradeTierRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
+  OauthProviderReturnRoute: OauthProviderReturnRoute,
   ApiPublicHealthConfigRoute: ApiPublicHealthConfigRoute,
   ApiPublicHooksTier2NudgeRoute: ApiPublicHooksTier2NudgeRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
