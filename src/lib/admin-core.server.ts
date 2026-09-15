@@ -44,14 +44,15 @@ export async function alertAdminAction(opts: {
   }
 }
 
-export async function assertAdmin(userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
+type RoleClient = {
+  rpc: (name: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{
+    data: boolean | null;
+    error: { message: string } | null;
+  }>;
+};
+
+export async function assertAdmin(userId: string, client: RoleClient) {
+  const { data, error } = await client.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden: admin only");
 }

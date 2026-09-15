@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendNotification } from "@/lib/notifications.functions";
+import { adminStats, listUsers } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Seedin America" }] }),
@@ -69,36 +70,16 @@ function AdminPage() {
   const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated" | "pending_apps">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
   const [authChecked, setAuthChecked] = useState(false);
+  const getStats = useServerFn(adminStats);
+  const getUsers = useServerFn(listUsers);
 
   useEffect(() => {
     (async () => {
       try {
-        const staffAuth = sessionStorage.getItem("staff_admin_auth") === "true";
-        if (!staffAuth) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) { navigate({ to: "/signin" }); return; }
-          const { data: role } = await supabase
-            .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-          if (!role) { toast.error("Admin access required"); navigate({ to: "/dashboard" }); return; }
-        }
-        // Load stats
-        const [
-          { count: total },
-          { count: pending },
-          { count: terminated },
-          { count: apps },
-        ] = await Promise.all([
-          supabase.from("profiles").select("id", { count: "exact", head: true }),
-          supabase.from("profiles").select("id", { count: "exact", head: true }).eq("tier_status", "pending"),
-          supabase.from("profiles").select("id", { count: "exact", head: true }).eq("profile_status", "terminated"),
-          supabase.from("grant_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        ]);
-        setS({
-          totalUsers: total ?? 0,
-          pendingTierUpgrades: pending ?? 0,
-          terminated: terminated ?? 0,
-          pendingApplications: apps ?? 0,
-        });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate({ to: "/signin" }); return; }
+        const stats = await getStats();
+        setS(stats);
         setAuthChecked(true);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to load admin");
@@ -110,37 +91,12 @@ function AdminPage() {
   const refresh = async () => {
     setLoading(true);
     try {
-      let q = supabase
-        .from("profiles")
-        .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code")
-        .order("created_at", { ascending: false });
-      if (search.trim()) {
-        const like = `%${search.trim()}%`;
-        q = q.or(`full_name.ilike.${like},email.ilike.${like},phone.ilike.${like},referral_code.ilike.${like}`);
-      }
-      if (filter === "terminated") q = q.eq("profile_status", "terminated");
-      if (filter === "pending_tier") q = q.eq("tier_status", "pending");
-      if (filter === "pending_apps") {
-        const { data: pendingApps } = await supabase
-          .from("grant_applications").select("user_id").eq("status", "pending");
-        const ids = Array.from(new Set((pendingApps ?? []).map((a) => a.user_id)));
-        if (ids.length === 0) {
-          setUsers([]);
-          setLoading(false);
-          return;
-        }
-        q = q.in("id", ids);
-      }
-      const { data: rows, error } = await q;
-      if (error) throw new Error(error.message);
-      setUsers((rows ?? []) as UserRow[]);
-      const ids = (rows ?? []).map((r) => r.id);
-      if (ids.length) {
-        const { data: appsData } = await supabase.from("grant_applications").select("user_id").in("user_id", ids);
-        const counts: Record<string, number> = {};
-        (appsData ?? []).forEach((a) => { counts[a.user_id] = (counts[a.user_id] ?? 0) + 1; });
-        setAppCounts(counts);
-      }
+      const status = filter === "pending_apps" ? undefined : filter === "all" ? undefined : filter;
+      const result = await getUsers({ data: { search: search.trim() || undefined, status } });
+      let rows = (result.users ?? []) as UserRow[];
+      if (filter === "pending_apps") rows = rows.filter((row) => (result.appCounts[row.id] ?? 0) > 0);
+      setUsers(rows);
+      setAppCounts(result.appCounts ?? {});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load users");
     } finally {
@@ -174,7 +130,7 @@ function AdminPage() {
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
             <button
-              onClick={async () => { sessionStorage.removeItem("staff_admin_auth"); await supabase.auth.signOut(); navigate({ to: "/signin" }); }}
+              onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/signin" }); }}
               className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
             >
               <LogOut className="h-4 w-4" /> Sign out

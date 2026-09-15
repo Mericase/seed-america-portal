@@ -9,9 +9,16 @@ type AlertOpts = {
   link?: string;
 };
 
-export async function notifyAccountChange(opts: AlertOpts): Promise<void> {
+type AlertClient = Awaited<ReturnType<typeof getFallbackClient>>;
+
+async function getFallbackClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+export async function notifyAccountChange(opts: AlertOpts, authenticatedClient?: AlertClient): Promise<void> {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = authenticatedClient ?? await getFallbackClient();
     const link = opts.link ?? "/dashboard";
 
     const { data: profile } = await supabaseAdmin
