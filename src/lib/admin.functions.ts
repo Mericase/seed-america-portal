@@ -453,6 +453,46 @@ export const deleteUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateMemberCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string; email?: string; password?: string }) =>
+    z.object({
+      userId: z.string().uuid(),
+      email: z.string().trim().toLowerCase().email().max(255).optional(),
+      password: z.string().min(8).max(72).optional(),
+    }).refine((value) => value.email || value.password, "Enter a new email, password, or both").parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
+    const supabaseAdmin = getSupabaseAdmin();
+    const updates: { email?: string; password?: string; email_confirm?: boolean } = {};
+    if (data.email) {
+      updates.email = data.email;
+      updates.email_confirm = true;
+    }
+    if (data.password) updates.password = data.password;
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, updates);
+    if (error) throw new Error(error.message);
+    if (data.email) {
+      const { error: profileError } = await context.supabase
+        .from("profiles")
+        .update({ email: data.email })
+        .eq("id", data.userId);
+      if (profileError) throw new Error(profileError.message);
+    }
+    await admin.alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "🔐",
+      title: "Member sign-in details updated",
+      extra: [["Email changed", Boolean(data.email) ? "Yes" : "No"], ["Password reset", Boolean(data.password) ? "Yes" : "No"]],
+      urgent: true,
+    });
+    return { ok: true };
+  });
+
 export const updateApplicationStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { applicationId: string; status: string; notes?: string }) =>

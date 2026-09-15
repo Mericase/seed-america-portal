@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { supabase } from "@/integrations/supabase/client";
+import { amIAdmin } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/admin-login")({
   head: () => ({ meta: [{ title: "Staff Login — Seedin America" }] }),
@@ -16,21 +19,28 @@ function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const checkAdmin = useServerFn(amIAdmin);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Small delay to feel real
-    setTimeout(() => {
-      if (username === "Seedin" && password === "Lunallister1") {
-        sessionStorage.setItem("staff_admin_auth", "true");
-        navigate({ to: "/admin" });
-      } else {
-        setError("Invalid username or password.");
-        setLoading(false);
-      }
-    }, 600);
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: username.trim().toLowerCase(), password });
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+    try {
+      const result = await checkAdmin();
+      if (!result.admin) throw new Error("Admin access required.");
+      navigate({ to: "/admin" });
+    } catch (cause) {
+      await supabase.auth.signOut();
+      setError(cause instanceof Error ? cause.message : "Admin access required.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,12 +59,13 @@ function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                Username
+                Admin email
               </label>
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
+                type="email"
+                autoComplete="email"
                 required
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               />
