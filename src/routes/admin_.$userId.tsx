@@ -9,7 +9,12 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole, approveTierUpgrade, confirmTier2LiveVerification, resetTier2LiveVerification } from "@/lib/admin.functions";
+import {
+  getUserDetail, updateApplicationStatus, grantAdminRole, revokeAdminRole,
+  approveTierUpgrade, confirmTier2LiveVerification, resetTier2LiveVerification,
+  rejectTierUpgrade, terminateUser as terminateMember, restoreUser as restoreMember,
+  deleteUser as deleteMember, setUserTier, updateBalance, updateMemberCredentials,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
@@ -44,58 +49,6 @@ const emptySignedUrls: Detail["signedUrls"] = {
   selfie_url: null,
 };
 
-function normalizeVerificationPath(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  let path = value.trim();
-  if (!path) return null;
-
-  try {
-    path = new URL(path).pathname;
-  } catch {
-    // Already a storage path.
-  }
-
-  path = path.split("?")[0] ?? path;
-  const markers = [
-    "/storage/v1/object/sign/verification/",
-    "/storage/v1/object/public/verification/",
-    "/object/sign/verification/",
-    "/object/public/verification/",
-    "verification/",
-  ];
-  for (const marker of markers) {
-    const idx = path.indexOf(marker);
-    if (idx >= 0) {
-      path = path.slice(idx + marker.length);
-      break;
-    }
-  }
-
-  path = path.replace(/^\/+/, "");
-  try {
-    path = decodeURIComponent(path);
-  } catch {
-    // Keep original if not percent-encoded.
-  }
-  return path || null;
-}
-
-async function signVerificationDocs(profile: Record<string, unknown>): Promise<Detail["signedUrls"]> {
-  const signed: Detail["signedUrls"] = { ...emptySignedUrls };
-  for (const key of ["id_front_url", "id_back_url", "ssn_card_url", "selfie_url"] as const) {
-    const path = normalizeVerificationPath(profile[key]);
-    if (!path) continue;
-    const { data, error } = await supabase.storage.from("verification").createSignedUrl(path, 60 * 60 * 24);
-    if (error) {
-      console.error(`[admin] failed to sign ${key}`, error.message);
-      signed[key] = typeof profile[key] === "string" ? String(profile[key]) : null;
-    } else {
-      signed[key] = data?.signedUrl ?? null;
-    }
-  }
-  return signed;
-}
-
 function AdminUserDetail() {
   const navigate = useNavigate();
   const { userId } = useParams({ from: "/admin_/$userId" });
@@ -105,6 +58,10 @@ function AdminUserDetail() {
   const doGetUserDetail = useServerFn(getUserDetail);
   const grantAdminFn = useServerFn(grantAdminRole);
   const revokeAdminFn = useServerFn(revokeAdminRole);
+  const rejectTierFn = useServerFn(rejectTierUpgrade);
+  const terminateMemberFn = useServerFn(terminateMember);
+  const restoreMemberFn = useServerFn(restoreMember);
+  const deleteMemberFn = useServerFn(deleteMember);
 
 
   const load = async () => {
@@ -120,39 +77,8 @@ function AdminUserDetail() {
         signedUrls: result.signedUrls ?? emptySignedUrls,
       });
     } catch (e) {
-      try {
-        const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
-        if (error) throw new Error(error.message);
-        if (!profile) throw new Error("User not found");
-
-        const [
-          { data: apps },
-          { data: roles },
-          { count: referralCount },
-        ] = await Promise.all([
-          supabase.from("grant_applications").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-          supabase.from("user_roles").select("role").eq("user_id", userId),
-          supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", profile.referral_code),
-        ]);
-
-        let referrer = null;
-        if (profile.referred_by) {
-          const { data: r } = await supabase.from("profiles").select("full_name, email, referral_code").eq("referral_code", profile.referred_by).maybeSingle();
-          referrer = r ?? null;
-        }
-
-        setDetail({
-          profile: profile as unknown as Profile,
-          applications: (apps ?? []) as Application[],
-          roles: (roles ?? []).map((r) => r.role),
-          referrer,
-          referralCount: referralCount ?? 0,
-          signedUrls: await signVerificationDocs(profile),
-        });
-      } catch (fallbackError) {
-        toast.error(fallbackError instanceof Error ? fallbackError.message : e instanceof Error ? e.message : "Failed to load user");
-        navigate({ to: "/admin" });
-      }
+      toast.error(e instanceof Error ? e.message : "Failed to load user");
+      navigate({ to: "/admin" });
     } finally {
       setLoading(false);
     }
@@ -160,13 +86,8 @@ function AdminUserDetail() {
 
   useEffect(() => {
     (async () => {
-      const staffAuth = sessionStorage.getItem("staff_admin_auth") === "true";
-      if (!staffAuth) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { navigate({ to: "/signin" }); return; }
-        const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-        if (!role) { navigate({ to: "/dashboard" }); return; }
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate({ to: "/signin" }); return; }
       await load();
     })();
   }, [userId]);
@@ -206,20 +127,16 @@ function AdminUserDetail() {
   };
 
   const rejectTier = async () => {
-    const { error } = await supabase.from("profiles").update({ tier_status: "rejected", requested_tier: null }).eq("id", userId);
-    if (error) throw new Error(error.message);
+    await rejectTierFn({ data: { userId } });
   };
   const terminateUser = async () => {
-    const { error } = await supabase.from("profiles").update({ profile_status: "terminated" }).eq("id", userId);
-    if (error) throw new Error(error.message);
+    await terminateMemberFn({ data: { userId } });
   };
   const restoreUser = async () => {
-    const { error } = await supabase.from("profiles").update({ profile_status: "active" }).eq("id", userId);
-    if (error) throw new Error(error.message);
+    await restoreMemberFn({ data: { userId } });
   };
   const deleteUser = async () => {
-    const { error } = await supabase.from("profiles").update({ profile_status: "terminated", full_name: "[Deleted]", email: "", phone: "" }).eq("id", userId);
-    if (error) throw new Error(error.message);
+    await deleteMemberFn({ data: { userId } });
     navigate({ to: "/admin" });
   };
   const grantAdmin = async () => {
@@ -479,6 +396,7 @@ function AccountEditor({ userId }: { userId: string }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const saveCredentials = useServerFn(updateMemberCredentials);
 
   const handleSave = async () => {
     if (!email.trim() && !password.trim()) {
@@ -491,27 +409,11 @@ function AccountEditor({ userId }: { userId: string }) {
     }
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            targetUserId: userId,
-            ...(email.trim() && { email: email.trim() }),
-            ...(password.trim() && { password: password.trim() }),
-          }),
-        }
-      );
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed");
+      await saveCredentials({ data: {
+        userId,
+        ...(email.trim() ? { email: email.trim() } : {}),
+        ...(password.trim() ? { password: password.trim() } : {}),
+      } });
 
       toast.success("Account updated successfully");
       setEmail("");
@@ -736,6 +638,7 @@ function DocImage({ label, url }: { label: string; url: string | null }) {
 }
 function TierSelector({ currentTier, userId, onDone, busy, setBusy }: { currentTier: number; userId: string; onDone: () => Promise<void>; busy: boolean; setBusy: (b: boolean) => void }) {
   const [t, setT] = useState(currentTier);
+  const setTier = useServerFn(setUserTier);
   return (
     <div className="rounded-xl border border-input bg-background p-3">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Set Tier Manually</p>
@@ -746,8 +649,7 @@ function TierSelector({ currentTier, userId, onDone, busy, setBusy }: { currentT
         <button disabled={busy || t === currentTier} onClick={async () => {
           setBusy(true);
           try {
-            const { error } = await supabase.from("profiles").update({ tier: t, tier_status: "active", requested_tier: null }).eq("id", userId);
-            if (error) throw new Error(error.message);
+            await setTier({ data: { userId, tier: t } });
             toast.success(`Tier set to ${t}`); await onDone();
           } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
           finally { setBusy(false); }
@@ -758,6 +660,7 @@ function TierSelector({ currentTier, userId, onDone, busy, setBusy }: { currentT
 }
 function BalanceEditor({ balance, userId, onDone, busy, setBusy }: { balance: number; userId: string; onDone: () => Promise<void>; busy: boolean; setBusy: (b: boolean) => void }) {
   const [val, setVal] = useState(balance.toFixed(2));
+  const saveBalance = useServerFn(updateBalance);
   return (
     <div className="rounded-xl border border-input bg-background p-3">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Adjust Balance</p>
@@ -772,8 +675,7 @@ function BalanceEditor({ balance, userId, onDone, busy, setBusy }: { balance: nu
           if (Number.isNaN(n) || n < 0) { toast.error("Invalid balance"); return; }
           setBusy(true);
           try {
-            const { error } = await supabase.from("profiles").update({ balance: n }).eq("id", userId);
-            if (error) throw new Error(error.message);
+            await saveBalance({ data: { userId, balance: n } });
             toast.success("Balance updated"); await onDone();
           } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
           finally { setBusy(false); }
