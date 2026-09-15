@@ -5,14 +5,12 @@ import { z } from "zod";
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    return { admin: !!data };
+    const { data, error } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (error) throw new Error(error.message);
+    return { admin: data === true };
   });
 
 export const listUsers = createServerFn({ method: "POST" })
@@ -20,8 +18,8 @@ export const listUsers = createServerFn({ method: "POST" })
   .inputValidator((i: { search?: string; status?: string; tierFilter?: string }) => i ?? {})
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
-    await admin.assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const supabaseAdmin = context.supabase;
     let q = supabaseAdmin
       .from("profiles")
       .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code")
@@ -57,8 +55,8 @@ export const getUserDetail = createServerFn({ method: "POST" })
   .inputValidator((i: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
-    await admin.assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const supabaseAdmin = context.supabase;
 
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
@@ -129,8 +127,8 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
-    await admin.assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const supabaseAdmin = context.supabase;
     const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier, full_name, email").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
     const newTier = p.requested_tier && p.requested_tier > p.tier ? p.requested_tier : p.tier;
@@ -150,7 +148,7 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
         })
         .eq("id", data.userId);
       if (error) throw new Error(error.message);
-      await notifyAccountChange({
+       await notifyAccountChange({
         userId: data.userId,
         title: "URGENT: Complete your final Tier 2 live verification",
         body:
@@ -159,7 +157,7 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
           `IMPORTANT: This session can ONLY be completed on a laptop, desktop computer, tablet or iPad with a working webcam. Mobile phones are not permitted and the session will not open on a phone.\n\n` +
           `Sign in to your dashboard on an approved device and tap "Proceed" on the verification prompt to begin.`,
         categoryLabel: "Urgent — Action Required",
-      });
+       }, context.supabase);
       await admin.alertAdminAction({
         actorId: context.userId,
         targetId: data.userId,
@@ -180,7 +178,7 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
       title: `Tier ${newTier} verification approved`,
       body: `Great news — your account has been upgraded to Tier ${newTier}.\n\nYour verification documents were reviewed and approved by Member Services. Your new tier benefits and limits are now active on your account.\n\nPlease sign in and review your dashboard to confirm the change.`,
       categoryLabel: "Account Change",
-    });
+    }, context.supabase);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
