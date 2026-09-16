@@ -37,17 +37,19 @@ export const listUsers = createServerFn({ method: "POST" })
 
     // Count grant apps per user
     const ids = (rows ?? []).map((r) => r.id);
-    let appCounts: Record<string, number> = {};
+    const appCounts: Record<string, number> = {};
+    const pendingAppCounts: Record<string, number> = {};
     if (ids.length) {
       const { data: apps } = await supabaseAdmin
         .from("grant_applications")
-        .select("user_id")
+        .select("user_id, status")
         .in("user_id", ids);
       (apps ?? []).forEach((a) => {
         appCounts[a.user_id] = (appCounts[a.user_id] ?? 0) + 1;
+        if (a.status === "pending") pendingAppCounts[a.user_id] = (pendingAppCounts[a.user_id] ?? 0) + 1;
       });
     }
-    return { users: rows ?? [], appCounts };
+    return { users: rows ?? [], appCounts, pendingAppCounts };
   });
 
 export const getUserDetail = createServerFn({ method: "POST" })
@@ -248,7 +250,7 @@ export const confirmTier2LiveVerification = createServerFn({ method: "POST" })
       title: `Live verification complete — Tier ${newTier} is now active`,
       body: `Congratulations — your live identity verification has been reviewed and confirmed by our compliance team.\n\nYour account is now fully upgraded to Tier ${newTier}, and your new grant limits are active immediately.\n\nPlease sign in to your dashboard to review your updated benefits.`,
       categoryLabel: "Account Change",
-    });
+    }, context.supabase);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
@@ -277,7 +279,7 @@ export const resetTier2LiveVerification = createServerFn({ method: "POST" })
       title: "Your Tier 2 live verification must be repeated",
       body: `Our compliance team was unable to complete your live identity verification.\n\nA new session link will be issued to you shortly. Remember: the session can only be completed on a laptop, desktop computer, tablet or iPad with a working webcam.\n\nPlease sign in and review your account for details.`,
       categoryLabel: "Urgent — Action Required",
-    });
+    }, context.supabase);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
@@ -307,7 +309,7 @@ export const rejectTierUpgrade = createServerFn({ method: "POST" })
       title: "Tier upgrade request not approved",
       body: `Your recent tier upgrade request could not be approved at this time.\n\nThis is usually due to unclear or incomplete verification documents. You may submit a new request with clearer documents at any time.\n\nPlease sign in and review your account for details.`,
       categoryLabel: "Account Change",
-    });
+    }, context.supabase);
     return { ok: true };
   });
 
@@ -331,7 +333,7 @@ export const setUserTier = createServerFn({ method: "POST" })
       title: `Your account tier is now Tier ${data.tier}`,
       body: `Member Services has updated your membership tier to Tier ${data.tier}.\n\nYour grant eligibility and limits have been adjusted accordingly.\n\nPlease sign in and review your dashboard to confirm this change.`,
       categoryLabel: "Account Change",
-    });
+    }, context.supabase);
     return { ok: true };
   });
 
@@ -358,7 +360,7 @@ export const updateBalance = createServerFn({ method: "POST" })
       title: "Your account balance has been updated",
       body: `Member Services has updated the available balance on your Seedin America account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
       categoryLabel: "Balance & Payment Update",
-    });
+    }, context.supabase);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
@@ -387,7 +389,7 @@ export const terminateUser = createServerFn({ method: "POST" })
       title: "Your membership has been suspended",
       body: `Your Seedin America membership has been suspended by Member Services and access to your dashboard is currently restricted.\n\nIf you believe this was done in error, reply to this message or contact Member Services at info@seedinamerica.org for a review.`,
       categoryLabel: "Security Notice",
-    });
+    }, context.supabase);
     // Also sign them out of all sessions
     await supabaseAdmin.auth.admin.signOut(data.userId).catch(() => {});
     await admin.alertAdminAction({
@@ -415,7 +417,7 @@ export const restoreUser = createServerFn({ method: "POST" })
       title: "Your membership has been reinstated",
       body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
       categoryLabel: "Account Change",
-    });
+    }, context.supabase);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
@@ -553,7 +555,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
           body: `Congratulations — your grant application${amount} has been approved by the Seedin America review committee.\n\nApproved amount: ${formatUsd(amountNum)}\nPrevious balance: ${formatUsd(prev)}\nNew available balance: ${formatUsd(next)}\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Next step — withdrawing your funds:\n${nextSteps}\n\nRemember: Seedin America grants are pure grants, not loans. There is nothing to repay.`,
           categoryLabel: "Grant Approved",
           link: isTier3 ? "/withdrawal" : "/update-tier-3",
-        });
+        }, context.supabase);
       } else {
         const statusText: Record<string, string> = {
           pending: "is back under review",
@@ -566,7 +568,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
           title: `Grant application update: ${data.status}`,
           body: `Your grant application${amount} ${statusText[data.status] ?? "has been updated"}.\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Please sign in and review your dashboard for the full details of this change.`,
           categoryLabel: "Application Update",
-        });
+        }, context.supabase);
       }
 
       await admin.alertAdminAction({
@@ -656,12 +658,15 @@ export const adminStats = createServerFn({ method: "GET" })
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
     const supabaseAdmin = context.supabase;
-    const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = await Promise.all([
+    const results = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("tier_status", "pending"),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("profile_status", "terminated"),
       supabaseAdmin.from("grant_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ]);
+    const firstError = results.find((result) => result.error)?.error;
+    if (firstError) throw new Error(firstError.message);
+    const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = results;
     return {
       totalUsers: total ?? 0,
       pendingTierUpgrades: pending ?? 0,

@@ -12,7 +12,14 @@ import { sendNotification } from "@/lib/notifications.functions";
 import { adminStats, listUsers } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — Seedin America" }] }),
+  head: () => ({ meta: [
+    { title: "Member Records | Seedin America Admin" },
+    { name: "description", content: "Secure staff workspace for Seedin America member records and account reviews." },
+    { property: "og:title", content: "Member Records | Seedin America Admin" },
+    { property: "og:description", content: "Secure staff workspace for Seedin America member records and account reviews." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminPage,
 });
 
@@ -94,7 +101,7 @@ function AdminPage() {
       const status = filter === "pending_apps" ? undefined : filter === "all" ? undefined : filter;
       const result = await getUsers({ data: { search: search.trim() || undefined, status } });
       let rows = (result.users ?? []) as UserRow[];
-      if (filter === "pending_apps") rows = rows.filter((row) => (result.appCounts[row.id] ?? 0) > 0);
+      if (filter === "pending_apps") rows = rows.filter((row) => (result.pendingAppCounts[row.id] ?? 0) > 0);
       setUsers(rows);
       setAppCounts(result.appCounts ?? {});
     } catch (e) {
