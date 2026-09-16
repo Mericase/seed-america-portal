@@ -7,7 +7,14 @@ import { amIAdmin } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/admin-login")({
-  head: () => ({ meta: [{ title: "Staff Login — Seedin America" }] }),
+  head: () => ({ meta: [
+    { title: "Staff Sign In | Seedin America" },
+    { name: "description", content: "Authorized Seedin America staff sign-in." },
+    { property: "og:title", content: "Staff Sign In | Seedin America" },
+    { property: "og:description", content: "Authorized Seedin America staff sign-in." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminLoginPage,
 });
 

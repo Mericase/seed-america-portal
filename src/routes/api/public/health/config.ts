@@ -15,9 +15,9 @@ export const Route = createFileRoute("/api/public/health/config")({
         const core = {
           supabaseUrl: has("SUPABASE_URL", "VITE_SUPABASE_URL"),
           supabasePublishableKey: has("SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"),
-          supabaseServiceRoleKey: has("SUPABASE_SERVICE_ROLE_KEY"),
         };
         const features = {
+          privilegedAdminActions: has("SUPABASE_SERVICE_ROLE_KEY"),
           email: has("RESEND_API_KEY") || has("LOVABLE_API_KEY"),
           adminTelegramBot: has("TELEGRAM_BOT_TOKEN") || (has("LOVABLE_API_KEY") && has("TELEGRAM_API_KEY")),
           sms: has("LOVABLE_API_KEY") && has("TWILIO_API_KEY") && has("TWILIO_FROM", "TWILIO_PHONE_NUMBER"),
@@ -28,13 +28,11 @@ export const Route = createFileRoute("/api/public/health/config")({
             has("SUPABASE_SERVICE_ROLE_KEY"),
         };
 
-        const missing = [
-          ...Object.entries(core).filter(([, v]) => !v).map(([k]) => k),
-          ...Object.entries(features).filter(([, v]) => !v).map(([k]) => k),
-        ];
+        const missing = Object.entries(core).filter(([, v]) => !v).map(([k]) => k);
+        const unavailableFeatures = Object.entries(features).filter(([, v]) => !v).map(([k]) => k);
 
         return Response.json(
-          { ok: missing.length === 0, core, features, missing },
+          { ok: missing.length === 0, core, features, missing, unavailableFeatures },
           { headers: { "cache-control": "no-store" } },
         );
       },

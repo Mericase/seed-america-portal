@@ -17,7 +17,14 @@ import {
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
-  head: () => ({ meta: [{ title: "Member Detail — Seedin America Admin" }] }),
+  head: () => ({ meta: [
+    { title: "Member Review | Seedin America Admin" },
+    { name: "description", content: "Secure Seedin America staff member review workspace." },
+    { property: "og:title", content: "Member Review | Seedin America Admin" },
+    { property: "og:description", content: "Secure Seedin America staff member review workspace." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminUserDetail,
 });
 
@@ -476,11 +483,12 @@ function AccountEditor({ userId }: { userId: string }) {
 function ApplicationCard({ app, onRefresh }: { app: Application; onRefresh: () => Promise<void> }) {
   const [notes, setNotes] = useState((app.admin_notes as string) ?? "");
   const [saving, setSaving] = useState(false);
+  const saveApplicationStatus = useServerFn(updateApplicationStatus);
 
   const setStatus = async (status: "pending" | "approved" | "rejected" | "disbursed") => {
     setSaving(true);
     try {
-      await updateApplicationStatus({ data: { applicationId: app.id, status, notes } });
+      await saveApplicationStatus({ data: { applicationId: app.id, status, notes } });
       toast.success(`Application marked as ${status}`);
       await onRefresh();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }

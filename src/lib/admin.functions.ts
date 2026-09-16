@@ -37,17 +37,19 @@ export const listUsers = createServerFn({ method: "POST" })
 
     // Count grant apps per user
     const ids = (rows ?? []).map((r) => r.id);
-    let appCounts: Record<string, number> = {};
+    const appCounts: Record<string, number> = {};
+    const pendingAppCounts: Record<string, number> = {};
     if (ids.length) {
       const { data: apps } = await supabaseAdmin
         .from("grant_applications")
-        .select("user_id")
+        .select("user_id, status")
         .in("user_id", ids);
       (apps ?? []).forEach((a) => {
         appCounts[a.user_id] = (appCounts[a.user_id] ?? 0) + 1;
+        if (a.status === "pending") pendingAppCounts[a.user_id] = (pendingAppCounts[a.user_id] ?? 0) + 1;
       });
     }
-    return { users: rows ?? [], appCounts };
+    return { users: rows ?? [], appCounts, pendingAppCounts };
   });
 
 export const getUserDetail = createServerFn({ method: "POST" })
@@ -656,12 +658,15 @@ export const adminStats = createServerFn({ method: "GET" })
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
     const supabaseAdmin = context.supabase;
-    const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = await Promise.all([
+    const results = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("tier_status", "pending"),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("profile_status", "terminated"),
       supabaseAdmin.from("grant_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ]);
+    const firstError = results.find((result) => result.error)?.error;
+    if (firstError) throw new Error(firstError.message);
+    const [{ count: total }, { count: pending }, { count: terminated }, { count: apps }] = results;
     return {
       totalUsers: total ?? 0,
       pendingTierUpgrades: pending ?? 0,
