@@ -37,8 +37,36 @@ const step1Schema = z.object({
 
 type Step1 = z.infer<typeof step1Schema>;
 
+const PROGRESS_KEY = "seedin_signup_progress";
+
+type SavedProgress = {
+  step: number;
+  data: Step1;
+  otpToken: string;
+  hearAbout: string;
+  referralCode: string;
+};
+
+function loadProgress(): SavedProgress | null {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedProgress;
+    if (!parsed || typeof parsed.step !== "number" || !parsed.data?.email) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Detects in-app browsers (Messenger, Facebook, Instagram, TikTok...) that kill the tab when the user switches apps. */
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|TikTok|Snapchat|Line\//i.test(navigator.userAgent);
+}
+
 function SignupPage() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => loadProgress()?.step ?? 1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [data, setData] = useState<Step1>({
