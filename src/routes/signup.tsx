@@ -69,17 +69,27 @@ function SignupPage() {
   const [step, setStep] = useState(() => loadProgress()?.step ?? 1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [data, setData] = useState<Step1>({
-    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
-  });
-  const [hearAbout, setHearAbout] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  const [data, setData] = useState<Step1>(() =>
+    loadProgress()?.data ?? {
+      full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
+    });
+  const [hearAbout, setHearAbout] = useState(() => loadProgress()?.hearAbout ?? "");
+  const [referralCode, setReferralCode] = useState(() => loadProgress()?.referralCode ?? "");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
-  const [otpToken, setOtpToken] = useState("");
+  const [otpToken, setOtpToken] = useState(() => loadProgress()?.otpToken ?? "");
+  const [inApp] = useState(isInAppBrowser);
+
+  // Persist progress so an in-app browser (e.g. Messenger) closing the tab
+  // doesn't lose the user's place — reopening the link resumes where they left off.
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ step, data, otpToken, hearAbout, referralCode }));
+    } catch { /* storage unavailable */ }
+  }, [step, data, otpToken, hearAbout, referralCode]);
 
   const doSendOtp = useServerFn(sendSignupOtp);
   const doVerifyOtp = useServerFn(verifySignupOtp);
