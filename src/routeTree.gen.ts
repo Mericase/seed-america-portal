@@ -9,90 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WithdrawalRouteImport } from './routes/withdrawal'
-import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
-import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SigninRouteImport } from './routes/signin'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ConnectEmailRouteImport } from './routes/connect-email'
-import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
-import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as ApplyGrantRouteImport } from './routes/apply-grant'
+import { Route as ApplyGrantFormRouteImport } from './routes/apply-grant-form'
+import { Route as ConnectEmailRouteImport } from './routes/connect-email'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
+import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
+import { Route as WithdrawalRouteImport } from './routes/withdrawal'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 import { Route as OauthProviderReturnRouteImport } from './routes/oauth.$provider.return'
-import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
-import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
 import { Route as ApiPublicHealthConfigRouteImport } from './routes/api/public/health/config'
+import { Route as ApiPublicHooksTier2NudgeRouteImport } from './routes/api/public/hooks/tier2-nudge'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
-const WithdrawalRoute = WithdrawalRouteImport.update({
-  id: '/withdrawal',
-  path: '/withdrawal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UpgradeTierRoute = UpgradeTierRouteImport.update({
-  id: '/upgrade-tier',
-  path: '/upgrade-tier',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UpdateTier3Route = UpdateTier3RouteImport.update({
-  id: '/update-tier-3',
-  path: '/update-tier-3',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SigninRoute = SigninRouteImport.update({
-  id: '/signin',
-  path: '/signin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConnectEmailRoute = ConnectEmailRouteImport.update({
-  id: '/connect-email',
-  path: '/connect-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApplyGrantFormRoute = ApplyGrantFormRouteImport.update({
-  id: '/apply-grant-form',
-  path: '/apply-grant-form',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApplyGrantRoute = ApplyGrantRouteImport.update({
-  id: '/apply-grant',
-  path: '/apply-grant',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin-login',
-  path: '/admin-login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -100,9 +40,69 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyGrantRoute = ApplyGrantRouteImport.update({
+  id: '/apply-grant',
+  path: '/apply-grant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyGrantFormRoute = ApplyGrantFormRouteImport.update({
+  id: '/apply-grant-form',
+  path: '/apply-grant-form',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectEmailRoute = ConnectEmailRouteImport.update({
+  id: '/connect-email',
+  path: '/connect-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpdateTier3Route = UpdateTier3RouteImport.update({
+  id: '/update-tier-3',
+  path: '/update-tier-3',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpgradeTierRoute = UpgradeTierRouteImport.update({
+  id: '/upgrade-tier',
+  path: '/upgrade-tier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WithdrawalRoute = WithdrawalRouteImport.update({
+  id: '/withdrawal',
+  path: '/withdrawal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUserIdRoute = AdminUserIdRouteImport.update({
@@ -115,23 +115,23 @@ const OauthProviderReturnRoute = OauthProviderReturnRouteImport.update({
   path: '/oauth/$provider/return',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTelegramWebhookRoute =
-  ApiPublicTelegramWebhookRouteImport.update({
-    id: '/api/public/telegram/webhook',
-    path: '/api/public/telegram/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApiPublicHealthConfigRoute = ApiPublicHealthConfigRouteImport.update({
+  id: '/api/public/health/config',
+  path: '/api/public/health/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksTier2NudgeRoute =
   ApiPublicHooksTier2NudgeRouteImport.update({
     id: '/api/public/hooks/tier2-nudge',
     path: '/api/public/hooks/tier2-nudge',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHealthConfigRoute = ApiPublicHealthConfigRouteImport.update({
-  id: '/api/public/health/config',
-  path: '/api/public/health/config',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -294,95 +294,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/withdrawal': {
-      id: '/withdrawal'
-      path: '/withdrawal'
-      fullPath: '/withdrawal'
-      preLoaderRoute: typeof WithdrawalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/upgrade-tier': {
-      id: '/upgrade-tier'
-      path: '/upgrade-tier'
-      fullPath: '/upgrade-tier'
-      preLoaderRoute: typeof UpgradeTierRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/update-tier-3': {
-      id: '/update-tier-3'
-      path: '/update-tier-3'
-      fullPath: '/update-tier-3'
-      preLoaderRoute: typeof UpdateTier3RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signin': {
-      id: '/signin'
-      path: '/signin'
-      fullPath: '/signin'
-      preLoaderRoute: typeof SigninRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/connect-email': {
-      id: '/connect-email'
-      path: '/connect-email'
-      fullPath: '/connect-email'
-      preLoaderRoute: typeof ConnectEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/apply-grant-form': {
-      id: '/apply-grant-form'
-      path: '/apply-grant-form'
-      fullPath: '/apply-grant-form'
-      preLoaderRoute: typeof ApplyGrantFormRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/apply-grant': {
-      id: '/apply-grant'
-      path: '/apply-grant'
-      fullPath: '/apply-grant'
-      preLoaderRoute: typeof ApplyGrantRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-login': {
-      id: '/admin-login'
-      path: '/admin-login'
-      fullPath: '/admin-login'
-      preLoaderRoute: typeof AdminLoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -392,11 +308,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply-grant': {
+      id: '/apply-grant'
+      path: '/apply-grant'
+      fullPath: '/apply-grant'
+      preLoaderRoute: typeof ApplyGrantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply-grant-form': {
+      id: '/apply-grant-form'
+      path: '/apply-grant-form'
+      fullPath: '/apply-grant-form'
+      preLoaderRoute: typeof ApplyGrantFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect-email': {
+      id: '/connect-email'
+      path: '/connect-email'
+      fullPath: '/connect-email'
+      preLoaderRoute: typeof ConnectEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/update-tier-3': {
+      id: '/update-tier-3'
+      path: '/update-tier-3'
+      fullPath: '/update-tier-3'
+      preLoaderRoute: typeof UpdateTier3RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/upgrade-tier': {
+      id: '/upgrade-tier'
+      path: '/upgrade-tier'
+      fullPath: '/upgrade-tier'
+      preLoaderRoute: typeof UpgradeTierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/withdrawal': {
+      id: '/withdrawal'
+      path: '/withdrawal'
+      fullPath: '/withdrawal'
+      preLoaderRoute: typeof WithdrawalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin_/$userId': {
@@ -413,11 +413,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthProviderReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/telegram/webhook': {
-      id: '/api/public/telegram/webhook'
-      path: '/api/public/telegram/webhook'
-      fullPath: '/api/public/telegram/webhook'
-      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+    '/api/public/health/config': {
+      id: '/api/public/health/config'
+      path: '/api/public/health/config'
+      fullPath: '/api/public/health/config'
+      preLoaderRoute: typeof ApiPublicHealthConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/tier2-nudge': {
@@ -427,11 +427,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksTier2NudgeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/health/config': {
-      id: '/api/public/health/config'
-      path: '/api/public/health/config'
-      fullPath: '/api/public/health/config'
-      preLoaderRoute: typeof ApiPublicHealthConfigRouteImport
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
