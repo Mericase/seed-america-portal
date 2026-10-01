@@ -437,7 +437,8 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (data.userId === context.userId) throw new Error("You cannot delete yourself");
     if (data.userId === admin.PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
+    const supabaseAdmin = getSupabaseAdmin();
     const { sendAdminAlert, memberIdentity } = await import("./admin-bot.server");
     const target = await memberIdentity(data.userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
