@@ -21,7 +21,15 @@ export const signInWithUsername = createServerFn({ method: "POST" })
 
     const { getSupabaseAdmin } = await import("./supabase-admin.server");
     const { serverEnv } = await import("./runtime-env.server");
-    const supabaseAdmin = getSupabaseAdmin();
+    let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+    try {
+      supabaseAdmin = getSupabaseAdmin();
+    } catch {
+      return {
+        ok: false as const,
+        message: "Username sign-in is temporarily unavailable. Please sign in with your email address.",
+      };
+    }
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
