@@ -37,21 +37,59 @@ const step1Schema = z.object({
 
 type Step1 = z.infer<typeof step1Schema>;
 
+const PROGRESS_KEY = "seedin_signup_progress";
+
+type SavedProgress = {
+  step: number;
+  data: Step1;
+  otpToken: string;
+  hearAbout: string;
+  referralCode: string;
+};
+
+function loadProgress(): SavedProgress | null {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedProgress;
+    if (!parsed || typeof parsed.step !== "number" || !parsed.data?.email) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Detects in-app browsers (Messenger, Facebook, Instagram, TikTok...) that kill the tab when the user switches apps. */
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|TikTok|Snapchat|Line\//i.test(navigator.userAgent);
+}
+
 function SignupPage() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => loadProgress()?.step ?? 1);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [data, setData] = useState<Step1>({
-    full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
-  });
-  const [hearAbout, setHearAbout] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  const [data, setData] = useState<Step1>(() =>
+    loadProgress()?.data ?? {
+      full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
+    });
+  const [hearAbout, setHearAbout] = useState(() => loadProgress()?.hearAbout ?? "");
+  const [referralCode, setReferralCode] = useState(() => loadProgress()?.referralCode ?? "");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
-  const [otpToken, setOtpToken] = useState("");
+  const [otpToken, setOtpToken] = useState(() => loadProgress()?.otpToken ?? "");
+  const [inApp] = useState(isInAppBrowser);
+
+  // Persist progress so an in-app browser (e.g. Messenger) closing the tab
+  // doesn't lose the user's place — reopening the link resumes where they left off.
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ step, data, otpToken, hearAbout, referralCode }));
+    } catch { /* storage unavailable */ }
+  }, [step, data, otpToken, hearAbout, referralCode]);
 
   const doSendOtp = useServerFn(sendSignupOtp);
   const doVerifyOtp = useServerFn(verifySignupOtp);
@@ -86,6 +124,28 @@ function SignupPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-6">
+        {inApp && (
+          <div className="mb-6 rounded-xl border border-gold/50 bg-gold/10 p-4 text-sm text-foreground">
+            <p className="font-semibold">For the best experience, open this page in your phone's browser.</p>
+            <p className="mt-1 text-muted-foreground">
+              You're viewing this inside an app, which may close the page when you switch to your email. Tap the <strong>⋯ menu</strong> and choose <strong>"Open in browser"</strong>, or copy the link below and paste it into Safari or Chrome.
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied — paste it into your browser");
+                } catch {
+                  toast.error("Could not copy the link");
+                }
+              }}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+            >
+              Copy page link
+            </button>
+          </div>
+        )}
         <ProgressBar step={step} />
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card shadow-card">
@@ -186,6 +246,7 @@ function SignupPage() {
 
                   await supabase.auth.signOut();
                   setSubmitting(false);
+                  try { localStorage.removeItem(PROGRESS_KEY); } catch { /* ignore */ }
                   setSuccess(true);
                 }}
               />
