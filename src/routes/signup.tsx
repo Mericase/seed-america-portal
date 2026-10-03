@@ -59,11 +59,6 @@ function loadProgress(): SavedProgress | null {
   }
 }
 
-/** Detects in-app browsers (Messenger, Facebook, Instagram, TikTok...) that kill the tab when the user switches apps. */
-function isInAppBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|TikTok|Snapchat|Line\//i.test(navigator.userAgent);
-}
 
 function SignupPage() {
   const [step, setStep] = useState(() => loadProgress()?.step ?? 1);
@@ -81,7 +76,6 @@ function SignupPage() {
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpToken, setOtpToken] = useState(() => loadProgress()?.otpToken ?? "");
-  const [inApp] = useState(isInAppBrowser);
 
   // Persist progress so an in-app browser (e.g. Messenger) closing the tab
   // doesn't lose the user's place — reopening the link resumes where they left off.
