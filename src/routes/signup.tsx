@@ -59,11 +59,6 @@ function loadProgress(): SavedProgress | null {
   }
 }
 
-/** Detects in-app browsers (Messenger, Facebook, Instagram, TikTok...) that kill the tab when the user switches apps. */
-function isInAppBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|TikTok|Snapchat|Line\//i.test(navigator.userAgent);
-}
 
 function SignupPage() {
   const [step, setStep] = useState(() => loadProgress()?.step ?? 1);
@@ -81,7 +76,6 @@ function SignupPage() {
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpToken, setOtpToken] = useState(() => loadProgress()?.otpToken ?? "");
-  const [inApp] = useState(isInAppBrowser);
 
   // Persist progress so an in-app browser (e.g. Messenger) closing the tab
   // doesn't lose the user's place — reopening the link resumes where they left off.
@@ -124,28 +118,6 @@ function SignupPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-6">
-        {inApp && (
-          <div className="mb-6 rounded-xl border border-gold/50 bg-gold/10 p-4 text-sm text-foreground">
-            <p className="font-semibold">For the best experience, open this page in your phone's browser.</p>
-            <p className="mt-1 text-muted-foreground">
-              You're viewing this inside an app, which may close the page when you switch to your email. Tap the <strong>⋯ menu</strong> and choose <strong>"Open in browser"</strong>, or copy the link below and paste it into Safari or Chrome.
-            </p>
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link copied — paste it into your browser");
-                } catch {
-                  toast.error("Could not copy the link");
-                }
-              }}
-              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
-            >
-              Copy page link
-            </button>
-          </div>
-        )}
         <ProgressBar step={step} />
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card shadow-card">
