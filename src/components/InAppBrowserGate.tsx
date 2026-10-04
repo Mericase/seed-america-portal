@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, ExternalLink, ShieldCheck } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 /** Detects in-app webviews (Messenger, Facebook, Instagram, TikTok...) that
