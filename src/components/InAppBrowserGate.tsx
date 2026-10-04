@@ -17,8 +17,9 @@ function isAndroid(): boolean {
 
 /**
  * Site-wide gate: when the page is opened inside an in-app browser, Android
- * users are bounced straight into Chrome via an intent URL, and everyone else
- * gets a blocking screen with instructions + a copy-link button.
+ * users are bounced straight into their phone's DEFAULT browser via an intent
+ * URL (no package specified, so the system resolves the default). iOS webviews
+ * cannot be force-exited by any website — those users get a blocking screen.
  */
 export function InAppBrowserGate() {
   const [blocked, setBlocked] = useState(false);
@@ -27,16 +28,33 @@ export function InAppBrowserGate() {
     if (!isInAppBrowser()) return;
 
     if (isAndroid()) {
-      // Try to force-open in the device's real browser (Chrome) immediately.
       const { host, pathname, search, hash } = window.location;
-      const intentUrl = `intent://${host}${pathname}${search}${hash}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
-      window.location.replace(intentUrl);
-      // If the intent didn't hand off (no Chrome / blocked), fall back to the
-      // blocking screen after a short delay.
-      const t = setTimeout(() => setBlocked(true), 1500);
-      return () => clearTimeout(t);
+      const target = `${host}${pathname}${search}${hash}`;
+      // No `package=` — Android resolves this with the user's default browser.
+      const intentUrl = `intent://${target}#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end`;
+
+      const tryHandoff = () => {
+        try {
+          window.location.replace(intentUrl);
+        } catch {
+          window.location.href = intentUrl;
+        }
+      };
+
+      // Fire immediately, and retry once shortly after in case the first
+      // attempt was swallowed while the webview was still settling.
+      tryHandoff();
+      const retry = setTimeout(tryHandoff, 600);
+
+      // If the intent didn't hand off (blocked webview), show the fallback.
+      const fallback = setTimeout(() => setBlocked(true), 2500);
+      return () => {
+        clearTimeout(retry);
+        clearTimeout(fallback);
+      };
     }
 
+    // iOS / other: no website can force-exit an in-app webview here.
     setBlocked(true);
   }, []);
 
@@ -58,19 +76,18 @@ export function InAppBrowserGate() {
           <ExternalLink className="h-6 w-6" />
         </div>
         <h2 className="mt-4 font-display text-2xl font-semibold text-foreground">
-          Open this page in your browser
+          One quick step: open in your browser
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          You're viewing Seedin America inside another app, which can close this
-          page when you switch apps and can block document uploads. Please open
-          it in your phone's browser instead.
+          This app opened the page in its own built-in viewer, which can't handle
+          secure sign-up and document uploads. Your phone's browser is required.
         </p>
 
         <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-left text-sm text-foreground">
-          <p className="font-semibold">How to open in your browser:</p>
+          <p className="font-semibold">It takes 5 seconds:</p>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-muted-foreground">
             <li>Tap the <strong className="text-foreground">⋯</strong> or <strong className="text-foreground">⋮</strong> menu at the top of this screen.</li>
-            <li>Choose <strong className="text-foreground">"Open in browser"</strong> or <strong className="text-foreground">"Open in Safari / Chrome"</strong>.</li>
+            <li>Tap <strong className="text-foreground">"Open in browser"</strong> (or "Open in Safari").</li>
           </ol>
         </div>
 
