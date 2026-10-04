@@ -60,47 +60,56 @@ export function InAppBrowserGate() {
 
   if (!blocked) return null;
 
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied — paste it into Safari or Chrome");
-    } catch {
-      toast.error("Could not copy the link. Long-press the address bar to copy it.");
+  const continueInBrowser = async () => {
+    // Best-effort handoff: some webviews honor _blank by opening externally.
+    const win = window.open(window.location.href, "_blank");
+    if (!win) {
+      // Pop-up blocked — fall back to copying the link for manual paste.
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied — paste it into Safari's address bar");
+      } catch {
+        toast.error('Tap the ⋯ menu at the top and choose "Open in Safari".');
+      }
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-primary/95 p-6 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-7 text-center shadow-elegant">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-gradient-primary text-primary-foreground">
-          <ExternalLink className="h-6 w-6" />
-        </div>
-        <h2 className="mt-4 font-display text-2xl font-semibold text-foreground">
-          One quick step: open in your browser
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          This app opened the page in its own built-in viewer, which can't handle
-          secure sign-up and document uploads. Your phone's browser is required.
-        </p>
-
-        <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-left text-sm text-foreground">
-          <p className="font-semibold">It takes 5 seconds:</p>
-          <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-muted-foreground">
-            <li>Tap the <strong className="text-foreground">⋯</strong> or <strong className="text-foreground">⋮</strong> menu at the top of this screen.</li>
-            <li>Tap <strong className="text-foreground">"Open in browser"</strong> (or "Open in Safari").</li>
-          </ol>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center">
+      {/* iOS-style alert card */}
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-card text-center shadow-elegant">
+        <div className="px-6 pb-5 pt-7">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-gradient-primary text-primary-foreground">
+            <ExternalLink className="h-6 w-6" />
+          </div>
+          <h2 className="mt-4 text-lg font-semibold text-foreground">
+            Continue in Safari
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Secure sign-up and document uploads require your phone's browser.
+            Continue in Safari to keep going — your progress is saved and you'll
+            pick up right where you left off.
+          </p>
         </div>
 
         <button
           type="button"
-          onClick={copyLink}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition hover:opacity-90"
+          onClick={continueInBrowser}
+          className="w-full border-t border-border py-3.5 text-base font-semibold text-[#007AFF] transition active:bg-muted"
         >
-          <Copy className="h-4 w-4" /> Copy page link
+          Continue
         </button>
-        <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+        <button
+          type="button"
+          onClick={() => toast('Tap the ⋯ menu at the top of this screen, then choose "Open in Safari".')}
+          className="w-full border-t border-border py-3.5 text-sm text-muted-foreground transition active:bg-muted"
+        >
+          How do I do this manually?
+        </button>
+
+        <p className="flex items-center justify-center gap-1.5 border-t border-border py-3 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5 text-forest" />
-          Your progress is saved — you'll continue right where you left off.
+          Your progress is saved automatically.
         </p>
       </div>
     </div>
