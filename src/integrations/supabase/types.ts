@@ -266,6 +266,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string
+          assigned_admin_id: string | null
           balance: number
           created_at: string
           date_of_birth: string
@@ -300,6 +301,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          assigned_admin_id?: string | null
           balance?: number
           created_at?: string
           date_of_birth: string
@@ -334,6 +336,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          assigned_admin_id?: string | null
           balance?: number
           created_at?: string
           date_of_birth?: string
@@ -445,18 +448,21 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          tag: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          tag?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tag?: string | null
           user_id?: string
         }
         Relationships: []
