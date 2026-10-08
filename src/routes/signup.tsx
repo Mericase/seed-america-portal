@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendSignupOtp, verifySignupOtp } from "@/lib/signup-otp.functions";
 import { sendWelcomeEmail } from "@/lib/welcome.functions";
+import { notifyNewSignup } from "@/lib/signup-notify.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -29,8 +30,8 @@ const step1Schema = z.object({
   phone: z.string().trim().min(7, "Enter a valid phone").max(20),
   address: z.string().trim().min(5, "Enter your residential address").max(255),
   date_of_birth: z.string().regex(dobRegex, "Use MM/DD/YYYY (e.g. 04/12/1990)"),
-  password: z.string().min(8, "Minimum 8 characters").max(72),
-  confirm_password: z.string().min(8, "Confirm your password").max(72),
+  password: z.string().min(1, "Enter a password").max(72),
+  confirm_password: z.string().min(1, "Confirm your password").max(72),
 }).refine((v) => v.password === v.confirm_password, {
   message: "Passwords do not match", path: ["confirm_password"],
 });
@@ -436,7 +437,7 @@ function PasswordField({ label, value, onChange, show, setShow }: {
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="relative">
-        <input type={show ? "text" : "password"} value={value} onChange={onChange} required minLength={8} placeholder="Minimum 8 characters"
+        <input type={show ? "text" : "password"} value={value} onChange={onChange} required placeholder="Choose any password"
           className="block w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20" />
         <button type="button" onClick={() => setShow(!show)} className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted-foreground hover:text-forest" aria-label={show ? "Hide" : "Show"}>
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
