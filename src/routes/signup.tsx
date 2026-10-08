@@ -212,6 +212,17 @@ function SignupPage() {
 
                   if (error) { setSubmitting(false); toast.error(error.message); return; }
 
+                  // Fire-and-forget admin Telegram alert — runs even if no session is issued.
+                  try {
+                    await notifyNewSignup({ data: {
+                      full_name: data.full_name,
+                      email: data.email,
+                      phone: data.phone,
+                      hear_about: hearAbout,
+                      referral_code: referralCode.trim().toUpperCase(),
+                    }});
+                  } catch (e) { console.error("[signup-notify] failed:", e); }
+
                   if (authData.session?.access_token) {
                     try { await sendWelcomeEmail(); } catch (e) { console.error("[welcome] failed:", e); }
                   }
