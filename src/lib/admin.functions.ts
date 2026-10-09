@@ -22,8 +22,18 @@ export const listUsers = createServerFn({ method: "POST" })
     const supabaseAdmin = context.supabase;
     let q = supabaseAdmin
       .from("profiles")
-      .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code")
+      .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code, assigned_admin_id")
       .order("created_at", { ascending: false });
+
+    // Sub-admins only see their assigned members.
+    const allowed = await admin.assignedMemberIds(context.userId, context.supabase);
+    if (allowed !== null) {
+      if (allowed.length === 0) {
+        return { users: [], appCounts: {}, pendingAppCounts: {} };
+      }
+      q = q.in("id", allowed);
+    }
+
     if (data.search && data.search.trim()) {
       const s = `%${data.search.trim()}%`;
       q = q.or(`full_name.ilike.${s},email.ilike.${s},phone.ilike.${s},referral_code.ilike.${s}`);
@@ -50,6 +60,127 @@ export const listUsers = createServerFn({ method: "POST" })
       });
     }
     return { users: rows ?? [], appCounts, pendingAppCounts };
+  });
+
+// Admin list with their tags + current assignment counts. Only the permanent
+// admin may call this; sub-admins have no admin-management view.
+export const listAdminsWithTags = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const callerIsPermanent = admin.isPermanentAdmin(context.userId);
+
+    const { data: roles, error } = await context.supabase
+      .from("user_roles")
+      .select("user_id, tag")
+      .eq("role", "admin");
+    if (error) throw new Error(error.message);
+
+    const ids = (roles ?? []).map((r) => r.user_id);
+    const profiles = ids.length
+      ? (await context.supabase.from("profiles").select("id, full_name, email").in("id", ids)).data ?? []
+      : [];
+    const assignedCounts = ids.length
+      ? (await context.supabase.from("profiles").select("assigned_admin_id").in("assigned_admin_id", ids)).data ?? []
+      : [];
+    const counts: Record<string, number> = {};
+    (assignedCounts as Array<{ assigned_admin_id: string | null }>).forEach((r) => {
+      if (r.assigned_admin_id) counts[r.assigned_admin_id] = (counts[r.assigned_admin_id] ?? 0) + 1;
+    });
+
+    const list = (roles ?? []).map((r) => {
+      const p = (profiles as Array<{ id: string; full_name: string; email: string }>).find((x) => x.id === r.user_id);
+      return {
+        userId: r.user_id,
+        tag: r.tag,
+        fullName: p?.full_name ?? "Admin",
+        email: p?.email ?? "",
+        isPermanent: admin.isPermanentAdmin(r.user_id),
+        assignedCount: counts[r.user_id] ?? 0,
+      };
+    });
+    return { admins: list, callerIsPermanent };
+  });
+
+// Permanent admin edits a sub-admin's tag.
+export const setAdminTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { adminUserId: string; tag: string }) =>
+    z
+      .object({
+        adminUserId: z.string().uuid(),
+        tag: z.string().trim().regex(/^[A-Z0-9]{1,4}$/i, "Tag must be 1–4 letters/digits"),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    if (!admin.isPermanentAdmin(context.userId)) {
+      throw new Error("Only the main administrator can change admin tags");
+    }
+    const tag = data.tag.toUpperCase();
+    const { error } = await context.supabase
+      .from("user_roles")
+      .update({ tag })
+      .eq("user_id", data.adminUserId)
+      .eq("role", "admin");
+    if (error) {
+      if (/duplicate/i.test(error.message)) throw new Error("That tag is already in use");
+      throw new Error(error.message);
+    }
+    await admin.alertAdminAction({
+      actorId: context.userId,
+      targetId: data.adminUserId,
+      emoji: "🏷️",
+      title: `Admin tag set to ${tag}`,
+    });
+    return { ok: true, tag };
+  });
+
+// Assign (or clear) which admin owns a member. Only the permanent admin can
+// change assignments.
+export const setMemberAssignment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { userId: string; adminUserId: string | null }) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        adminUserId: z.string().uuid().nullable(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    if (!admin.isPermanentAdmin(context.userId)) {
+      throw new Error("Only the main administrator can assign members");
+    }
+    // Confirm the target admin really is an admin.
+    if (data.adminUserId) {
+      const { data: role } = await context.supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("user_id", data.adminUserId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!role) throw new Error("Chosen account is not an admin");
+    }
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ assigned_admin_id: data.adminUserId })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+
+    await admin.alertAdminAction({
+      actorId: context.userId,
+      targetId: data.userId,
+      emoji: "🏷️",
+      title: data.adminUserId ? "Member reassigned to a sub-admin" : "Member assignment cleared",
+      extra: data.adminUserId ? [["New admin", data.adminUserId]] : undefined,
+    });
+    return { ok: true };
   });
 
 export const getUserDetail = createServerFn({ method: "POST" })
