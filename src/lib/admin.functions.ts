@@ -189,6 +189,7 @@ export const getUserDetail = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
 
     const { data: profile, error } = await supabaseAdmin
