@@ -654,9 +654,11 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("grant_applications")
-      .select("status")
+      .select("status, user_id")
       .eq("id", data.applicationId)
       .maybeSingle();
+    if (!existing) throw new Error("Application not found");
+    await admin.assertCanAccessMember(context.userId, existing.user_id, context.supabase);
     const wasCredited = existing?.status === "approved" || existing?.status === "disbursed";
 
     const { data: updated, error } = await supabaseAdmin
@@ -738,16 +740,19 @@ export const grantAdminRole = createServerFn({ method: "POST" })
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
     const supabaseAdmin = context.supabase;
-    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
+    const tag = await admin.allocateAdminTag(context.supabase);
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.userId, role: "admin", tag });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
     await admin.alertAdminAction({
       actorId: context.userId,
       targetId: data.userId,
       emoji: "👑",
-      title: "Admin access GRANTED to a member",
+      title: `Admin access GRANTED (tag ${tag})`,
       urgent: true,
     });
-    return { ok: true };
+    return { ok: true, tag };
   });
 
 export const revokeAdminRole = createServerFn({ method: "POST" })
