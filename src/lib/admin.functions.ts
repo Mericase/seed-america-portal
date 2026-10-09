@@ -262,6 +262,7 @@ export const approveTierUpgrade = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { data: p } = await supabaseAdmin.from("profiles").select("requested_tier, tier, full_name, email").eq("id", data.userId).maybeSingle();
     if (!p) throw new Error("User not found");
@@ -357,6 +358,7 @@ export const confirmTier2LiveVerification = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { data: p } = await supabaseAdmin
       .from("profiles")
@@ -399,6 +401,7 @@ export const resetTier2LiveVerification = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -429,6 +432,7 @@ export const rejectTierUpgrade = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -453,6 +457,7 @@ export const setUserTier = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -477,6 +482,7 @@ export const updateBalance = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { data: before } = await supabaseAdmin.from("profiles").select("balance").eq("id", data.userId).maybeSingle();
     const { error } = await supabaseAdmin.from("profiles").update({ balance: data.balance }).eq("id", data.userId);
@@ -509,6 +515,7 @@ export const terminateUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     if (data.userId === context.userId) throw new Error("You cannot terminate yourself");
     if (data.userId === admin.PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be suspended");
 
@@ -540,6 +547,7 @@ export const restoreUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin.from("profiles").update({ profile_status: "active" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
@@ -566,6 +574,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     if (data.userId === context.userId) throw new Error("You cannot delete yourself");
     if (data.userId === admin.PERMANENT_ADMIN_ID) throw new Error("This account is a permanent administrator and cannot be deleted");
 
@@ -600,6 +609,7 @@ export const updateMemberCredentials = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await import("./admin-core.server");
     await admin.assertAdmin(context.userId, context.supabase);
+    await admin.assertCanAccessMember(context.userId, data.userId, context.supabase);
     const { getSupabaseAdmin } = await import("./supabase-admin.server");
     const supabaseAdmin = getSupabaseAdmin();
     const updates: { email?: string; password?: string; email_confirm?: boolean } = {};
