@@ -515,3 +515,104 @@ function extractPhones(input: string): string[] {
   }
   return Array.from(out);
 }
+
+type AdminRow = {
+  userId: string; tag: string | null; fullName: string; email: string;
+  isPermanent: boolean; assignedCount: number;
+};
+
+function AdminTagsPanel() {
+  const loadAdmins = useServerFn(listAdminsWithTags);
+  const saveTag = useServerFn(setAdminTag);
+  const [data, setData] = useState<{ admins: AdminRow[]; callerIsPermanent: boolean } | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draftTag, setDraftTag] = useState("");
+
+  const refresh = () => loadAdmins()
+    .then((r) => setData({ admins: (r.admins ?? []) as AdminRow[], callerIsPermanent: r.callerIsPermanent }))
+    .catch(() => setData(null));
+
+  useEffect(() => { refresh(); }, []);
+
+  if (!data || !data.callerIsPermanent) return null;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-border bg-card shadow-card">
+      <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+        <ShieldAlert className="h-4 w-4 text-forest" />
+        <h2 className="text-base font-semibold">Admin Tags & Member Assignment</h2>
+        <span className="ml-auto text-xs text-muted-foreground">
+          Only you (main admin) can edit these. Sub-admins see only members with their tag.
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3 text-left">Admin</th>
+              <th className="px-4 py-3 text-left">Tag</th>
+              <th className="px-4 py-3 text-left">Members assigned</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.admins.map((a) => (
+              <tr key={a.userId} className="border-t border-border">
+                <td className="px-4 py-3">
+                  <div className="font-semibold">{a.fullName}{a.isPermanent && " · Main"}</div>
+                  <div className="text-xs text-muted-foreground">{a.email}</div>
+                </td>
+                <td className="px-4 py-3">
+                  {editing === a.userId ? (
+                    <input autoFocus value={draftTag} onChange={(e) => setDraftTag(e.target.value.toUpperCase())}
+                      maxLength={4}
+                      className="w-20 rounded-md border border-input bg-background px-2 py-1 text-sm uppercase tracking-widest" />
+                  ) : (
+                    <span className="rounded-full bg-gold/20 px-2.5 py-1 font-mono text-xs font-bold tracking-widest text-gold-foreground">
+                      {a.isPermanent ? "ALL" : (a.tag || "—")}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{a.isPermanent ? "all members" : a.assignedCount}</td>
+                <td className="px-4 py-3 text-right">
+                  {a.isPermanent ? (
+                    <span className="text-xs text-muted-foreground">Not editable</span>
+                  ) : editing === a.userId ? (
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await saveTag({ data: { adminUserId: a.userId, tag: draftTag } });
+                            toast.success(`Tag set to ${draftTag}`);
+                            setEditing(null);
+                            await refresh();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Failed to set tag");
+                          }
+                        }}
+                        className="rounded-md bg-forest px-3 py-1 text-xs font-semibold text-forest-foreground"
+                      >Save</button>
+                      <button onClick={() => setEditing(null)} className="rounded-md border border-input bg-background px-3 py-1 text-xs">Cancel</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setEditing(a.userId); setDraftTag(a.tag ?? ""); }}
+                      className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium hover:bg-accent">
+                      Edit tag
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {data.admins.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-muted-foreground">No admins yet.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="border-t border-border bg-muted/20 px-5 py-3 text-xs text-muted-foreground">
+        To assign a member to an admin, open the member's page and use the "Assigned admin" selector.
+      </div>
+    </section>
+  );
+}
+
