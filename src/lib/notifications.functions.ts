@@ -61,9 +61,14 @@ export const listUsersBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { data, error } = await context.supabase
-      .from("profiles").select("id, full_name, email, tier")
-      .order("full_name", { ascending: true });
+    const { assignedMemberIds } = await import("./admin-core.server");
+    const allowed = await assignedMemberIds(context.userId, context.supabase);
+    let q = context.supabase.from("profiles").select("id, full_name, email, tier").order("full_name", { ascending: true });
+    if (allowed !== null) {
+      if (allowed.length === 0) return { users: [] };
+      q = q.in("id", allowed);
+    }
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     return { users: data ?? [] };
   });
@@ -96,12 +101,27 @@ export const sendNotification = createServerFn({ method: "POST" })
     const { sendWebPush } = await import("./push.server");
 
     // ── resolve recipients ──────────────────────────────────────────────────
+    const { assignedMemberIds } = await import("./admin-core.server");
+    const allowed = await assignedMemberIds(context.userId, context.supabase);
+    const allowedSet = allowed === null ? null : new Set(allowed);
     let userIds: string[] = [];
     if (data.toAll) {
-      const { data: rows } = await context.supabase.from("profiles").select("id");
-      userIds = (rows ?? []).map((r) => r.id);
+      let q = context.supabase.from("profiles").select("id");
+      if (allowedSet) {
+        if (allowed!.length === 0) {
+          userIds = [];
+        } else {
+          q = q.in("id", allowed!);
+          const { data: rows } = await q;
+          userIds = (rows ?? []).map((r) => r.id);
+        }
+      } else {
+        const { data: rows } = await q;
+        userIds = (rows ?? []).map((r) => r.id);
+      }
     } else {
       userIds = data.userIds ?? [];
+      if (allowedSet) userIds = userIds.filter((id) => allowedSet.has(id));
     }
     const manualEmails = Array.from(new Set(data.manualEmails ?? []));
     const { normalizePhone } = await import("./sms.server");
