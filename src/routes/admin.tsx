@@ -8,8 +8,8 @@ import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { sendNotification } from "@/lib/notifications.functions";
-import { adminStats, listUsers } from "@/lib/admin.functions";
+import { listUsersBrief, sendNotification } from "@/lib/notifications.functions";
+import { adminStats, listUsers, listAdminsWithTags, setAdminTag } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
