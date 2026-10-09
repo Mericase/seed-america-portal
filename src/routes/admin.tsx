@@ -161,6 +161,7 @@ function AdminPage() {
             active={filter === "terminated"} onClick={() => selectFilter("terminated")} />
         </section>
 
+        <AdminTagsPanel />
 
         <NotificationComposer />
 
@@ -275,9 +276,9 @@ function NotificationComposer() {
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
 
+  const loadBrief = useServerFn(listUsersBrief);
   useEffect(() => {
-    supabase.from("profiles").select("id, full_name, email, tier").order("full_name")
-      .then(({ data }) => setAllUsers((data ?? []) as Brief[]));
+    loadBrief().then((r) => setAllUsers((r.users ?? []) as Brief[])).catch(() => setAllUsers([]));
   }, []);
 
   const filtered = useMemo(() => {
