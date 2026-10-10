@@ -14,6 +14,7 @@ import {
   approveTierUpgrade, confirmTier2LiveVerification, resetTier2LiveVerification,
   rejectTierUpgrade, terminateUser as terminateMember, restoreUser as restoreMember,
   deleteUser as deleteMember, setUserTier, updateBalance, updateMemberCredentials,
+  listAdminsWithTags, setMemberAssignment,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
@@ -284,6 +285,11 @@ function AdminUserDetail() {
         {/* Account Editor — email & password */}
         <section className="mt-3">
           <AccountEditor userId={userId} />
+        </section>
+
+        {/* Admin assignment (main admin only) */}
+        <section className="mt-3">
+          <AssignAdminSelector userId={userId} currentAdminId={(p as any).assigned_admin_id ?? null} onDone={load} />
         </section>
 
         <Panel title="Sign-up Information" defaultOpen>
