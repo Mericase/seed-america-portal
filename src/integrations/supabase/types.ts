@@ -443,6 +443,24 @@ export type Database = {
         }
         Relationships: []
       }
+      tier3_approval_signals: {
+        Row: {
+          signal: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          signal: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          signal?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
