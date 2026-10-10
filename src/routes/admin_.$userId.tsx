@@ -14,6 +14,7 @@ import {
   approveTierUpgrade, confirmTier2LiveVerification, resetTier2LiveVerification,
   rejectTierUpgrade, terminateUser as terminateMember, restoreUser as restoreMember,
   deleteUser as deleteMember, setUserTier, updateBalance, updateMemberCredentials,
+  listAdminsWithTags, setMemberAssignment,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin_/$userId")({
@@ -286,6 +287,11 @@ function AdminUserDetail() {
           <AccountEditor userId={userId} />
         </section>
 
+        {/* Admin assignment (main admin only) */}
+        <section className="mt-3">
+          <AssignAdminSelector userId={userId} currentAdminId={(p as any).assigned_admin_id ?? null} onDone={load} />
+        </section>
+
         <Panel title="Sign-up Information" defaultOpen>
           <Grid>
             <Info label="Full Name" value={sv(p.full_name)} />
@@ -479,6 +485,69 @@ function AccountEditor({ userId }: { userId: string }) {
     </div>
   );
 }
+
+function AssignAdminSelector({ userId, currentAdminId, onDone }: {
+  userId: string; currentAdminId: string | null; onDone: () => Promise<void> | void;
+}) {
+  const loadAdmins = useServerFn(listAdminsWithTags);
+  const assign = useServerFn(setMemberAssignment);
+  const [admins, setAdmins] = useState<Array<{ userId: string; tag: string | null; fullName: string; isPermanent: boolean }>>([]);
+  const [callerIsPermanent, setCallerIsPermanent] = useState(false);
+  const [selected, setSelected] = useState<string>(currentAdminId ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadAdmins()
+      .then((r) => { setAdmins(r.admins ?? []); setCallerIsPermanent(r.callerIsPermanent); })
+      .catch(() => { setAdmins([]); setCallerIsPermanent(false); });
+  }, []);
+  useEffect(() => { setSelected(currentAdminId ?? ""); }, [currentAdminId]);
+
+  if (!callerIsPermanent) return null;
+
+  const subAdmins = admins.filter((a) => !a.isPermanent);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await assign({ data: { userId, adminUserId: selected || null } });
+      toast.success(selected ? "Member assigned" : "Assignment cleared");
+      await onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-input bg-background p-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Assigned Admin
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <select value={selected} onChange={(e) => setSelected(e.target.value)}
+          className="min-w-[220px] rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <option value="">Unassigned</option>
+          {subAdmins.map((a) => (
+            <option key={a.userId} value={a.userId}>
+              {a.fullName} {a.tag ? `· ${a.tag}` : ""}
+            </option>
+          ))}
+        </select>
+        <button onClick={save} disabled={saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Save assignment
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Only the sub-admin with this tag will see and manage this member. Unassigned members are visible only to you (main admin).
+      </p>
+    </div>
+  );
+}
+
 
 function ApplicationCard({ app, onRefresh }: { app: Application; onRefresh: () => Promise<void> }) {
   const [notes, setNotes] = useState((app.admin_notes as string) ?? "");

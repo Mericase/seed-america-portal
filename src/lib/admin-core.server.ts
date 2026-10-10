@@ -45,10 +45,8 @@ export async function alertAdminAction(opts: {
 }
 
 // Loose typing so the helper accepts both the authenticated and service-role clients.
-type AnyClient = {
-  rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-  from: (table: string) => any;
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyClient = any;
 
 export async function assertAdmin(userId: string, client: AnyClient) {
   const { data, error } = await client.rpc("has_role", { _user_id: userId, _role: "admin" });
