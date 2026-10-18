@@ -302,7 +302,10 @@ function PasswordCard() {
     if (pw.length < 8) return toast.error("Password must be at least 8 characters.");
     if (pw !== confirm) return toast.error("Passwords do not match.");
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: pw });
+    // Uses the change_my_password database function (created in the SQL editor),
+    // which sets the signed-in user's password without asking for the current one.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.rpc as any)("change_my_password", { new_password: pw });
     setSaving(false);
     if (error) return toast.error(error.message);
     setPw(""); setConfirm("");
@@ -314,11 +317,11 @@ function PasswordCard() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">New password</span>
-          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
+          <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm password</span>
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
+          <input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
         </label>
       </div>
       <button onClick={save} disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
