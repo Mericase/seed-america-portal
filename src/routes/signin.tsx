@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, Mail, ShieldCheck, X } from "lucide-rea
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithUsername } from "@/lib/account.functions";
+import { sendPasswordReset } from "@/lib/password-reset.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signin")({
