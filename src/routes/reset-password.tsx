@@ -1,11 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { supabase } from "@/integrations/supabase/client";
+import { resetPassword } from "@/lib/password-reset.functions";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  token: z.string().optional(),
+});
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Reset Password — Seedin America" },
@@ -21,18 +27,12 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const [ready, setReady] = useState(false);
+  const { token } = Route.useSearch();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (s) setReady(true);
-    });
-    supabase.auth.getSession().then(({ data }) => setReady(!!data.session));
-    return () => subscription.unsubscribe();
-  }, []);
+  const hasToken = Boolean(token);
 
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-to-b from-accent/40 via-background to-background p-6">
@@ -41,7 +41,7 @@ function ResetPasswordPage() {
         <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
           <h1 className="font-display text-3xl font-semibold">Set a new password</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {ready
+            {hasToken
               ? "Choose a strong password you haven't used before."
               : "Open this page from the secure link in your reset email to continue."}
           </p>
@@ -50,14 +50,23 @@ function ResetPasswordPage() {
             className="mt-6 space-y-4"
             onSubmit={async (e) => {
               e.preventDefault();
+              if (!token) return toast.error("Missing reset token. Please use the link from your email.");
               if (password.length < 8) return toast.error("Password must be at least 8 characters.");
               if (password !== confirm) return toast.error("Passwords do not match.");
               setSaving(true);
-              const { error } = await supabase.auth.updateUser({ password });
-              setSaving(false);
-              if (error) return toast.error(error.message);
-              toast.success("Password updated — you're signed in.");
-              navigate({ to: "/dashboard", replace: true });
+              try {
+                const result = await resetPassword({ data: { token, newPassword: password } });
+                if (!result.ok) {
+                  toast.error(result.message || "Could not reset your password.");
+                  return;
+                }
+                toast.success("Password updated — please sign in with your new password.");
+                navigate({ to: "/signin", replace: true });
+              } catch {
+                toast.error("Something went wrong. Please try again.");
+              } finally {
+                setSaving(false);
+              }
             }}
           >
             <label className="block">
@@ -68,7 +77,7 @@ function ResetPasswordPage() {
               <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm password</span>
               <input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20" />
             </label>
-            <button disabled={saving || !ready} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant disabled:opacity-60">
+            <button disabled={saving || !hasToken} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant disabled:opacity-60">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Updating…</> : <><Lock className="h-4 w-4" /> Update password <ArrowRight className="h-4 w-4" /></>}
             </button>
           </form>

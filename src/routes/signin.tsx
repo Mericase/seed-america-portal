@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, Mail, ShieldCheck, X } from "lucide-rea
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithUsername } from "@/lib/account.functions";
+import { sendPasswordReset } from "@/lib/password-reset.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signin")({
@@ -151,12 +152,14 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
             onSubmit={async (e) => {
               e.preventDefault();
               setSending(true);
-              const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-                redirectTo: `${window.location.origin}/reset-password`,
-              });
-              setSending(false);
-              if (error) return toast.error(error.message);
-              setSent(true);
+              try {
+                await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin: window.location.origin } });
+                setSent(true);
+              } catch (err) {
+                toast.error("Could not send reset email. Please try again.");
+              } finally {
+                setSending(false);
+              }
             }}
           >
             <p className="text-sm text-muted-foreground">
