@@ -8,10 +8,10 @@ import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/admin-login")({
   head: () => ({ meta: [
-    { title: "Staff Sign In | Seedin America" },
-    { name: "description", content: "Authorized Seedin America staff sign-in." },
-    { property: "og:title", content: "Staff Sign In | Seedin America" },
-    { property: "og:description", content: "Authorized Seedin America staff sign-in." },
+    { title: "Staff Sign In | Seedin" },
+    { name: "description", content: "Authorized Seedin staff sign-in." },
+    { property: "og:title", content: "Staff Sign In | Seedin" },
+    { property: "og:description", content: "Authorized Seedin staff sign-in." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
