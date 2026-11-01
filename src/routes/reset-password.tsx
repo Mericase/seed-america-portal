@@ -14,10 +14,10 @@ export const Route = createFileRoute("/reset-password")({
   validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Reset Password — Seedin America" },
-      { name: "description", content: "Choose a new password for your Seedin America member account." },
-      { property: "og:title", content: "Reset Password — Seedin America" },
-      { property: "og:description", content: "Securely set a new password for your Seedin America account." },
+      { title: "Reset Password — Seedin" },
+      { name: "description", content: "Choose a new password for your Seedin member account." },
+      { property: "og:title", content: "Reset Password — Seedin" },
+      { property: "og:description", content: "Securely set a new password for your Seedin account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
