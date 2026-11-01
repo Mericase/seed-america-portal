@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { reportMemberEvent } from "@/lib/admin-bot.functions";
 
 export const Route = createFileRoute("/upgrade-tier")({
-  head: () => ({ meta: [{ title: "Upgrade to Tier 2 — Seedin America" }] }),
+  head: () => ({ meta: [{ title: "Upgrade to Tier 2 — Seedin" }] }),
   component: UpgradeTier,
 });
 
