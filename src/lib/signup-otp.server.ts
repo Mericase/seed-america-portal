@@ -91,7 +91,7 @@ export async function readOtpToken(token: string, email: string): Promise<OtpPay
 
 export function renderOtpEmail(code: string, email: string): string {
   return renderBrandedEmail({
-    preheader: "Your secure Seedin America email verification code expires in 10 minutes.",
+    preheader: "Your secure Seedin email verification code expires in 10 minutes.",
     heading: "Secure email verification",
     intro: "Use the one-time code below to continue your member registration.",
     categoryLabel: "Identity Verification",
@@ -111,8 +111,8 @@ export function renderOtpEmail(code: string, email: string): string {
           </td>
         </tr>
       </table>
-      <p style="margin:0;color:#5f6b64;font-size:14px;line-height:1.7;">For your protection, Seedin America will never ask for your password by email. If you did not request this code, you may safely ignore this notice.</p>
+      <p style="margin:0;color:#5f6b64;font-size:14px;line-height:1.7;">For your protection, Seedin will never ask for your password by email. If you did not request this code, you may safely ignore this notice.</p>
     `,
-    footerNote: "Seedin America Member Services · Secure registration notice.",
+    footerNote: "Seedin Member Services · Secure registration notice.",
   });
 }
