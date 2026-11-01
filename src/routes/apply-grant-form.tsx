@@ -9,8 +9,8 @@ import { reportMemberEvent } from "@/lib/admin-bot.functions";
 export const Route = createFileRoute("/apply-grant-form")({
   head: () => ({
     meta: [
-      { title: "Grant Application — Seedin America" },
-      { name: "description", content: "Submit your federal grant application." },
+      { title: "Grant Application — Seedin" },
+      { name: "description", content: "Submit your Seedin grant application." },
     ],
   }),
   component: ApplyGrant,
@@ -160,7 +160,7 @@ function ApplyGrant() {
               <Select label="Highest Education" value={form.education} onChange={(v) => set("education", v)} options={EDUCATION} required />
               <Select label="Ethnicity" value={form.ethnicity} onChange={(v) => set("ethnicity", v)} options={ETHNICITY} required />
               <Select label="Housing Status" value={form.housingStatus} onChange={(v) => set("housingStatus", v)} options={HOUSING} required />
-              <Select label="U.S. Military Veteran?" value={form.veteran} onChange={(v) => set("veteran", v)} options={["No", "Yes — Active", "Yes — Reserve / Guard", "Yes — Honorably Discharged"]} required />
+              <Select label="Military Veteran?" value={form.veteran} onChange={(v) => set("veteran", v)} options={["No", "Yes — Active", "Yes — Reserve / Guard", "Yes — Honorably Discharged"]} required />
               <Select label="Living with a Disability?" value={form.disability} onChange={(v) => set("disability", v)} options={["No", "Yes — Physical", "Yes — Mental Health", "Yes — Both", "Prefer not to say"]} required />
               <Field label="State of Residence" value={form.state} onChange={(v) => set("state", v)} required />
               <Field label="City" value={form.city} onChange={(v) => set("city", v)} required />
@@ -184,7 +184,7 @@ function ApplyGrant() {
             )}
           </Section>
 
-          <Section n={3} title="Grant Request" desc="Seedin America offers a wide range of grants. Choose the one that matches your need.">
+          <Section n={3} title="Grant Request" desc="Seedin offers a wide range of grants. Choose the one that matches your need.">
             <Grid>
               <Select label="Type of Grant Needed" value={form.grantType} onChange={(v) => set("grantType", v)} options={GRANT_TYPES} required />
               <Select label="How Urgently Do You Need Funds?" value={form.urgency} onChange={(v) => set("urgency", v)} options={URGENCY} required />
@@ -196,7 +196,7 @@ function ApplyGrant() {
             <Textarea label="Tell us how this grant will change your life or business (minimum 100 characters)" value={form.purposeDescription} onChange={(v) => set("purposeDescription", v)} required minLength={100} rows={5} />
           </Section>
 
-          <Section n={4} title="Disbursement Bank Details" desc="The grant amount will be disbursed directly into the bank account provided below. Ensure the details are correct — Seedin America is not liable for funds sent to incorrect accounts." highlight>
+          <Section n={4} title="Disbursement Bank Details" desc="The grant amount will be disbursed directly into the bank account provided below. Ensure the details are correct — Seedin is not liable for funds sent to incorrect accounts." highlight>
             <Grid>
               <Field label="Bank Name" value={form.bankName} onChange={(v) => set("bankName", v)} required />
               <Field label="Account Holder's Full Name" value={form.accountHolderName} onChange={(v) => set("accountHolderName", v)} required />
@@ -217,7 +217,7 @@ function ApplyGrant() {
             <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-lg border border-input p-4 hover:bg-accent/40">
               <input type="checkbox" className="mt-1 h-4 w-4 accent-forest" checked={form.consentVerify} onChange={(e) => set("consentVerify", e.target.checked)} />
               <span className="text-sm text-foreground/90">
-                I authorize Seedin America to verify my identity, income, and bank information with relevant federal agencies and financial institutions for the purpose of processing this grant.
+                I authorize Seedin to verify my identity, income, and bank information with relevant federal agencies and financial institutions for the purpose of processing this grant.
               </span>
             </label>
           </Section>
@@ -228,7 +228,7 @@ function ApplyGrant() {
               <div>
                 <p className="font-display text-xl font-semibold text-forest">Pure grants. We never take equity, royalties, or repayment.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  This is a grant — not a loan. No repayment is required, ever. Funds are disbursed by the U.S. Treasury under the public-private American Growth Mandate.
+                  This is a grant — not a loan. No repayment is required, ever. Funds are disbursed through Seedin's globally recognized grant programme.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-forest" /> Bank-grade encryption</span>
