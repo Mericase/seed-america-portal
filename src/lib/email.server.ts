@@ -4,7 +4,7 @@ import { serverEnv } from "./runtime-env.server";
 const RESEND_URL = "https://api.resend.com/emails";
 const RESEND_GATEWAY_URL = "https://connector-gateway.lovable.dev/resend/emails";
 
-export const FROM_ADDRESS = "Seedin America <info@seedinamerica.org>";
+export const FROM_ADDRESS = "Seedin <info@seedinamerica.org>";
 
 const HERO_URL = "https://seedinamerica.org/email-assets/hero-seedling.jpeg";
 
@@ -123,7 +123,7 @@ export function renderBrandedEmail(opts: {
     ctaUrl,
     categoryLabel = "Official Member Notice",
     showReferralBanner = false,
-    footerNote = "Seedin America · Empowering communities through capital access.",
+    footerNote = "Seedin · Empowering communities through capital access.",
   } = opts;
 
   const cta =
@@ -166,12 +166,12 @@ export function renderBrandedEmail(opts: {
             <tr>
               <td style="width:54px;height:54px;border-radius:999px;background:#1f5f3b;border:2px solid #c9a84c;text-align:center;vertical-align:middle;font-size:25px;box-shadow:0 10px 28px rgba(0,0,0,0.24);">🌱</td>
               <td style="padding-left:12px;text-align:left;vertical-align:middle;">
-                <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:700;color:#ffffff;line-height:1;">Seedin <span style="color:#c9a84c;">America</span></div>
+                <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:700;color:#c9a84c;line-height:1;">Seedin</div>
                 <div style="margin-top:6px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.70);">Plant · Grow · Prosper</div>
               </td>
             </tr>
           </table>
-          <div style="display:inline-block;margin:4px 0 20px;padding:7px 14px;border:1px solid rgba(201,168,76,0.55);border-radius:3px;background:rgba(255,255,255,0.06);font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#ffffff;">Endorsed by the Office of the President</div>
+          <div style="display:inline-block;margin:4px 0 20px;padding:7px 14px;border:1px solid rgba(201,168,76,0.55);border-radius:3px;background:rgba(255,255,255,0.06);font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#ffffff;">Globally Recognized Grant Initiative</div>
           <p style="margin:0 0 9px;font-size:11px;font-weight:900;color:#c9a84c;letter-spacing:0.20em;text-transform:uppercase;">${escapeHtml(categoryLabel)}</p>
           <h1 style="margin:0 auto;font-family:Georgia,'Times New Roman',serif;font-size:31px;font-weight:700;color:#ffffff;text-align:center;line-height:1.18;max-width:520px;">${escapeHtml(heading)}</h1>
           ${intro ? `<p style="margin:12px auto 0;max-width:500px;font-size:14px;color:rgba(255,255,255,0.84);text-align:center;line-height:1.62;">${intro}</p>` : ""}
@@ -200,15 +200,15 @@ export function renderBrandedEmail(opts: {
         <tr><td style="background:#f6f8f6;padding:24px 42px;border-top:1px solid #dce4df;">
           <p style="margin:0 0 8px;font-size:12px;color:#69756e;text-align:center;line-height:1.6;">${footerNote}</p>
           <p style="margin:0;font-size:11px;color:#8b958f;text-align:center;line-height:1.55;">
-            This email was sent by Seedin America Member Services. For account support, contact <a href="mailto:info@seedinamerica.org" style="color:#1d4f33;text-decoration:none;font-weight:700;">info@seedinamerica.org</a>.
+            This email was sent by Seedin Member Services. For account support, contact <a href="mailto:info@seedinamerica.org" style="color:#1d4f33;text-decoration:none;font-weight:700;">info@seedinamerica.org</a>.
           </p>
           <p style="margin:12px 0 0;font-size:10px;color:#a6aea9;text-align:center;letter-spacing:0.12em;text-transform:uppercase;">
-            &copy; ${new Date().getFullYear()} Seedin America &middot; info@seedinamerica.org
+            &copy; ${new Date().getFullYear()} Seedin &middot; info@seedinamerica.org
           </p>
         </td></tr>
 
       </table>
-      <p style="margin:18px 0 38px;font-size:11px;color:#7f8b84;text-align:center;">Seedin America Federal Grant Initiative</p>
+      <p style="margin:18px 0 38px;font-size:11px;color:#7f8b84;text-align:center;">Seedin · Global Grant Initiative</p>
     </td></tr>
   </table>
 </body></html>`;
