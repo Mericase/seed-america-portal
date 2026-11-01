@@ -24,12 +24,21 @@ export const Route = createFileRoute("/signup")({
 
 const dobRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
 
+const COUNTRIES = [
+  { code: "US", label: "🇺🇸 United States" },
+  { code: "CA", label: "🇨🇦 Canada" },
+  { code: "AU", label: "🇦🇺 Australia" },
+  { code: "DE", label: "🇩🇪 Germany" },
+] as const;
+type CountryCode = (typeof COUNTRIES)[number]["code"];
+
 const step1Schema = z.object({
   full_name: z.string().trim().min(2, "Enter your full legal name").max(120),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().min(7, "Enter a valid phone").max(20),
   address: z.string().trim().min(5, "Enter your residential address").max(255),
   date_of_birth: z.string().regex(dobRegex, "Use MM/DD/YYYY (e.g. 04/12/1990)"),
+  country: z.enum(["US", "CA", "AU", "DE"]),
   password: z.string().min(1, "Enter a password").max(72),
   confirm_password: z.string().min(1, "Confirm your password").max(72),
 }).refine((v) => v.password === v.confirm_password, {
@@ -67,7 +76,7 @@ function SignupPage() {
   const [success, setSuccess] = useState(false);
   const [data, setData] = useState<Step1>(() =>
     loadProgress()?.data ?? {
-      full_name: "", email: "", phone: "", address: "", date_of_birth: "", password: "", confirm_password: "",
+      full_name: "", email: "", phone: "", address: "", date_of_birth: "", country: "US", password: "", confirm_password: "",
     });
   const [hearAbout, setHearAbout] = useState(() => loadProgress()?.hearAbout ?? "");
   const [referralCode, setReferralCode] = useState(() => loadProgress()?.referralCode ?? "");
@@ -204,6 +213,7 @@ function SignupPage() {
                           const [m, d, y] = data.date_of_birth.split("/");
                           return `${y}-${m}-${d}`;
                         })(),
+                        country: data.country,
                         hear_about: hearAbout,
                         referral_code: referralCode.trim().toUpperCase() || null,
                       },
@@ -293,6 +303,21 @@ function Step1Form({ value, onChange, onNext, submitting }: { value: Step1; onCh
         <Field label="Phone Number" type="tel" placeholder="(555) 123-4567" value={value.phone} onChange={set("phone")} required />
       </div>
       <Field label="Residential Address" placeholder="1600 Main St, Springfield, IL 62701" value={value.address} onChange={set("address")} required />
+      <div>
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Country of Registration</span>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {COUNTRIES.map(({ code, label }) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => onChange({ ...value, country: code as CountryCode })}
+              className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${value.country === code ? "border-forest bg-forest/10 text-forest" : "border-input bg-background hover:bg-accent"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date of Birth</span>
         <div className="relative">
