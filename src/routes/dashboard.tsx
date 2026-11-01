@@ -17,7 +17,7 @@ import { Tier2LiveVerificationPrompt } from "@/components/Tier2LiveVerification"
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Seedin America" },
+      { title: "Dashboard — Seedin" },
       { name: "description", content: "Your member dashboard." },
     ],
   }),
