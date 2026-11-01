@@ -263,6 +263,30 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_otps: {
+        Row: {
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          used: boolean
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          used?: boolean
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          used?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string

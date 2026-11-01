@@ -8,6 +8,13 @@
       "when": 1791474007078,
       "tag": "0000_admin_tagging_and_member_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793519895962,
+      "tag": "0001_create_password_reset_otps",
+      "breakpoints": true
     }
   ]
 }
