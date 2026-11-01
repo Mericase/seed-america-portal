@@ -1,9 +1,9 @@
-// Seedin America push service worker
+// Seedin push service worker
 self.addEventListener("install", (e) => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
-  let data = { title: "Seedin America", body: "You have a new update.", link: "/dashboard" };
+  let data = { title: "Seedin", body: "You have a new update.", link: "/dashboard" };
   try { if (event.data) data = { ...data, ...event.data.json() }; } catch (_) {}
   event.waitUntil(
     self.registration.showNotification(data.title, {
