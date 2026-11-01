@@ -8,10 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Seedin America — Federal Grants for Business, Debt, Tuition & More" },
-      { name: "description", content: "Federally backed grants for U.S. citizens: business capital, student loan repayment, mortgage relief, accident recovery and more. Plant the seed." },
-      { property: "og:title", content: "Seedin America" },
-      { property: "og:description", content: "Plant the seed. Grow the dream. American grants for life's biggest moments." },
+      { title: "Seedin — Grants for Business, Debt, Tuition & More" },
+      { name: "description", content: "Globally recognized grants for individuals and entrepreneurs: business capital, student loan repayment, mortgage relief, accident recovery and more. Plant the seed." },
+      { property: "og:title", content: "Seedin" },
+      { property: "og:description", content: "Plant the seed. Grow the dream. Grants for life's biggest moments." },
     ],
   }),
   component: Landing,
@@ -31,13 +31,23 @@ function Landing() {
       <section className="relative isolate min-h-[100svh] overflow-hidden">
         <img
           src={heroImg}
-          alt="Diverse American entrepreneurs in their businesses"
+          alt="Diverse entrepreneurs building their businesses"
           width={1920}
           height={1080}
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-hero-overlay" style={{ backgroundImage: "var(--gradient-hero-overlay)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at top, transparent 0%, oklch(0.12 0.05 260 / 0.6) 70%)" }} />
+
+        {/* Flag strip — shows the countries Seedin serves */}
+        <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 backdrop-blur-md">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/60">Serving</span>
+          <span className="text-xl leading-none" title="United States">🇺🇸</span>
+          <span className="text-xl leading-none" title="Canada">🇨🇦</span>
+          <span className="text-xl leading-none" title="Australia">🇦🇺</span>
+          <span className="text-xl leading-none" title="Germany">🇩🇪</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/60">&amp; more</span>
+        </div>
 
         <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-5 sm:px-6 sm:py-6">
           <Logo variant="light" />
@@ -57,14 +67,14 @@ function Landing() {
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-start px-4 pb-20 pt-16 sm:px-6 sm:pb-24 sm:pt-20 md:pt-32">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-            Endorsed by the Office of the President
+            Globally Recognized Grant Initiative
           </span>
           <h1 className="max-w-4xl font-display text-4xl font-semibold leading-[1.08] text-white text-balance sm:text-5xl md:text-7xl">
             Plant the seed. <span className="text-gold">Grow the dream.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 md:text-xl">
-            Seedin America is a federally backed grant initiative providing relief and capital
-            to every American — for business, student loans, mortgages, accident recovery and more.
+            Seedin is a globally recognized grant initiative providing relief and capital
+            to individuals and entrepreneurs — for business, student loans, mortgages, accident recovery and more.
             No equity. No payback. Just growth.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
@@ -85,8 +95,8 @@ function Landing() {
 
           <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3 border-t border-white/15 pt-8">
             <Stat value="$4.2B" label="Funds Deployed" />
-            <Stat value="312,000+" label="Americans Helped" />
-            <Stat value="All 50" label="States Served" />
+            <Stat value="312,000+" label="People Helped" />
+            <Stat value="Global" label="Reach" />
           </div>
         </div>
       </section>
@@ -96,7 +106,7 @@ function Landing() {
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
-              <Flag className="h-3.5 w-3.5" /> Grants for every American
+              <Flag className="h-3.5 w-3.5" /> Grants for everyone, everywhere
             </span>
             <h2 className="mt-4 font-display text-3xl font-semibold md:text-4xl">
               We fund more than just businesses.
@@ -110,7 +120,7 @@ function Landing() {
             <Category icon={<GraduationCap className="h-5 w-5" />} title="Student Loan Relief" desc="Repayment assistance for federal and private student loans." />
             <Category icon={<Home className="h-5 w-5" />} title="Mortgage Aid" desc="Down-payment help, refinancing relief and foreclosure prevention." />
             <Category icon={<HeartPulse className="h-5 w-5" />} title="Accident Relief Funds" desc="Emergency support for medical bills and accident recovery." />
-            <Category icon={<Coins className="h-5 w-5" />} title="Debt Repayment" desc="Pay down credit card, medical and personal debt with federal grants." />
+            <Category icon={<Coins className="h-5 w-5" />} title="Debt Repayment" desc="Pay down credit card, medical and personal debt with Seedin grants." />
             <Category icon={<Sprout className="h-5 w-5" />} title="Family & Housing" desc="Childcare assistance, utility relief and first-home programs." />
           </div>
         </div>
@@ -123,7 +133,7 @@ function Landing() {
             Bank-grade infrastructure with end-to-end encryption protecting every applicant.
           </Pillar>
           <Pillar icon={<Landmark className="h-6 w-6" />} title="Government Backed">
-            Operating under the public-private American Growth Mandate.
+            Operating as a globally endorsed public-private grant initiative.
           </Pillar>
           <Pillar icon={<Sprout className="h-6 w-6" />} title="Non-Dilutive Capital">
             Pure grants. We never take equity, royalties, or repayment.
@@ -136,7 +146,7 @@ function Landing() {
         <div className="mx-auto max-w-4xl text-center">
           <BadgeCheck className="mx-auto mb-6 h-12 w-12 text-gold" />
           <h2 className="font-display text-4xl font-semibold md:text-5xl">
-            America was built by the audacious.
+            Great things are built by the audacious.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-white/80">
             Your application takes under three minutes. Eligible founders receive disbursement
@@ -154,7 +164,7 @@ function Landing() {
       <footer className="border-t border-border bg-card px-6 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row">
           <Logo />
-          <p>© {new Date().getFullYear()} Seedin America. A federally endorsed initiative.</p>
+          <p>© {new Date().getFullYear()} Seedin. A globally recognized grant initiative.</p>
         </div>
       </footer>
     </div>
