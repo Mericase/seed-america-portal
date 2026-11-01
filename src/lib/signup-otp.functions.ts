@@ -64,9 +64,9 @@ export const sendSignupOtp = createServerFn({ method: "POST" })
 
     const res = await sendEmail({
       to: data.email,
-      subject: `Your Seedin America verification code: ${code}`,
+      subject: `Your Seedin verification code: ${code}`,
       html: renderOtpEmail(code, data.email),
-      text: `Your Seedin America verification code is ${code}. This code expires in 10 minutes.`,
+      text: `Your Seedin verification code is ${code}. This code expires in 10 minutes.`,
     });
     if (!res.ok) throw new Error("Could not send verification email. Please try again.");
 
