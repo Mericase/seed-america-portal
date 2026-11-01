@@ -2,6 +2,71 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { Buffer } from "node:buffer";
 
+// ── OTP-based reset: verify 6-digit code and return a short-lived token ───────
+
+export const resetPasswordWithOtp = createServerFn({ method: "POST" })
+  .inputValidator((i: { email: string; code: string }) =>
+    z.object({ email: z.string().email().max(320), code: z.string().length(6) }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { serverEnv } = await import("./runtime-env.server");
+    const { sha256Hex } = await import("./signup-otp.server");
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
+
+    const secret = serverEnv(
+      "SIGNUP_OTP_SECRET",
+      "RESEND_API_KEY",
+      "LOVABLE_API_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_PUBLISHABLE_KEY",
+    );
+    if (!secret) {
+      return { ok: false as const, message: "Password reset is temporarily unavailable." };
+    }
+
+    const email = data.email.trim().toLowerCase();
+
+    // Look up the pending OTP record from the DB (stored when the reset email was sent)
+    let admin: ReturnType<typeof getSupabaseAdmin>;
+    try { admin = getSupabaseAdmin(); } catch {
+      return { ok: false as const, message: "Password reset is temporarily unavailable." };
+    }
+
+    const { data: record } = await admin
+      .from("password_reset_otps")
+      .select("code_hash, expires_at, used")
+      .ilike("email", email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!record) {
+      return { ok: false as const, message: "No pending reset code for this email. Please request a new one." };
+    }
+    if (record.used) {
+      return { ok: false as const, message: "This code has already been used. Please request a new one." };
+    }
+    if (new Date(record.expires_at) < new Date()) {
+      return { ok: false as const, message: "This code has expired. Please request a new one." };
+    }
+
+    const hash = await sha256Hex(data.code + secret);
+    if (hash !== record.code_hash) {
+      return { ok: false as const, message: "Incorrect code. Please check and try again." };
+    }
+
+    // Mark used
+    await admin.from("password_reset_otps").update({ used: true }).ilike("email", email);
+
+    // Issue a signed token that /reset-password (and resetPassword fn) can use
+    const payload = { email, exp: Date.now() + 15 * 60 * 1000 };
+    const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    const signature = await hmacSign(encoded, secret);
+    const token = `${encoded}.${signature}`;
+
+    return { ok: true as const, token };
+  });
+
 /**
  * Custom password-reset flow that sends the reset link via Resend
  * so it works on any domain (Cloudflare, Lovable preview, etc.)
@@ -69,24 +134,46 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
 
     const resetUrl = `${data.origin}/reset-password?token=${encodeURIComponent(token)}`;
 
+    // Generate & store OTP for the code-entry flow
+    const { genCode, sha256Hex } = await import("./signup-otp.server");
+    const otpCode = genCode();
+    const codeHash = await sha256Hex(otpCode + secret);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    const { getSupabaseAdmin } = await import("./supabase-admin.server");
+    try {
+      const admin = getSupabaseAdmin();
+      await admin.from("password_reset_otps").upsert(
+        { email, code_hash: codeHash, expires_at: expiresAt, used: false, created_at: new Date().toISOString() },
+        { onConflict: "email" },
+      );
+    } catch {
+      console.error("[reset] could not store OTP");
+    }
+
     const html = renderBrandedEmail({
-      preheader: "Your Seedin America password reset link expires in 60 minutes.",
+      preheader: "Your Seedin password reset link expires in 60 minutes.",
       heading: "Reset your password",
-      intro: "We received a request to reset your Seedin America account password.",
+      intro: "We received a request to reset your Seedin account password.",
       categoryLabel: "Account Security",
       bodyHtml: `
+        <p style="margin:0 0 12px;color:#5f6b64;font-size:14px;line-height:1.7;">
+          Your 6-digit verification code is:
+        </p>
+        <p style="margin:0 0 22px;font-size:36px;font-weight:700;letter-spacing:0.18em;color:#102b1b;">${otpCode}</p>
         <p style="margin:0 0 22px;color:#5f6b64;font-size:14px;line-height:1.7;">
-          Click the button below to choose a new password. This link expires in <strong style="color:#102b1b;">60 minutes</strong>.
+          Enter this code on the Seedin password reset page. It expires in <strong style="color:#102b1b;">60 minutes</strong>.
+          If you prefer, you can also click the button below to reset via a direct link.
         </p>
       `,
-      ctaLabel: "Reset Password",
+      ctaLabel: "Reset Password (link)",
       ctaUrl: resetUrl,
       footerNote: "If you didn't request this, you can safely ignore this email. Your password will remain unchanged.",
     });
 
     const result = await sendEmail({
       to: email,
-      subject: "Reset your Seedin America password",
+      subject: "Reset your Seedin password",
       html,
     });
 
