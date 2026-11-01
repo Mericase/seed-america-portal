@@ -12,7 +12,7 @@ import { savePushSubscription } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
-    meta: [{ title: "Notifications — Seedin America" }],
+    meta: [{ title: "Notifications — Seedin" }],
   }),
   component: NotificationsPage,
 });
