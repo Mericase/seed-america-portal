@@ -63,7 +63,7 @@ export const listUsersBrief = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { assignedMemberIds } = await import("./admin-core.server");
     const allowed = await assignedMemberIds(context.userId, context.supabase);
-    let q = context.supabase.from("profiles").select("id, full_name, email, tier").order("full_name", { ascending: true });
+    let q = context.supabase.from("profiles").select("id, full_name, email, tier, country").order("full_name", { ascending: true });
     if (allowed !== null) {
       if (allowed.length === 0) return { users: [] };
       q = q.in("id", allowed);
@@ -188,7 +188,7 @@ export const sendNotification = createServerFn({ method: "POST" })
           const html = renderBrandedEmail({
             preheader: data.title,
             heading: data.title,
-            intro: `Hello ${escapeHtml(firstName)}, you have a new official notification from Seedin America.`,
+            intro: `Hello ${escapeHtml(firstName)}, you have a new official notification from Seedin.`,
             categoryLabel: templateLabels[data.templateKey ?? "custom"] ?? templateLabels.custom,
             bodyHtml: `
               ${emailParagraphs(data.body)}
@@ -197,10 +197,10 @@ export const sendNotification = createServerFn({ method: "POST" })
               </p>
             `,
             ctaLabel: "View notification",
-            ctaUrl: `https://seedinamerica.org${safeLink}`,
+            ctaUrl: `https://seedin.site${safeLink}`,
           });
 
-          const result = await sendEmail({ to: p.email, subject: `Seedin America: ${data.title}`, html });
+          const result = await sendEmail({ to: p.email, subject: `Seedin: ${data.title}`, html });
           if (result.ok) {
             emailed++;
           } else {
