@@ -15,9 +15,9 @@ import {
 export const Route = createFileRoute("/connect-email")({
   head: () => ({
     meta: [
-      { title: "Connect Your Email — Seedin America" },
-      { name: "description", content: "Add a third layer of security to your Seedin America account, get faster reviews, and never miss a grant notification by linking your everyday email." },
-      { property: "og:title", content: "Connect Your Email — Seedin America" },
+      { title: "Connect Your Email — Seedin" },
+      { name: "description", content: "Add a third layer of security to your Seedin account, get faster reviews, and never miss a grant notification by linking your everyday email." },
+      { property: "og:title", content: "Connect Your Email — Seedin" },
       { property: "og:description", content: "Link your everyday inbox for stronger account security and faster grant reviews." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -111,7 +111,7 @@ function ConnectEmailPage() {
           <div className="flex items-start gap-2.5 border-t border-border bg-muted/40 px-6 py-4 text-xs leading-relaxed text-muted-foreground sm:px-8">
             <Lock className="mt-0.5 h-4 w-4 shrink-0 text-forest" />
             <p>
-              Seedin America never sees or stores your email password. Provider sign-in happens entirely on Google's or
+              Seedin never sees or stores your email password. Provider sign-in happens entirely on Google's or
               Microsoft's own website, and you can disconnect at any time from this page.
             </p>
           </div>
@@ -252,7 +252,7 @@ function ProviderCard({ onLinked }: { onLinked: () => Promise<void> }) {
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recommended</p>
       <h2 className="mt-1 font-display text-2xl font-semibold">Sign in with your email provider</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        You'll be taken to the provider's own secure sign-in page. Seedin America never sees your password.
+        You'll be taken to the provider's own secure sign-in page. Seedin never sees your password.
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
