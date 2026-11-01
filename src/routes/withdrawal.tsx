@@ -11,7 +11,7 @@ import { reportMemberEvent } from "@/lib/admin-bot.functions";
 import type { Profile } from "@/lib/auth";
 
 export const Route = createFileRoute("/withdrawal")({
-  head: () => ({ meta: [{ title: "Withdrawal — Seedin America" }] }),
+  head: () => ({ meta: [{ title: "Withdrawal — Seedin" }] }),
   component: Withdrawal,
 });
 
