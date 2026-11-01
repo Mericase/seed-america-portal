@@ -22,6 +22,7 @@ function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [otpToken, setOtpToken] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -43,8 +44,9 @@ function ForgotPasswordPage() {
     setLoading(true);
     try {
       const origin = window.location.origin;
-      await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin } });
+      const result = await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin } });
       // Always advance (server never reveals whether email exists)
+      if (result.otpToken) setOtpToken(result.otpToken);
       setStep("code");
       setResendCooldown(60);
       toast.success("Verification code sent — check your inbox.");
@@ -88,7 +90,7 @@ function ForgotPasswordPage() {
     setLoading(true);
     try {
       const result = await resetPasswordWithOtp({
-        data: { email: email.trim().toLowerCase(), code: enteredCode },
+        data: { email: email.trim().toLowerCase(), code: enteredCode, otpToken },
       });
       if (!result.ok) {
         toast.error(result.message || "Invalid or expired code. Please try again.");
@@ -106,7 +108,7 @@ function ForgotPasswordPage() {
   // ── Step 3: set new password ─────────────────────────────────────────────
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (!password) return toast.error("Please enter a password.");
     if (password !== confirm) return toast.error("Passwords do not match.");
     setLoading(true);
     try {
@@ -243,7 +245,8 @@ function ForgotPasswordPage() {
                       onClick={async () => {
                         setLoading(true);
                         try {
-                          await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin: window.location.origin } });
+                          const resendResult = await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin: window.location.origin } });
+                          if (resendResult.otpToken) setOtpToken(resendResult.otpToken);
                           toast.success("New code sent.");
                           setResendCooldown(60);
                           setCode(["", "", "", "", "", ""]);
@@ -284,7 +287,6 @@ function ForgotPasswordPage() {
                     <input
                       type="password"
                       required
-                      minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
@@ -345,7 +347,7 @@ function ForgotPasswordPage() {
 // ── Password strength indicator ──────────────────────────────────────────────
 function PasswordStrength({ password }: { password: string }) {
   const checks = [
-    password.length >= 8,
+    password.length >= 1,
     /[A-Z]/.test(password),
     /[0-9]/.test(password),
     /[^A-Za-z0-9]/.test(password),
