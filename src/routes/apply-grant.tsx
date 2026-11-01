@@ -11,8 +11,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/apply-grant")({
   head: () => ({
     meta: [
-      { title: "Apply for Grant — Seedin America" },
-      { name: "description", content: "Submit your federal grant application." },
+      { title: "Apply for Grant — Seedin" },
+      { name: "description", content: "Submit your Seedin grant application." },
     ],
   }),
   component: ApplyGrantIntro,
@@ -87,19 +87,19 @@ function ApplyGrantIntro() {
           </div>
           <div className="space-y-5 px-6 py-6 text-sm leading-relaxed text-foreground/90">
             <p>
-              Seedin America administers federally authorized grant programs under the American Growth Mandate, a public-private initiative designed to accelerate economic mobility, reduce household debt, and expand access to capital for everyday Americans. The funds disbursed through this program are <strong className="text-foreground">grants — not loans</strong>.
+              Seedin administers authorized grant programs under a public-private initiative designed to accelerate economic mobility, reduce household debt, and expand access to capital for everyday people. The funds disbursed through this program are <strong className="text-foreground">grants — not loans</strong>.
             </p>
             <p>
-              A grant is a direct financial award made to an eligible individual or household with <strong className="text-foreground">no obligation of repayment, no interest, no equity transfer, and no conditions attached to the money once disbursed</strong>. You will never be asked to pay this money back — not in part, not in full, not under any circumstance. Seedin America does not take a percentage of your award, does not charge processing fees from the disbursement, and holds no financial claim over any asset you may acquire using the funds.
+              A grant is a direct financial award made to an eligible individual or household with <strong className="text-foreground">no obligation of repayment, no interest, no equity transfer, and no conditions attached to the money once disbursed</strong>. You will never be asked to pay this money back — not in part, not in full, not under any circumstance. Seedin does not take a percentage of your award, does not charge processing fees from the disbursement, and holds no financial claim over any asset you may acquire using the funds.
             </p>
             <p>
               This is categorically different from a personal loan, a payday advance, a business line of credit, or any form of debt instrument. There is no creditor. There is no repayment schedule. There is no penalty for how you choose to use the funds within the stated purpose of your application. <strong className="text-foreground">Once the money is in your account, it is entirely and permanently yours.</strong>
             </p>
             <p>
-              Federal grant funds are sourced from designated Treasury allocations and are disbursed directly into the bank account you provide during this application. Disbursement typically occurs within 14 business days of approval. The review process considers household income, tier standing, urgency, and the purpose of your request.
+              Grant funds are sourced from designated programme allocations and are disbursed directly into the bank account you provide during this application. Disbursement typically occurs within 14 business days of approval. The review process considers household income, tier standing, urgency, and the purpose of your request.
             </p>
             <p className="rounded-lg border border-forest/30 bg-forest/5 p-4">
-              <strong className="text-forest">Important notice:</strong> Submitting false or misleading information in a federal grant application is a criminal offense under 18 U.S.C. § 1001 and may result in disqualification, demand for return of funds, civil liability, or federal prosecution. All information you provide is verified against IRS and federal agency records.
+              <strong className="text-forest">Important notice:</strong> Submitting false or misleading information is a serious offence and may result in disqualification, demand for return of funds, or civil liability.
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ function ApplyGrantIntro() {
             <ShieldCheck className="h-4 w-4 text-forest" /> Bank-grade encryption
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Landmark className="h-4 w-4 text-forest" /> U.S. Treasury backed
+            <Landmark className="h-4 w-4 text-forest" /> Internationally backed
           </span>
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-forest" /> Decision in 14 business days
