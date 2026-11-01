@@ -11,10 +11,10 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Account Settings — Seedin America" },
+      { title: "Account Settings — Seedin" },
       { name: "description", content: "Manage your username, contact details, password, notifications and track your grant application stage." },
-      { property: "og:title", content: "Account Settings — Seedin America" },
-      { property: "og:description", content: "Manage your Seedin America member account and track your grant application progress." },
+      { property: "og:title", content: "Account Settings — Seedin" },
+      { property: "og:description", content: "Manage your Seedin member account and track your grant application progress." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -353,7 +353,7 @@ function ConnectEmailCard() {
   return (
     <Card icon={<Mail className="h-4 w-4" />} title="Connected email">
       <p className="text-sm text-muted-foreground">
-        Link your everyday email inbox to Seedin America for faster verification and secure correspondence.
+        Link your everyday email inbox to Seedin for faster verification and secure correspondence.
       </p>
       <button
         onClick={() => toast.info("Email connection is coming soon.", { description: "We'll notify you the moment it's available." })}
