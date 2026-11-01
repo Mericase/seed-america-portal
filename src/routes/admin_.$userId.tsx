@@ -19,10 +19,10 @@ import {
 
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [
-    { title: "Member Review | Seedin America Admin" },
-    { name: "description", content: "Secure Seedin America staff member review workspace." },
-    { property: "og:title", content: "Member Review | Seedin America Admin" },
-    { property: "og:description", content: "Secure Seedin America staff member review workspace." },
+    { title: "Member Review | Seedin Admin" },
+    { name: "description", content: "Secure Seedin staff member review workspace." },
+    { property: "og:title", content: "Member Review | Seedin Admin" },
+    { property: "og:description", content: "Secure Seedin staff member review workspace." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
