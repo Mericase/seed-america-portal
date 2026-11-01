@@ -13,8 +13,8 @@ import { notifyNewSignup } from "@/lib/signup-notify.functions";
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Create your account — Seedin America" },
-      { name: "description", content: "Begin your federal grant application in three secure steps." },
+      { title: "Create your account — Seedin" },
+      { name: "description", content: "Begin your Seedin grant application in three secure steps." },
     ],
   }),
   component: SignupPage,
@@ -135,7 +135,7 @@ function SignupPage() {
             <p className="mt-1 text-sm text-white/75">
               {step === 1 && "Tell us who you are. All information is encrypted end-to-end."}
               {step === 2 && `Enter the 6-digit code we just sent to ${data.email}.`}
-              {step === 3 && "Let us know how you heard about Seedin America."}
+              {step === 3 && "Let us know how you heard about Seedin."}
               {step === 4 && "Please review and accept to complete your application."}
             </p>
           </div>
@@ -500,15 +500,15 @@ function Step2Form({ hearAbout, setHearAbout, referralCode, setReferralCode, onB
   );
 }
 
-const TERMS = `SEEDIN AMERICA — TERMS AND CONDITIONS OF PARTICIPATION
+const TERMS = `SEEDIN — TERMS AND CONDITIONS OF PARTICIPATION
 
 PREAMBLE
-These Terms and Conditions ("Agreement") govern your participation in the Seedin America Federal Grant Initiative ("Program"), operated under endorsement of the Office of the President and administered in accordance with applicable federal regulations.
+These Terms and Conditions ("Agreement") govern your participation in the Seedin Global Grant Initiative ("Program"), a globally recognized public-private grant programme administered in accordance with applicable regulations in the member's jurisdiction.
 
 1. ELIGIBILITY
-1.1 You must be at least eighteen (18) years of age and a citizen or lawful permanent resident of the United States of America.
-1.2 You must possess a valid federal taxpayer identification number.
-1.3 You must intend to use disbursed grant capital exclusively for the establishment, operation, or expansion of a lawful business enterprise.
+1.1 You must be at least eighteen (18) years of age.
+1.2 You must possess a valid government-issued identification and a verifiable bank account in your name.
+1.3 You must intend to use disbursed grant capital exclusively for the establishment, operation, or expansion of a lawful enterprise, or for eligible personal relief purposes.
 
 2. APPLICATION REVIEW
 2.1 All applications are reviewed by independent grant adjudicators within fourteen (14) business days.
@@ -516,7 +516,7 @@ These Terms and Conditions ("Agreement") govern your participation in the Seedin
 2.3 Submission does not guarantee approval.
 
 3. DISBURSEMENT OF FUNDS
-3.1 Approved grants are disbursed via ACH transfer to a U.S.-based deposit account in the applicant's name.
+3.1 Approved grants are disbursed via bank transfer to a deposit account in the applicant's name.
 3.2 Disbursements are non-dilutive: the Program takes no equity, royalty, or repayment obligation.
 3.3 Recipients shall use funds in accordance with the use-of-proceeds statement submitted during application.
 
@@ -526,8 +526,8 @@ These Terms and Conditions ("Agreement") govern your participation in the Seedin
 4.3 The Program reserves the right to audit, suspend, or revoke referral credits in the event of suspected fraud, self-referral, or other abuse.
 
 5. CONFIDENTIALITY AND DATA SECURITY
-5.1 All personal information is processed under bank-grade encryption and retained in accordance with the Federal Information Security Modernization Act (FISMA).
-5.2 You authorize the Program to share information with federal agencies as required by law.
+5.1 All personal information is processed under bank-grade encryption and retained in accordance with applicable data protection laws in your jurisdiction.
+5.2 You authorize the Program to share information with relevant authorities as required by law.
 
 6. PROHIBITED CONDUCT
 6.1 You shall not submit false, misleading, or fraudulent information.
@@ -543,8 +543,8 @@ These Terms and Conditions ("Agreement") govern your participation in the Seedin
 8.2 Continued participation following amendment constitutes acceptance.
 
 9. GOVERNING LAW
-9.1 This Agreement shall be governed by the laws of the United States of America and the District of Columbia.
-9.2 Any dispute arising hereunder shall be submitted to binding arbitration in Washington, D.C.
+9.1 This Agreement is governed by applicable laws in your country of residence.
+9.2 Any dispute arising hereunder shall be submitted to binding arbitration in the jurisdiction agreed upon at the time of registration.
 
 10. ACKNOWLEDGMENT
 By checking the acceptance box below, you acknowledge that you have read, understood, and agree to be bound by the entirety of this Agreement. You further certify that all information provided in your application is true, accurate, and complete to the best of your knowledge.
@@ -573,7 +573,7 @@ function Step3Terms({ scrolledToEnd, setScrolledToEnd, accepted, setAccepted, on
       {!scrolledToEnd && <p className="text-center text-xs text-muted-foreground">↓ Scroll to the bottom to continue</p>}
       <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition ${scrolledToEnd ? "border-input bg-background hover:bg-accent" : "border-dashed border-border bg-muted/30 opacity-60"}`}>
         <input type="checkbox" disabled={!scrolledToEnd} checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 accent-forest" />
-        <span className="text-sm">I have read and accept the <strong>Terms and Conditions</strong> of Seedin America.</span>
+        <span className="text-sm">I have read and accept the <strong>Terms and Conditions</strong> of Seedin.</span>
       </label>
       <div className="flex gap-3">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-5 py-3 text-sm font-medium hover:bg-accent">
@@ -595,7 +595,7 @@ function SuccessScreen() {
         <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-gradient-gold shadow-gold">
           <Check className="h-10 w-10 text-primary" strokeWidth={3} />
         </div>
-        <h1 className="mt-8 font-display text-4xl font-semibold text-balance">Welcome to Seedin America</h1>
+        <h1 className="mt-8 font-display text-4xl font-semibold text-balance">Welcome to Seedin</h1>
         <p className="mt-4 text-white/80">
           Your account has been created and a welcome email is on its way to your inbox.
           Sign in to access your dashboard and begin your grant application.
