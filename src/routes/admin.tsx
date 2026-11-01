@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Loader2, Search, ShieldAlert, Users, Clock, Ban, FileText,
-  LogOut, ChevronRight, ArrowLeft, Send, Bell, Upload,
+  LogOut, ChevronRight, ArrowLeft, Send, Bell, Upload, BookmarkPlus,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,8 +27,19 @@ type UserRow = {
   id: string; full_name: string; email: string; phone: string;
   tier: number; tier_status: string; requested_tier: number | null;
   balance: number; profile_status: string; created_at: string; referral_code: string;
+  country?: string;
 };
-type Brief = { id: string; full_name: string; email: string; tier: number };
+type Brief = { id: string; full_name: string; email: string; tier: number; country?: string };
+
+const COUNTRY_FLAGS: Record<string, string> = { US: "🇺🇸", CA: "🇨🇦", AU: "🇦🇺", DE: "🇩🇪" };
+function countryFlag(code?: string | null) { return COUNTRY_FLAGS[code ?? "US"] ?? "🇺🇸"; }
+
+const FILTER_COUNTRIES = [
+  { code: "US", flag: "🇺🇸" },
+  { code: "CA", flag: "🇨🇦" },
+  { code: "AU", flag: "🇦🇺" },
+  { code: "DE", flag: "🇩🇪" },
+] as const;
 
 const notificationTemplates = [
   {
@@ -209,7 +220,7 @@ function AdminPage() {
                     <tr key={u.id} onClick={() => navigate({ to: "/admin/$userId", params: { userId: u.id } })}
                       className="cursor-pointer border-t border-border transition hover:bg-accent/40">
                       <td className="px-4 py-3">
-                        <div className="font-semibold">{u.full_name || "—"}</div>
+                        <div className="font-semibold"><span className="mr-1">{countryFlag(u.country)}</span>{u.full_name || "—"}</div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
                       </td>
                       <td className="px-4 py-3">
@@ -269,12 +280,32 @@ function NotificationComposer() {
   const [body, setBody] = useState("");
   const [link, setLink] = useState("/dashboard");
   const [templateKey, setTemplateKey] = useState<(typeof notificationTemplates)[number]["key"] | "custom">("custom");
-  const [toAll, setToAll] = useState(true);
+  const [toAll, setToAll] = useState(false);
+  const [countryFilter, setCountryFilter] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualEmailText, setManualEmailText] = useState("");
   const [manualPhoneText, setManualPhoneText] = useState("");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<Array<{ key: string; label: string; title: string; body: string; link: string }>>(() => {
+    try { return JSON.parse(localStorage.getItem("seedin_notif_templates") ?? "[]"); } catch { return []; }
+  });
+
+  const saveAsTemplate = () => {
+    if (!title.trim() || !body.trim()) { toast.error("Enter a title and message first"); return; }
+    const key = `custom_${Date.now()}`;
+    const label = title.trim().slice(0, 30);
+    const next = [...savedTemplates, { key, label, title: title.trim(), body: body.trim(), link: link.trim() || "/dashboard" }];
+    setSavedTemplates(next);
+    try { localStorage.setItem("seedin_notif_templates", JSON.stringify(next)); } catch { /* ignore */ }
+    toast.success("Template saved");
+  };
+
+  const deleteSavedTemplate = (key: string) => {
+    const next = savedTemplates.filter((t) => t.key !== key);
+    setSavedTemplates(next);
+    try { localStorage.setItem("seedin_notif_templates", JSON.stringify(next)); } catch { /* ignore */ }
+  };
 
   const loadBrief = useServerFn(listUsersBrief);
   useEffect(() => {
@@ -283,9 +314,17 @@ function NotificationComposer() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return allUsers;
-    return allUsers.filter((u) => u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+    return allUsers.filter((u) => {
+      if (q && !u.full_name?.toLowerCase().includes(q) && !u.email?.toLowerCase().includes(q)) return false;
+      return true;
+    });
   }, [allUsers, search]);
+
+  // Users that match the country filter (for broadcast)
+  const broadcastTargets = useMemo(() => {
+    if (countryFilter.size === 0) return allUsers;
+    return allUsers.filter((u) => countryFilter.has(u.country ?? "US"));
+  }, [allUsers, countryFilter]);
 
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
@@ -305,6 +344,11 @@ function NotificationComposer() {
       toast.error("Pick at least one member or enter at least one email or phone recipient"); return;
     }
     setSending(true);
+    // When "Send to everyone" is checked with country filters, resolve IDs client-side
+    const resolvedToAll = toAll && countryFilter.size === 0;
+    const resolvedUserIds = toAll
+      ? (countryFilter.size > 0 ? broadcastTargets.map((u) => u.id) : undefined)
+      : Array.from(selected);
     try {
       const res = await doSend({
         data: {
@@ -312,8 +356,8 @@ function NotificationComposer() {
           body: body.trim(),
           link: link.trim() || "/dashboard",
           templateKey,
-          toAll,
-          userIds: toAll ? undefined : Array.from(selected),
+          toAll: resolvedToAll,
+          userIds: resolvedToAll ? undefined : resolvedUserIds,
           manualEmails,
           manualPhones,
         },
@@ -359,6 +403,18 @@ function NotificationComposer() {
                   {template.label}
                 </button>
               ))}
+              {savedTemplates.map((t) => (
+                <div key={t.key} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => { setTemplateKey("custom"); setTitle(t.title); setBody(t.body); setLink(t.link); }}
+                    className="flex-1 rounded-lg border border-dashed border-gold/60 bg-gold/5 px-3 py-2 text-left text-xs font-semibold text-gold-foreground transition hover:bg-gold/10"
+                  >
+                    ⭐ {t.label}
+                  </button>
+                  <button type="button" onClick={() => deleteSavedTemplate(t.key)} className="rounded-md border border-input px-2 py-2 text-xs text-muted-foreground hover:text-destructive" title="Delete">×</button>
+                </div>
+              ))}
             </div>
           </div>
           <div>
@@ -368,7 +424,17 @@ function NotificationComposer() {
               placeholder="Grant application update" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</label>
+              <button
+                type="button"
+                onClick={saveAsTemplate}
+                className="inline-flex items-center gap-1 rounded-md border border-gold/50 bg-gold/10 px-2 py-1 text-xs font-semibold text-gold-foreground hover:bg-gold/20"
+                title="Save current title + message as a template"
+              >
+                <BookmarkPlus className="h-3 w-3" /> Save as template
+              </button>
+            </div>
             <textarea value={body} onChange={(e) => { setBody(e.target.value); if (templateKey !== "custom") setTemplateKey("custom"); }} maxLength={1800} rows={8}
               className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               placeholder="Hi! Your tier upgrade is approved…" />
@@ -379,15 +445,42 @@ function NotificationComposer() {
               className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-forest/20"
               placeholder="/dashboard" />
           </div>
-          <label className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${toAll ? "border-forest bg-forest/5" : "border-border"}`}>
-            <input type="checkbox" checked={toAll} onChange={(e) => setToAll(e.target.checked)} className="h-4 w-4 accent-forest" />
-            <span><strong>Send to everyone</strong> <span className="text-muted-foreground">({allUsers.length} members)</span></span>
-          </label>
+          <div className={`rounded-lg border p-3 ${toAll ? "border-forest bg-forest/5" : "border-border"}`}>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={toAll} onChange={(e) => { setToAll(e.target.checked); if (!e.target.checked) setCountryFilter(new Set()); }} className="h-4 w-4 accent-forest" />
+              <strong>Send to everyone</strong>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {countryFilter.size > 0 ? `${broadcastTargets.length} of ${allUsers.length} members` : `${allUsers.length} members`}
+              </span>
+            </label>
+            {toAll && (
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {FILTER_COUNTRIES.map(({ code, flag }) => {
+                  const active = countryFilter.has(code);
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setCountryFilter((prev) => { const n = new Set(prev); active ? n.delete(code) : n.add(code); return n; })}
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition ${active ? "border-forest bg-forest text-forest-foreground" : "border-input bg-background hover:bg-accent"}`}
+                    >
+                      {flag} {code}
+                    </button>
+                  );
+                })}
+                {countryFilter.size > 0 && (
+                  <button type="button" onClick={() => setCountryFilter(new Set())} className="text-xs text-muted-foreground hover:text-foreground">
+                    All countries
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <button onClick={handleSend} disabled={sending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-4 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             {sending ? "Sending…" : toAll
-              ? `Send to all members${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}${manualPhones.length ? ` + ${manualPhones.length} SMS` : ""}`
+              ? `Send to ${countryFilter.size > 0 ? `${broadcastTargets.length} members` : "all members"}${manualEmails.length ? ` + ${manualEmails.length} email${manualEmails.length === 1 ? "" : "s"}` : ""}${manualPhones.length ? ` + ${manualPhones.length} SMS` : ""}`
               : `Send to ${selected.size + manualEmails.length + manualPhones.length} recipient${selected.size + manualEmails.length + manualPhones.length === 1 ? "" : "s"}`}
           </button>
         </div>
@@ -408,7 +501,7 @@ function NotificationComposer() {
               <label key={u.id} className={`flex cursor-pointer items-center gap-2 border-b border-border/60 px-3 py-2 text-sm hover:bg-accent/40 ${toAll ? "pointer-events-none" : ""}`}>
                 <input type="checkbox" checked={selected.has(u.id)} onChange={() => toggle(u.id)} disabled={toAll} className="h-4 w-4 accent-forest" />
                 <div className="flex-1">
-                  <div className="font-medium">{u.full_name || "—"}</div>
+                  <div className="font-medium"><span className="mr-1">{countryFlag(u.country)}</span>{u.full_name || "—"}</div>
                   <div className="text-xs text-muted-foreground">{u.email}</div>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">T{u.tier}</span>
