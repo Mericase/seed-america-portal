@@ -13,10 +13,10 @@ import { adminStats, listUsers, listAdminsWithTags, setAdminTag } from "@/lib/ad
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
-    { title: "Member Records | Seedin America Admin" },
-    { name: "description", content: "Secure staff workspace for Seedin America member records and account reviews." },
-    { property: "og:title", content: "Member Records | Seedin America Admin" },
-    { property: "og:description", content: "Secure staff workspace for Seedin America member records and account reviews." },
+    { title: "Member Records | Seedin Admin" },
+    { name: "description", content: "Secure staff workspace for Seedin member records and account reviews." },
+    { property: "og:title", content: "Member Records | Seedin Admin" },
+    { property: "og:description", content: "Secure staff workspace for Seedin member records and account reviews." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -34,16 +34,16 @@ const notificationTemplates = [
   {
     key: "upgrade_reminder",
     label: "Upgrade reminder",
-    title: "Unlock your next Seedin America benefits",
+    title: "Unlock your next Seedin benefits",
     link: "/update-tier-3",
     body: "You are very close to unlocking a stronger review path for your grant journey. Completing your next tier upgrade gives your application greater priority, faster document review, higher funding consideration, and access to additional member support.\n\nPlease sign in to your dashboard and complete the remaining upgrade steps so your account can continue moving forward without delay.",
   },
   {
     key: "account_change",
     label: "Account change",
-    title: "Important update on your Seedin America account",
+    title: "Important update on your Seedin account",
     link: "/dashboard",
-    body: "A change has been made to your Seedin America account record. Please review your dashboard to confirm that your profile, contact information, balance, and application details are accurate.\n\nIf you did not request or expect this update, contact member support immediately so our team can review your account.",
+    body: "A change has been made to your Seedin account record. Please review your dashboard to confirm that your profile, contact information, balance, and application details are accurate.\n\nIf you did not request or expect this update, contact member support immediately so our team can review your account.",
   },
   {
     key: "application_update",
@@ -55,16 +55,16 @@ const notificationTemplates = [
   {
     key: "payment_update",
     label: "Balance/payment",
-    title: "Your Seedin America balance has been updated",
+    title: "Your Seedin balance has been updated",
     link: "/dashboard",
-    body: "Your Seedin America member balance or payment status has been updated. Please sign in to your dashboard to review the new details and confirm that everything appears correct.\n\nIf you have questions about this update, contact member support from your dashboard.",
+    body: "Your Seedin member balance or payment status has been updated. Please sign in to your dashboard to review the new details and confirm that everything appears correct.\n\nIf you have questions about this update, contact member support from your dashboard.",
   },
   {
     key: "security_notice",
     label: "Security notice",
-    title: "Security notice for your Seedin America account",
+    title: "Security notice for your Seedin account",
     link: "/dashboard",
-    body: "We are sending this notice to help keep your Seedin America account secure. Please review your account information, password, and recent activity from your dashboard.\n\nIf anything looks unfamiliar, contact member support immediately so we can protect your account.",
+    body: "We are sending this notice to help keep your Seedin account secure. Please review your account information, password, and recent activity from your dashboard.\n\nIf anything looks unfamiliar, contact member support immediately so we can protect your account.",
   },
 ] as const;
 
