@@ -292,7 +292,6 @@ export type Database = {
           address: string
           assigned_admin_id: string | null
           balance: number
-          country: string | null
           created_at: string
           date_of_birth: string
           email: string
@@ -328,7 +327,6 @@ export type Database = {
           address: string
           assigned_admin_id?: string | null
           balance?: number
-          country?: string | null
           created_at?: string
           date_of_birth: string
           email: string
@@ -364,7 +362,6 @@ export type Database = {
           address?: string
           assigned_admin_id?: string | null
           balance?: number
-          country?: string | null
           created_at?: string
           date_of_birth?: string
           email?: string
