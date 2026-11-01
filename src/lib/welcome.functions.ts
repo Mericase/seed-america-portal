@@ -21,8 +21,8 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
     const bodyHtml = `
       <p style="margin:0 0 16px;">Welcome ${escape(firstName)},</p>
       <p style="margin:0 0 16px;">
-        <strong>Seedin America</strong> is a federal grant initiative that helps everyday
-        Americans access non-repayable capital to strengthen their households, small
+        <strong>Seedin</strong> is a global grant initiative that helps everyday people
+        access non-repayable capital to strengthen their households, small
         businesses, and communities. Our mission is to make grant funding faster,
         clearer, and more accessible — with real human support at every step.
       </p>
@@ -49,9 +49,9 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
     `;
 
     const html = renderBrandedEmail({
-      preheader: "Welcome to Seedin America — your $50 sign-up bonus is ready.",
-      heading: "Welcome to Seedin America",
-      intro: "Your federal grant journey starts here.",
+      preheader: "Welcome to Seedin — your $50 sign-up bonus is ready.",
+      heading: "Welcome to Seedin",
+      intro: "Your grant journey starts here.",
       bodyHtml,
       ctaLabel: "Open your dashboard",
       ctaUrl: "https://seedinamerica.org/dashboard",
@@ -60,10 +60,10 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
     });
 
     await Promise.all([
-      sendEmail({ to: profile.email, subject: "Welcome to Seedin America — $50 bonus credited", html }),
+      sendEmail({ to: profile.email, subject: "Welcome to Seedin — $50 bonus credited", html }),
       supabaseAdmin.from("notifications").insert({
         user_id: profile.id,
-        title: "Welcome to Seedin America 🌱",
+        title: "Welcome to Seedin 🌱",
         body: "Your account is ready and a $50 sign-up bonus has been added to your balance. Complete your grant application to unlock your full funding.",
         link: "/dashboard",
       }),
