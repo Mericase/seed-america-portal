@@ -3,194 +3,192 @@ import { PartyPopper } from "lucide-react";
 
 // ─── Name pools ──────────────────────────────────────────────────────────────
 
-// Each entry: [firstName, lastName, locationCode]
-// Location codes: US state abbrevs | Canadian province abbrevs | AU state abbrevs | DE state abbrevs
-type Recipient = { first: string; last: string; loc: string };
+type Recipient = { first: string; last: string; loc: string; flag: string };
 
 const US_RECIPIENTS: Recipient[] = [
   // ── Male ──
-  { first: "James",       last: "Smith",      loc: "TX" },
-  { first: "Michael",     last: "Johnson",    loc: "FL" },
-  { first: "Robert",      last: "Williams",   loc: "CA" },
-  { first: "David",       last: "Brown",      loc: "NY" },
-  { first: "William",     last: "Jones",      loc: "GA" },
-  { first: "Richard",     last: "Davis",      loc: "OH" },
-  { first: "Joseph",      last: "Miller",     loc: "PA" },
-  { first: "Thomas",      last: "Wilson",     loc: "IL" },
-  { first: "Christopher", last: "Moore",      loc: "AZ" },
-  { first: "Daniel",      last: "Taylor",     loc: "NC" },
-  { first: "Matthew",     last: "Anderson",   loc: "TN" },
-  { first: "Anthony",     last: "Thomas",     loc: "MI" },
-  { first: "Mark",        last: "Jackson",    loc: "MO" },
-  { first: "Steven",      last: "Harris",     loc: "VA" },
-  { first: "Brandon",     last: "Martin",     loc: "WA" },
-  { first: "Tyler",       last: "Garcia",     loc: "NJ" },
-  { first: "Justin",      last: "Martinez",   loc: "MN" },
-  { first: "Kevin",       last: "Robinson",   loc: "CO" },
-  { first: "Brian",       last: "Clark",      loc: "OR" },
-  { first: "Eric",        last: "Rodriguez",  loc: "NV" },
-  { first: "Ryan",        last: "Lewis",      loc: "IN" },
-  { first: "Nathan",      last: "Lee",        loc: "WI" },
-  { first: "Jacob",       last: "Walker",     loc: "AL" },
-  { first: "Logan",       last: "Hall",       loc: "SC" },
-  { first: "Ethan",       last: "Allen",      loc: "KY" },
-  { first: "Elijah",      last: "Young",      loc: "OK" },
-  { first: "Marcus",      last: "King",       loc: "LA" },
-  { first: "Malik",       last: "Wright",     loc: "MD" },
-  { first: "Jamal",       last: "Scott",      loc: "UT" },
-  { first: "DeShawn",     last: "Green",      loc: "AR" },
-  { first: "Carlos",      last: "Torres",     loc: "TX" },
-  { first: "Luis",        last: "Flores",     loc: "CA" },
-  { first: "Miguel",      last: "Rivera",     loc: "NM" },
-  { first: "Juan",        last: "Perez",      loc: "AZ" },
-  { first: "Andres",      last: "Ramirez",    loc: "FL" },
-  { first: "Diego",       last: "Gutierrez",  loc: "TX" },
+  { first: "James",       last: "Smith",      loc: "TX",  flag: "🇺🇸" },
+  { first: "Michael",     last: "Johnson",    loc: "FL",  flag: "🇺🇸" },
+  { first: "Robert",      last: "Williams",   loc: "CA",  flag: "🇺🇸" },
+  { first: "David",       last: "Brown",      loc: "NY",  flag: "🇺🇸" },
+  { first: "William",     last: "Jones",      loc: "GA",  flag: "🇺🇸" },
+  { first: "Richard",     last: "Davis",      loc: "OH",  flag: "🇺🇸" },
+  { first: "Joseph",      last: "Miller",     loc: "PA",  flag: "🇺🇸" },
+  { first: "Thomas",      last: "Wilson",     loc: "IL",  flag: "🇺🇸" },
+  { first: "Christopher", last: "Moore",      loc: "AZ",  flag: "🇺🇸" },
+  { first: "Daniel",      last: "Taylor",     loc: "NC",  flag: "🇺🇸" },
+  { first: "Matthew",     last: "Anderson",   loc: "TN",  flag: "🇺🇸" },
+  { first: "Anthony",     last: "Thomas",     loc: "MI",  flag: "🇺🇸" },
+  { first: "Mark",        last: "Jackson",    loc: "MO",  flag: "🇺🇸" },
+  { first: "Steven",      last: "Harris",     loc: "VA",  flag: "🇺🇸" },
+  { first: "Brandon",     last: "Martin",     loc: "WA",  flag: "🇺🇸" },
+  { first: "Tyler",       last: "Garcia",     loc: "NJ",  flag: "🇺🇸" },
+  { first: "Justin",      last: "Martinez",   loc: "MN",  flag: "🇺🇸" },
+  { first: "Kevin",       last: "Robinson",   loc: "CO",  flag: "🇺🇸" },
+  { first: "Brian",       last: "Clark",      loc: "OR",  flag: "🇺🇸" },
+  { first: "Eric",        last: "Rodriguez",  loc: "NV",  flag: "🇺🇸" },
+  { first: "Ryan",        last: "Lewis",      loc: "IN",  flag: "🇺🇸" },
+  { first: "Nathan",      last: "Lee",        loc: "WI",  flag: "🇺🇸" },
+  { first: "Jacob",       last: "Walker",     loc: "AL",  flag: "🇺🇸" },
+  { first: "Logan",       last: "Hall",       loc: "SC",  flag: "🇺🇸" },
+  { first: "Ethan",       last: "Allen",      loc: "KY",  flag: "🇺🇸" },
+  { first: "Elijah",      last: "Young",      loc: "OK",  flag: "🇺🇸" },
+  { first: "Marcus",      last: "King",       loc: "LA",  flag: "🇺🇸" },
+  { first: "Malik",       last: "Wright",     loc: "MD",  flag: "🇺🇸" },
+  { first: "Jamal",       last: "Scott",      loc: "MS",  flag: "🇺🇸" },
+  { first: "DeShawn",     last: "Green",      loc: "AR",  flag: "🇺🇸" },
+  { first: "Carlos",      last: "Torres",     loc: "TX",  flag: "🇺🇸" },
+  { first: "Luis",        last: "Flores",     loc: "CA",  flag: "🇺🇸" },
+  { first: "Miguel",      last: "Rivera",     loc: "NM",  flag: "🇺🇸" },
+  { first: "Juan",        last: "Perez",      loc: "AZ",  flag: "🇺🇸" },
+  { first: "Andres",      last: "Ramirez",    loc: "FL",  flag: "🇺🇸" },
+  { first: "Diego",       last: "Gutierrez",  loc: "TX",  flag: "🇺🇸" },
   // ── Female ──
-  { first: "Mary",        last: "Campbell",   loc: "NC" },
-  { first: "Patricia",    last: "Mitchell",   loc: "GA" },
-  { first: "Jennifer",    last: "Carter",     loc: "OH" },
-  { first: "Linda",       last: "Roberts",    loc: "PA" },
-  { first: "Elizabeth",   last: "Turner",     loc: "IL" },
-  { first: "Barbara",     last: "Phillips",   loc: "NY" },
-  { first: "Susan",       last: "Evans",      loc: "VA" },
-  { first: "Jessica",     last: "Edwards",    loc: "TN" },
-  { first: "Sarah",       last: "Collins",    loc: "WA" },
-  { first: "Karen",       last: "Stewart",    loc: "MI" },
-  { first: "Ashley",      last: "Morris",     loc: "AZ" },
-  { first: "Amanda",      last: "Murphy",     loc: "CO" },
-  { first: "Melissa",     last: "Rogers",     loc: "MN" },
-  { first: "Angela",      last: "Cook",       loc: "WI" },
-  { first: "Nicole",      last: "Morgan",     loc: "OR" },
-  { first: "Emma",        last: "Bailey",     loc: "FL" },
-  { first: "Olivia",      last: "Bell",       loc: "CA" },
-  { first: "Sophia",      last: "Gomez",      loc: "TX" },
-  { first: "Keisha",      last: "Howard",     loc: "GA" },
-  { first: "Tamika",      last: "Ward",       loc: "SC" },
-  { first: "Jasmine",     last: "Cox",        loc: "NY" },
-  { first: "Vanessa",     last: "Diaz",       loc: "NJ" },
-  { first: "Rosa",        last: "Reyes",      loc: "CA" },
-  { first: "Elena",       last: "Cruz",       loc: "TX" },
-  { first: "Gabriela",    last: "Morales",    loc: "AZ" },
-  { first: "Carmen",      last: "Ortiz",      loc: "FL" },
+  { first: "Mary",        last: "Campbell",   loc: "NC",  flag: "🇺🇸" },
+  { first: "Patricia",    last: "Mitchell",   loc: "GA",  flag: "🇺🇸" },
+  { first: "Jennifer",    last: "Carter",     loc: "OH",  flag: "🇺🇸" },
+  { first: "Linda",       last: "Roberts",    loc: "PA",  flag: "🇺🇸" },
+  { first: "Elizabeth",   last: "Turner",     loc: "IL",  flag: "🇺🇸" },
+  { first: "Barbara",     last: "Phillips",   loc: "NY",  flag: "🇺🇸" },
+  { first: "Susan",       last: "Evans",      loc: "VA",  flag: "🇺🇸" },
+  { first: "Jessica",     last: "Edwards",    loc: "TN",  flag: "🇺🇸" },
+  { first: "Sarah",       last: "Collins",    loc: "WA",  flag: "🇺🇸" },
+  { first: "Karen",       last: "Stewart",    loc: "MI",  flag: "🇺🇸" },
+  { first: "Ashley",      last: "Hall",       loc: "AZ",  flag: "🇺🇸" },
+  { first: "Amanda",      last: "Morris",     loc: "CO",  flag: "🇺🇸" },
+  { first: "Melissa",     last: "Rogers",     loc: "MN",  flag: "🇺🇸" },
+  { first: "Angela",      last: "Cook",       loc: "WI",  flag: "🇺🇸" },
+  { first: "Nicole",      last: "Morgan",     loc: "OR",  flag: "🇺🇸" },
+  { first: "Emma",        last: "Bailey",     loc: "FL",  flag: "🇺🇸" },
+  { first: "Olivia",      last: "Bell",       loc: "CA",  flag: "🇺🇸" },
+  { first: "Sophia",      last: "Gomez",      loc: "TX",  flag: "🇺🇸" },
+  { first: "Keisha",      last: "Howard",     loc: "GA",  flag: "🇺🇸" },
+  { first: "Tamika",      last: "Ward",       loc: "SC",  flag: "🇺🇸" },
+  { first: "Jasmine",     last: "Cox",        loc: "NY",  flag: "🇺🇸" },
+  { first: "Vanessa",     last: "Diaz",       loc: "NJ",  flag: "🇺🇸" },
+  { first: "Rosa",        last: "Reyes",      loc: "CA",  flag: "🇺🇸" },
+  { first: "Elena",       last: "Cruz",       loc: "TX",  flag: "🇺🇸" },
+  { first: "Gabriela",    last: "Morales",    loc: "AZ",  flag: "🇺🇸" },
+  { first: "Carmen",      last: "Ortiz",      loc: "FL",  flag: "🇺🇸" },
 ];
 
 const CA_RECIPIENTS: Recipient[] = [
   // ── Anglophone ──
-  { first: "Liam",      last: "MacDonald",  loc: "ON" },
-  { first: "Noah",      last: "Murray",     loc: "BC" },
-  { first: "Ethan",     last: "Campbell",   loc: "AB" },
-  { first: "Owen",      last: "Stewart",    loc: "MB" },
-  { first: "Aiden",     last: "MacLeod",    loc: "NS" },
-  { first: "Connor",    last: "O'Brien",    loc: "SK" },
-  { first: "Declan",    last: "Murphy",     loc: "NB" },
-  { first: "Callum",    last: "Morrison",   loc: "ON" },
-  { first: "Finn",      last: "Armstrong",  loc: "BC" },
-  { first: "Hunter",    last: "Clarke",     loc: "AB" },
-  { first: "Avery",     last: "Robertson",  loc: "ON" },
-  { first: "Isla",      last: "Henderson",  loc: "BC" },
-  { first: "Emma",      last: "Thomson",    loc: "AB" },
-  { first: "Chloe",     last: "Mitchell",   loc: "ON" },
-  { first: "Zoey",      last: "Hamilton",   loc: "MB" },
-  { first: "Abigail",   last: "Young",      loc: "NS" },
-  { first: "Hannah",    last: "Scott",      loc: "SK" },
-  { first: "Natalie",   last: "Graham",     loc: "BC" },
+  { first: "Liam",      last: "MacDonald",  loc: "ON",  flag: "🇨🇦" },
+  { first: "Noah",      last: "Murray",     loc: "BC",  flag: "🇨🇦" },
+  { first: "Ethan",     last: "Campbell",   loc: "AB",  flag: "🇨🇦" },
+  { first: "Owen",      last: "Stewart",    loc: "MB",  flag: "🇨🇦" },
+  { first: "Aiden",     last: "MacLeod",    loc: "NS",  flag: "🇨🇦" },
+  { first: "Connor",    last: "O'Brien",    loc: "SK",  flag: "🇨🇦" },
+  { first: "Declan",    last: "Murphy",     loc: "NB",  flag: "🇨🇦" },
+  { first: "Callum",    last: "Armstrong",  loc: "ON",  flag: "🇨🇦" },
+  { first: "Finn",      last: "Clarke",     loc: "BC",  flag: "🇨🇦" },
+  { first: "Hunter",    last: "Robertson",  loc: "AB",  flag: "🇨🇦" },
+  { first: "Avery",     last: "Henderson",  loc: "ON",  flag: "🇨🇦" },
+  { first: "Isla",      last: "Thomson",    loc: "BC",  flag: "🇨🇦" },
+  { first: "Emma",      last: "Mitchell",   loc: "AB",  flag: "🇨🇦" },
+  { first: "Chloe",     last: "Hamilton",   loc: "ON",  flag: "🇨🇦" },
+  { first: "Zoey",      last: "Young",      loc: "MB",  flag: "🇨🇦" },
+  { first: "Abigail",   last: "Scott",      loc: "NS",  flag: "🇨🇦" },
+  { first: "Hannah",    last: "Graham",     loc: "SK",  flag: "🇨🇦" },
+  { first: "Natalie",   last: "Morrison",   loc: "BC",  flag: "🇨🇦" },
   // ── Francophone ──
-  { first: "Jean",      last: "Tremblay",   loc: "QC" },
-  { first: "Pierre",    last: "Gagnon",     loc: "QC" },
-  { first: "François",  last: "Roy",        loc: "QC" },
-  { first: "Marc",      last: "Côté",       loc: "QC" },
-  { first: "Sébastien", last: "Bouchard",   loc: "QC" },
-  { first: "Maxime",    last: "Fortin",     loc: "QC" },
-  { first: "Alexandre", last: "Gauthier",   loc: "QC" },
-  { first: "Chantal",   last: "Leblanc",    loc: "QC" },
-  { first: "Sophie",    last: "Morin",      loc: "QC" },
-  { first: "Nathalie",  last: "Lavoie",     loc: "QC" },
-  { first: "Isabelle",  last: "Ouellet",    loc: "QC" },
-  { first: "Mélanie",   last: "Pelletier",  loc: "QC" },
-  { first: "Valérie",   last: "Bergeron",   loc: "QC" },
+  { first: "Jean",      last: "Tremblay",   loc: "QC",  flag: "🇨🇦" },
+  { first: "Pierre",    last: "Gagnon",     loc: "QC",  flag: "🇨🇦" },
+  { first: "François",  last: "Roy",        loc: "QC",  flag: "🇨🇦" },
+  { first: "Marc",      last: "Côté",       loc: "QC",  flag: "🇨🇦" },
+  { first: "Sébastien", last: "Bouchard",   loc: "QC",  flag: "🇨🇦" },
+  { first: "Maxime",    last: "Fortin",     loc: "QC",  flag: "🇨🇦" },
+  { first: "Alexandre", last: "Gauthier",   loc: "QC",  flag: "🇨🇦" },
+  { first: "Chantal",   last: "Leblanc",    loc: "QC",  flag: "🇨🇦" },
+  { first: "Sophie",    last: "Morin",      loc: "QC",  flag: "🇨🇦" },
+  { first: "Nathalie",  last: "Lavoie",     loc: "QC",  flag: "🇨🇦" },
+  { first: "Isabelle",  last: "Ouellet",    loc: "QC",  flag: "🇨🇦" },
+  { first: "Mélanie",   last: "Pelletier",  loc: "QC",  flag: "🇨🇦" },
+  { first: "Valérie",   last: "Bergeron",   loc: "QC",  flag: "🇨🇦" },
   // ── Mixed ──
-  { first: "Dylan",     last: "Beaulieu",   loc: "ON" },
-  { first: "Kayla",     last: "Fontaine",   loc: "MB" },
-  { first: "Tyler",     last: "Vachon",     loc: "BC" },
-  { first: "Amber",     last: "Leclerc",    loc: "AB" },
-  { first: "Raj",       last: "Patel",      loc: "ON" },
-  { first: "Priya",     last: "Singh",      loc: "BC" },
-  { first: "Harpreet",  last: "Gill",       loc: "AB" },
-  { first: "Amy",       last: "Chen",       loc: "ON" },
-  { first: "Wei",       last: "Zhang",      loc: "BC" },
-  { first: "Mei",       last: "Liu",        loc: "ON" },
+  { first: "Dylan",     last: "Beaulieu",   loc: "ON",  flag: "🇨🇦" },
+  { first: "Kayla",     last: "Fontaine",   loc: "MB",  flag: "🇨🇦" },
+  { first: "Tyler",     last: "Vachon",     loc: "BC",  flag: "🇨🇦" },
+  { first: "Amber",     last: "Leclerc",    loc: "AB",  flag: "🇨🇦" },
+  { first: "Raj",       last: "Patel",      loc: "ON",  flag: "🇨🇦" },
+  { first: "Priya",     last: "Singh",      loc: "BC",  flag: "🇨🇦" },
+  { first: "Harpreet",  last: "Gill",       loc: "AB",  flag: "🇨🇦" },
+  { first: "Amy",       last: "Chen",       loc: "ON",  flag: "🇨🇦" },
+  { first: "Wei",       last: "Zhang",      loc: "BC",  flag: "🇨🇦" },
+  { first: "Mei",       last: "Liu",        loc: "ON",  flag: "🇨🇦" },
 ];
 
 const AU_RECIPIENTS: Recipient[] = [
   // ── Male ──
-  { first: "Lachlan",   last: "Smith",      loc: "NSW" },
-  { first: "Hamish",    last: "Jones",      loc: "VIC" },
-  { first: "Angus",     last: "Williams",   loc: "QLD" },
-  { first: "Fraser",    last: "Brown",      loc: "WA" },
-  { first: "Callum",    last: "Taylor",     loc: "SA" },
-  { first: "Flynn",     last: "Wilson",     loc: "NSW" },
-  { first: "Brody",     last: "Johnson",    loc: "QLD" },
-  { first: "Cooper",    last: "Anderson",   loc: "VIC" },
-  { first: "Remy",      last: "Thomas",     loc: "NSW" },
-  { first: "Blake",     last: "O'Brien",    loc: "QLD" },
-  { first: "Declan",    last: "Murphy",     loc: "VIC" },
-  { first: "Jake",      last: "Morrison",   loc: "WA" },
-  { first: "Dylan",     last: "Martin",     loc: "NSW" },
-  { first: "Brendan",   last: "Clarke",     loc: "SA" },
-  { first: "Shane",     last: "Walker",     loc: "NSW" },
+  { first: "Lachlan",   last: "Smith",      loc: "NSW", flag: "🇦🇺" },
+  { first: "Hamish",    last: "Jones",      loc: "VIC", flag: "🇦🇺" },
+  { first: "Angus",     last: "Williams",   loc: "QLD", flag: "🇦🇺" },
+  { first: "Fraser",    last: "Brown",      loc: "WA",  flag: "🇦🇺" },
+  { first: "Callum",    last: "Taylor",     loc: "SA",  flag: "🇦🇺" },
+  { first: "Flynn",     last: "Wilson",     loc: "NSW", flag: "🇦🇺" },
+  { first: "Brody",     last: "Johnson",    loc: "QLD", flag: "🇦🇺" },
+  { first: "Cooper",    last: "Anderson",   loc: "VIC", flag: "🇦🇺" },
+  { first: "Remy",      last: "Thomas",     loc: "NSW", flag: "🇦🇺" },
+  { first: "Blake",     last: "O'Brien",    loc: "QLD", flag: "🇦🇺" },
+  { first: "Declan",    last: "Murphy",     loc: "VIC", flag: "🇦🇺" },
+  { first: "Jake",      last: "Morrison",   loc: "WA",  flag: "🇦🇺" },
+  { first: "Dylan",     last: "Martin",     loc: "NSW", flag: "🇦🇺" },
+  { first: "Brendan",   last: "Clarke",     loc: "SA",  flag: "🇦🇺" },
+  { first: "Shane",     last: "Walker",     loc: "NSW", flag: "🇦🇺" },
   // ── Female ──
-  { first: "Sienna",    last: "Evans",      loc: "VIC" },
-  { first: "Matilda",   last: "White",      loc: "NSW" },
-  { first: "Isla",      last: "Harris",     loc: "QLD" },
-  { first: "Imogen",    last: "Robinson",   loc: "VIC" },
-  { first: "Zoe",       last: "Thompson",   loc: "WA" },
-  { first: "Freya",     last: "Campbell",   loc: "NSW" },
-  { first: "Ellie",     last: "Roberts",    loc: "QLD" },
-  { first: "Phoebe",    last: "Mitchell",   loc: "VIC" },
-  { first: "Chloe",     last: "Turner",     loc: "SA" },
-  { first: "Ruby",      last: "Stewart",    loc: "NSW" },
-  { first: "Grace",     last: "Cooper",     loc: "VIC" },
-  { first: "Sophie",    last: "Lee",        loc: "NSW" },
-  { first: "Amelia",    last: "Hall",       loc: "QLD" },
-  { first: "Lily",      last: "Phillips",   loc: "VIC" },
-  { first: "Tara",      last: "Moore",      loc: "ACT" },
-  { first: "Bridget",   last: "Scott",      loc: "TAS" },
-  { first: "Jade",      last: "Young",      loc: "NT" },
+  { first: "Sienna",    last: "Evans",      loc: "VIC", flag: "🇦🇺" },
+  { first: "Matilda",   last: "White",      loc: "NSW", flag: "🇦🇺" },
+  { first: "Isla",      last: "Harris",     loc: "QLD", flag: "🇦🇺" },
+  { first: "Imogen",    last: "Robinson",   loc: "VIC", flag: "🇦🇺" },
+  { first: "Zoe",       last: "Thompson",   loc: "WA",  flag: "🇦🇺" },
+  { first: "Freya",     last: "Campbell",   loc: "NSW", flag: "🇦🇺" },
+  { first: "Ellie",     last: "Roberts",    loc: "QLD", flag: "🇦🇺" },
+  { first: "Phoebe",    last: "Mitchell",   loc: "VIC", flag: "🇦🇺" },
+  { first: "Chloe",     last: "Turner",     loc: "SA",  flag: "🇦🇺" },
+  { first: "Ruby",      last: "Stewart",    loc: "NSW", flag: "🇦🇺" },
+  { first: "Grace",     last: "Cooper",     loc: "VIC", flag: "🇦🇺" },
+  { first: "Sophie",    last: "Lee",        loc: "NSW", flag: "🇦🇺" },
+  { first: "Amelia",    last: "Hall",       loc: "QLD", flag: "🇦🇺" },
+  { first: "Lily",      last: "Phillips",   loc: "VIC", flag: "🇦🇺" },
+  { first: "Tara",      last: "Moore",      loc: "ACT", flag: "🇦🇺" },
+  { first: "Bridget",   last: "Scott",      loc: "TAS", flag: "🇦🇺" },
+  { first: "Jade",      last: "Young",      loc: "NT",  flag: "🇦🇺" },
 ];
 
 const DE_RECIPIENTS: Recipient[] = [
   // ── Male ──
-  { first: "Hans",      last: "Müller",     loc: "BY" },
-  { first: "Stefan",    last: "Schmidt",    loc: "NW" },
-  { first: "Klaus",     last: "Schneider",  loc: "BW" },
-  { first: "Thomas",    last: "Fischer",    loc: "NI" },
-  { first: "Michael",   last: "Weber",      loc: "HE" },
-  { first: "Andreas",   last: "Meyer",      loc: "BE" },
-  { first: "Christian", last: "Wagner",     loc: "BW" },
-  { first: "Markus",    last: "Becker",     loc: "BY" },
-  { first: "Tobias",    last: "Hoffmann",   loc: "NW" },
-  { first: "Felix",     last: "Schäfer",    loc: "HH" },
-  { first: "Lukas",     last: "Koch",       loc: "BE" },
-  { first: "Julian",    last: "Bauer",      loc: "SH" },
-  { first: "Florian",   last: "Richter",    loc: "BY" },
-  { first: "Jan",       last: "Klein",      loc: "SN" },
-  { first: "Niklas",    last: "Wolf",       loc: "NW" },
+  { first: "Hans",      last: "Müller",     loc: "BY",  flag: "🇩🇪" },
+  { first: "Stefan",    last: "Schmidt",    loc: "NW",  flag: "🇩🇪" },
+  { first: "Klaus",     last: "Schneider",  loc: "BW",  flag: "🇩🇪" },
+  { first: "Thomas",    last: "Fischer",    loc: "NI",  flag: "🇩🇪" },
+  { first: "Michael",   last: "Weber",      loc: "HE",  flag: "🇩🇪" },
+  { first: "Andreas",   last: "Meyer",      loc: "BE",  flag: "🇩🇪" },
+  { first: "Christian", last: "Wagner",     loc: "BW",  flag: "🇩🇪" },
+  { first: "Markus",    last: "Becker",     loc: "BY",  flag: "🇩🇪" },
+  { first: "Tobias",    last: "Hoffmann",   loc: "NW",  flag: "🇩🇪" },
+  { first: "Felix",     last: "Schäfer",    loc: "HH",  flag: "🇩🇪" },
+  { first: "Lukas",     last: "Koch",       loc: "BE",  flag: "🇩🇪" },
+  { first: "Julian",    last: "Bauer",      loc: "SH",  flag: "🇩🇪" },
+  { first: "Florian",   last: "Richter",    loc: "BY",  flag: "🇩🇪" },
+  { first: "Jan",       last: "Klein",      loc: "SN",  flag: "🇩🇪" },
+  { first: "Niklas",    last: "Wolf",       loc: "NW",  flag: "🇩🇪" },
   // ── Female ──
-  { first: "Heike",     last: "Braun",      loc: "NI" },
-  { first: "Sabine",    last: "Lange",      loc: "BW" },
-  { first: "Monika",    last: "Zimmermann", loc: "BY" },
-  { first: "Petra",     last: "Krause",     loc: "BE" },
-  { first: "Ute",       last: "Krüger",     loc: "NW" },
-  { first: "Karin",     last: "Hartmann",   loc: "HE" },
-  { first: "Claudia",   last: "Schulz",     loc: "BW" },
-  { first: "Birgit",    last: "Lehmann",    loc: "BY" },
-  { first: "Stefanie",  last: "Neumann",    loc: "HH" },
-  { first: "Melanie",   last: "Schwarz",    loc: "SN" },
-  { first: "Laura",     last: "Günther",    loc: "NW" },
-  { first: "Hannah",    last: "Huber",      loc: "BY" },
-  { first: "Lisa",      last: "Schumacher", loc: "NI" },
-  { first: "Anna",      last: "Brandt",     loc: "BE" },
-  { first: "Julia",     last: "Maier",      loc: "BW" },
+  { first: "Heike",     last: "Braun",      loc: "NI",  flag: "🇩🇪" },
+  { first: "Sabine",    last: "Lange",      loc: "BW",  flag: "🇩🇪" },
+  { first: "Monika",    last: "Zimmermann", loc: "BY",  flag: "🇩🇪" },
+  { first: "Petra",     last: "Krause",     loc: "BE",  flag: "🇩🇪" },
+  { first: "Ute",       last: "Krüger",     loc: "NW",  flag: "🇩🇪" },
+  { first: "Karin",     last: "Hartmann",   loc: "HE",  flag: "🇩🇪" },
+  { first: "Claudia",   last: "Schulz",     loc: "BW",  flag: "🇩🇪" },
+  { first: "Birgit",    last: "Lehmann",    loc: "BY",  flag: "🇩🇪" },
+  { first: "Stefanie",  last: "Neumann",    loc: "HH",  flag: "🇩🇪" },
+  { first: "Melanie",   last: "Schwarz",    loc: "SN",  flag: "🇩🇪" },
+  { first: "Laura",     last: "Günther",    loc: "NW",  flag: "🇩🇪" },
+  { first: "Hannah",    last: "Huber",      loc: "BY",  flag: "🇩🇪" },
+  { first: "Lisa",      last: "Schumacher", loc: "NI",  flag: "🇩🇪" },
+  { first: "Anna",      last: "Brandt",     loc: "BE",  flag: "🇩🇪" },
+  { first: "Julia",     last: "Maier",      loc: "BW",  flag: "🇩🇪" },
 ];
 
 // ─── Combined weighted pool ───────────────────────────────────────────────────
@@ -237,9 +235,9 @@ function makeMessage(): string {
   const raw = cat.min + skew * (cat.max - cat.min);
   const step = raw < 10000 ? 250 : raw < 25000 ? 500 : 1000;
   const amount = Math.max(cat.min, Math.round(raw / step) * step);
-  const { first, last, loc } = pick(ALL_RECIPIENTS);
+  const { first, last, loc, flag } = pick(ALL_RECIPIENTS);
   const name = `${first} ${last}`;
-  return `🎉 Congratulations ${name} (${loc}) — approved for a $${amount.toLocaleString("en-US")} ${cat.label} grant.   🌱 Your seed can be next.`;
+  return `🎉 Congratulations ${name} (${loc}) ${flag} — approved for a $${amount.toLocaleString("en-US")} ${cat.label} grant.   🌱 Your seed can be next.`;
 }
 
 // ─── Tuning knobs ─────────────────────────────────────────────────────────────
@@ -305,32 +303,19 @@ export function LiveGrantTicker() {
           }
         }
 
-        // Build the CSS transform.
-        // The spans are rendered in DOM order 0,1,2,... but our logical order
-        // starts at head. We need to offset by the cumulative width of spans
-        // that are logically "before" head but sitting after it in the DOM.
-        // The simplest correct approach: translate by -pos, but also account for
-        // the widths of spans that have been "moved to the back" of our logical queue.
-        // Because we never reorder DOM nodes, we need a visual offset so that
-        // span[head] appears first. We compute this as the sum of widths of spans
-        // with DOM index < head (they are logically at the tail).
         let headOffset = 0;
         for (let i = 0; i < head.current; i++) {
           const s = spanRefs.current[i];
           if (s) headOffset += s.offsetWidth + GAP;
         }
 
-        // Total track width (all spans)
         let totalWidth = 0;
         for (let i = 0; i < SLOT_COUNT; i++) {
           const s = spanRefs.current[i];
           if (s) totalWidth += s.offsetWidth + GAP;
         }
 
-        // The translate we apply = -(headOffset + pos) mod totalWidth
-        // This wraps the track so it loops seamlessly.
         let translate = headOffset + pos.current;
-        // Keep translate within [0, totalWidth) to avoid drifting forever
         if (totalWidth > 0) translate = ((translate % totalWidth) + totalWidth) % totalWidth;
 
         track.style.transform = `translateX(-${translate}px)`;
@@ -341,7 +326,7 @@ export function LiveGrantTicker() {
 
     raf.current = requestAnimationFrame(loop);
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
-  }, []); // runs once — loop reads all state via refs
+  }, []);
 
   return (
     <div
@@ -370,7 +355,7 @@ export function LiveGrantTicker() {
           >
             {slots.map((text, i) => (
               <span
-                key={i} // stable key = stable DOM node = stable ref
+                key={i}
                 ref={el => { spanRefs.current[i] = el; }}
                 className="text-sm font-medium text-foreground/90"
                 style={{ paddingRight: GAP, display: "inline-block", whiteSpace: "nowrap" }}
