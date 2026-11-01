@@ -490,6 +490,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_my_password: { Args: { new_password: string }; Returns: undefined }
       generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
