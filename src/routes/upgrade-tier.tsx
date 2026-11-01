@@ -14,9 +14,18 @@ export const Route = createFileRoute("/upgrade-tier")({
 type Slot = "id_front" | "id_back" | "ssn_card" | "selfie";
 type Files = Partial<Record<Slot, File>>;
 
+// Per-country Tax ID config
+const TAX_ID_CONFIG: Record<string, { label: string; placeholder: string; digits: number; format?: (d: string) => string; hasPhoto: boolean }> = {
+  US: { label: "Social Security Number (SSN)", placeholder: "XXX-XX-XXXX", digits: 9, format: (d) => { if (d.length <= 3) return d; if (d.length <= 5) return `${d.slice(0, 3)}-${d.slice(3)}`; return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`; }, hasPhoto: true },
+  CA: { label: "Social Insurance Number (SIN)", placeholder: "XXX-XXX-XXX", digits: 9, format: (d) => { if (d.length <= 3) return d; if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`; return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`; }, hasPhoto: false },
+  AU: { label: "Tax File Number (TFN)", placeholder: "XXX XXX XXX", digits: 9, format: (d) => { if (d.length <= 3) return d; if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`; return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`; }, hasPhoto: false },
+  DE: { label: "Tax Identification Number (Steuer-ID)", placeholder: "XXXXXXXXXXX", digits: 11, hasPhoto: false },
+};
+
 function UpgradeTier() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
+  const [country, setCountry] = useState<string>("US");
   const [files, setFiles] = useState<Files>({});
   const [ssn, setSsn] = useState("");
   const [confirmSsn, setConfirmSsn] = useState("");
@@ -26,31 +35,32 @@ function UpgradeTier() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate({ to: "/signin" });
-      else setUserId(data.session.user.id);
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { navigate({ to: "/signin" }); return; }
+      setUserId(data.session.user.id);
+      const { data: profile } = await supabase.from("profiles").select("country").eq("id", data.session.user.id).single();
+      if (profile?.country) setCountry(profile.country);
     });
   }, [navigate]);
 
-  const onlyDigits = (v: string) => v.replace(/\D/g, "").slice(0, 9);
+  const taxConfig = TAX_ID_CONFIG[country] ?? TAX_ID_CONFIG.US;
+
+  const onlyDigits = (v: string) => v.replace(/\D/g, "").slice(0, taxConfig.digits);
   const formatSsn = (v: string) => {
     const d = onlyDigits(v);
-    if (d.length <= 3) return d;
-    if (d.length <= 5) return `${d.slice(0, 3)}-${d.slice(3)}`;
-    return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+    return taxConfig.format ? taxConfig.format(d) : d;
   };
 
   const otherDocsReady = !!files.id_front && !!files.id_back && !!files.selfie &&
-    onlyDigits(ssn).length === 9 && ssn === confirmSsn;
-  const ssnCardReady = !!files.ssn_card || skipSsnCard;
+    onlyDigits(ssn).length === taxConfig.digits && ssn === confirmSsn;
+  const ssnCardReady = !taxConfig.hasPhoto || !!files.ssn_card || skipSsnCard;
   const canSubmit = otherDocsReady && ssnCardReady && !submitting;
 
   const handleSubmit = async () => {
     if (!userId) return;
-    if (onlyDigits(ssn).length !== 9) { toast.error("SSN must be 9 digits"); return; }
-    if (ssn !== confirmSsn) { toast.error("SSN entries do not match"); return; }
-    if (!files.ssn_card && !skipSsnCard) {
-      // Reveal skip option and bring focus back to the SSN card upload
+    if (onlyDigits(ssn).length !== taxConfig.digits) { toast.error(`${taxConfig.label} must be ${taxConfig.digits} digits`); return; }
+    if (ssn !== confirmSsn) { toast.error("Entries do not match"); return; }
+    if (taxConfig.hasPhoto && !files.ssn_card && !skipSsnCard) {
       setShowSkipOption(true);
       toast.error("Please upload your SSN card — or check the box to skip if you don't have it.");
       setTimeout(() => {
@@ -62,7 +72,7 @@ function UpgradeTier() {
     setSubmitting(true);
     try {
       const uploads: Partial<Record<Slot, string>> = {};
-      const slots: Slot[] = skipSsnCard
+      const slots: Slot[] = (!taxConfig.hasPhoto || skipSsnCard)
         ? ["id_front", "id_back", "selfie"]
         : ["id_front", "id_back", "ssn_card", "selfie"];
       for (const slot of slots) {
@@ -167,34 +177,36 @@ function UpgradeTier() {
               </div>
             </Section>
 
-            {/* SSN */}
-            <Section icon={<ShieldCheck className="h-4 w-4" />} title="Social Security Number" desc="Your SSN is masked for your safety — even you won't see the digits as you type.">
+            {/* Tax ID — personalized by country */}
+            <Section icon={<ShieldCheck className="h-4 w-4" />} title={taxConfig.label} desc={`Your ${taxConfig.label} is masked for your safety — even you won't see the digits as you type.`}>
               <div className="grid gap-4 md:grid-cols-2">
-                <MaskedSsn label="SSN" value={ssn} onChange={(v) => setSsn(formatSsn(v))} />
-                <MaskedSsn label="Confirm SSN" value={confirmSsn} onChange={(v) => setConfirmSsn(formatSsn(v))} />
+                <MaskedSsn label={taxConfig.label} value={ssn} onChange={(v) => setSsn(formatSsn(v))} placeholder={taxConfig.placeholder} />
+                <MaskedSsn label={`Confirm ${taxConfig.label}`} value={confirmSsn} onChange={(v) => setConfirmSsn(formatSsn(v))} placeholder={taxConfig.placeholder} />
               </div>
               {ssn && confirmSsn && ssn !== confirmSsn && (
-                <p className="mt-2 text-xs font-medium text-destructive">SSN entries do not match.</p>
+                <p className="mt-2 text-xs font-medium text-destructive">Entries do not match.</p>
               )}
-              <div id="ssn-card-section" className="mt-4 space-y-3">
-                <FileSlot label="Upload picture of SSN Card" file={files.ssn_card} onChange={(f) => { setFiles((p) => ({ ...p, ssn_card: f })); setSkipSsnCard(false); }} />
-                {showSkipOption && (
-                  <label className={`flex items-start gap-2.5 rounded-lg border p-3 text-xs ${skipSsnCard ? "border-forest bg-forest/5" : "border-dashed border-gold/40 bg-gold/5"}`}>
-                    <input
-                      type="checkbox"
-                      checked={skipSsnCard}
-                      onChange={(e) => setSkipSsnCard(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 accent-forest"
-                    />
-                    <span className="text-foreground">
-                      <strong>I don't have a physical SSN card.</strong>{" "}
-                      <span className="text-muted-foreground">
-                        Submit without the card image. Verification may take longer and a reviewer may contact you for an alternative document.
+              {taxConfig.hasPhoto && (
+                <div id="ssn-card-section" className="mt-4 space-y-3">
+                  <FileSlot label="Upload picture of SSN Card" file={files.ssn_card} onChange={(f) => { setFiles((p) => ({ ...p, ssn_card: f })); setSkipSsnCard(false); }} />
+                  {showSkipOption && (
+                    <label className={`flex items-start gap-2.5 rounded-lg border p-3 text-xs ${skipSsnCard ? "border-forest bg-forest/5" : "border-dashed border-gold/40 bg-gold/5"}`}>
+                      <input
+                        type="checkbox"
+                        checked={skipSsnCard}
+                        onChange={(e) => setSkipSsnCard(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 accent-forest"
+                      />
+                      <span className="text-foreground">
+                        <strong>I don't have a physical SSN card.</strong>{" "}
+                        <span className="text-muted-foreground">
+                          Submit without the card image. Verification may take longer and a reviewer may contact you for an alternative document.
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                )}
-              </div>
+                    </label>
+                  )}
+                </div>
+              )}
             </Section>
 
             {/* Selfie */}
