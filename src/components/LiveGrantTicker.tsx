@@ -3,52 +3,203 @@ import { PartyPopper } from "lucide-react";
 
 // ─── Name pools ──────────────────────────────────────────────────────────────
 
-const FIRST_NAMES = [
-  // Male
-  "James", "Michael", "Robert", "John", "David", "William", "Richard", "Joseph",
-  "Thomas", "Christopher", "Daniel", "Matthew", "Anthony", "Mark", "Steven",
-  "Brandon", "Tyler", "Justin", "Kevin", "Brian", "Eric", "Gregory", "Samuel",
-  "Ryan", "Nathan", "Jacob", "Logan", "Ethan", "Joshua", "Andrew", "Patrick",
-  "Kyle", "Aaron", "Adam", "Sean", "Timothy", "Scott", "Walter", "Zachary",
-  "Dennis", "Jeffrey", "Frank", "Harold", "Raymond", "Lawrence", "Dylan", "Austin",
-  "Jordan", "Marcus", "Derrick", "Darnell", "Curtis", "Terrence", "Malik", "Jamal",
-  "Xavier", "Elijah", "Isaiah", "DeShawn", "Marquis", "Dwayne", "Cedric", "Reginald",
-  "Carlos", "Luis", "Miguel", "Juan", "Antonio", "Eduardo", "Ricardo", "Mario",
-  "Victor", "Alex", "Fernando", "Diego", "Rafael", "Omar", "Ivan", "Jesus",
-  "Hector", "Andres", "Alejandro", "Roberto", "Sergio", "Ruben", "Cesar", "Ernesto",
-  // Female
-  "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan",
-  "Jessica", "Sarah", "Karen", "Nancy", "Lisa", "Ashley", "Amanda", "Melissa",
-  "Danielle", "Rachel", "Heather", "Angela", "Nicole", "Katherine", "Megan",
-  "Stephanie", "Rebecca", "Sharon", "Laura", "Cynthia", "Dorothy", "Amy", "Anna",
-  "Ruth", "Deborah", "Carolyn", "Janet", "Maria", "Diane", "Christine", "Samantha",
-  "Emma", "Olivia", "Ava", "Isabella", "Sophia", "Mia", "Charlotte", "Abigail",
-  "Brittany", "Amber", "Crystal", "Tiffany", "Latasha", "Keisha", "Tamika", "Shonda",
-  "Aaliyah", "Destiny", "Jasmine", "Monique", "Shanice", "Tanesha", "Yolanda", "Vanessa",
-  "Gloria", "Rosa", "Elena", "Gabriela", "Adriana", "Veronica", "Marisol", "Esperanza",
-  "Leticia", "Alicia", "Sandra", "Diana", "Claudia", "Luz", "Blanca", "Margarita",
-  "Selena", "Brenda", "Norma", "Irma", "Alma", "Carmen", "Graciela", "Guadalupe",
+// Each entry: [firstName, lastName, locationCode]
+// Location codes: US state abbrevs | Canadian province abbrevs | AU state abbrevs | DE state abbrevs
+type Recipient = { first: string; last: string; loc: string };
+
+const US_RECIPIENTS: Recipient[] = [
+  // ── Male ──
+  { first: "James",       last: "Smith",      loc: "TX" },
+  { first: "Michael",     last: "Johnson",    loc: "FL" },
+  { first: "Robert",      last: "Williams",   loc: "CA" },
+  { first: "David",       last: "Brown",      loc: "NY" },
+  { first: "William",     last: "Jones",      loc: "GA" },
+  { first: "Richard",     last: "Davis",      loc: "OH" },
+  { first: "Joseph",      last: "Miller",     loc: "PA" },
+  { first: "Thomas",      last: "Wilson",     loc: "IL" },
+  { first: "Christopher", last: "Moore",      loc: "AZ" },
+  { first: "Daniel",      last: "Taylor",     loc: "NC" },
+  { first: "Matthew",     last: "Anderson",   loc: "TN" },
+  { first: "Anthony",     last: "Thomas",     loc: "MI" },
+  { first: "Mark",        last: "Jackson",    loc: "MO" },
+  { first: "Steven",      last: "Harris",     loc: "VA" },
+  { first: "Brandon",     last: "Martin",     loc: "WA" },
+  { first: "Tyler",       last: "Garcia",     loc: "NJ" },
+  { first: "Justin",      last: "Martinez",   loc: "MN" },
+  { first: "Kevin",       last: "Robinson",   loc: "CO" },
+  { first: "Brian",       last: "Clark",      loc: "OR" },
+  { first: "Eric",        last: "Rodriguez",  loc: "NV" },
+  { first: "Ryan",        last: "Lewis",      loc: "IN" },
+  { first: "Nathan",      last: "Lee",        loc: "WI" },
+  { first: "Jacob",       last: "Walker",     loc: "AL" },
+  { first: "Logan",       last: "Hall",       loc: "SC" },
+  { first: "Ethan",       last: "Allen",      loc: "KY" },
+  { first: "Elijah",      last: "Young",      loc: "OK" },
+  { first: "Marcus",      last: "King",       loc: "LA" },
+  { first: "Malik",       last: "Wright",     loc: "MD" },
+  { first: "Jamal",       last: "Scott",      loc: "UT" },
+  { first: "DeShawn",     last: "Green",      loc: "AR" },
+  { first: "Carlos",      last: "Torres",     loc: "TX" },
+  { first: "Luis",        last: "Flores",     loc: "CA" },
+  { first: "Miguel",      last: "Rivera",     loc: "NM" },
+  { first: "Juan",        last: "Perez",      loc: "AZ" },
+  { first: "Andres",      last: "Ramirez",    loc: "FL" },
+  { first: "Diego",       last: "Gutierrez",  loc: "TX" },
+  // ── Female ──
+  { first: "Mary",        last: "Campbell",   loc: "NC" },
+  { first: "Patricia",    last: "Mitchell",   loc: "GA" },
+  { first: "Jennifer",    last: "Carter",     loc: "OH" },
+  { first: "Linda",       last: "Roberts",    loc: "PA" },
+  { first: "Elizabeth",   last: "Turner",     loc: "IL" },
+  { first: "Barbara",     last: "Phillips",   loc: "NY" },
+  { first: "Susan",       last: "Evans",      loc: "VA" },
+  { first: "Jessica",     last: "Edwards",    loc: "TN" },
+  { first: "Sarah",       last: "Collins",    loc: "WA" },
+  { first: "Karen",       last: "Stewart",    loc: "MI" },
+  { first: "Ashley",      last: "Morris",     loc: "AZ" },
+  { first: "Amanda",      last: "Murphy",     loc: "CO" },
+  { first: "Melissa",     last: "Rogers",     loc: "MN" },
+  { first: "Angela",      last: "Cook",       loc: "WI" },
+  { first: "Nicole",      last: "Morgan",     loc: "OR" },
+  { first: "Emma",        last: "Bailey",     loc: "FL" },
+  { first: "Olivia",      last: "Bell",       loc: "CA" },
+  { first: "Sophia",      last: "Gomez",      loc: "TX" },
+  { first: "Keisha",      last: "Howard",     loc: "GA" },
+  { first: "Tamika",      last: "Ward",       loc: "SC" },
+  { first: "Jasmine",     last: "Cox",        loc: "NY" },
+  { first: "Vanessa",     last: "Diaz",       loc: "NJ" },
+  { first: "Rosa",        last: "Reyes",      loc: "CA" },
+  { first: "Elena",       last: "Cruz",       loc: "TX" },
+  { first: "Gabriela",    last: "Morales",    loc: "AZ" },
+  { first: "Carmen",      last: "Ortiz",      loc: "FL" },
 ];
 
-const LAST_NAMES = [
-  "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-  "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
-  "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson",
-  "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker",
-  "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill",
-  "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell",
-  "Mitchell", "Carter", "Roberts", "Turner", "Phillips", "Evans", "Edwards", "Collins",
-  "Stewart", "Morris", "Murphy", "Cook", "Rogers", "Morgan", "Peterson", "Cooper",
-  "Reed", "Bailey", "Bell", "Gomez", "Kelly", "Howard", "Ward", "Cox",
-  "Diaz", "Richardson", "Wood", "Watson", "Brooks", "Bennett", "Gray", "James",
-  "Reyes", "Cruz", "Hughes", "Price", "Myers", "Long", "Foster", "Sanders",
-  "Ross", "Morales", "Powell", "Sullivan", "Russell", "Ortiz", "Jenkins", "Gutierrez",
-  "Perry", "Butler", "Barnes", "Fisher", "Henderson", "Coleman", "Simmons", "Patterson",
-  "Jordan", "Reynolds", "Hamilton", "Graham", "Kim", "Gonzales", "Alexander", "Ramos",
-  "Washington", "Jefferson", "Freeman", "Owens", "Dixon", "Douglas", "Warren", "Bryant",
-  "Franklin", "Hawkins", "Griffin", "West", "Ford", "Chapman", "Lawrence", "Cunningham",
-  "Webb", "George", "Mckinney", "Barnett", "Payne", "Hicks", "Little", "Tran",
-  "Bishop", "Carr", "Bates", "Fields", "Lloyd", "Stone", "Dunn", "Bowman",
+const CA_RECIPIENTS: Recipient[] = [
+  // ── Anglophone ──
+  { first: "Liam",      last: "MacDonald",  loc: "ON" },
+  { first: "Noah",      last: "Murray",     loc: "BC" },
+  { first: "Ethan",     last: "Campbell",   loc: "AB" },
+  { first: "Owen",      last: "Stewart",    loc: "MB" },
+  { first: "Aiden",     last: "MacLeod",    loc: "NS" },
+  { first: "Connor",    last: "O'Brien",    loc: "SK" },
+  { first: "Declan",    last: "Murphy",     loc: "NB" },
+  { first: "Callum",    last: "Morrison",   loc: "ON" },
+  { first: "Finn",      last: "Armstrong",  loc: "BC" },
+  { first: "Hunter",    last: "Clarke",     loc: "AB" },
+  { first: "Avery",     last: "Robertson",  loc: "ON" },
+  { first: "Isla",      last: "Henderson",  loc: "BC" },
+  { first: "Emma",      last: "Thomson",    loc: "AB" },
+  { first: "Chloe",     last: "Mitchell",   loc: "ON" },
+  { first: "Zoey",      last: "Hamilton",   loc: "MB" },
+  { first: "Abigail",   last: "Young",      loc: "NS" },
+  { first: "Hannah",    last: "Scott",      loc: "SK" },
+  { first: "Natalie",   last: "Graham",     loc: "BC" },
+  // ── Francophone ──
+  { first: "Jean",      last: "Tremblay",   loc: "QC" },
+  { first: "Pierre",    last: "Gagnon",     loc: "QC" },
+  { first: "François",  last: "Roy",        loc: "QC" },
+  { first: "Marc",      last: "Côté",       loc: "QC" },
+  { first: "Sébastien", last: "Bouchard",   loc: "QC" },
+  { first: "Maxime",    last: "Fortin",     loc: "QC" },
+  { first: "Alexandre", last: "Gauthier",   loc: "QC" },
+  { first: "Chantal",   last: "Leblanc",    loc: "QC" },
+  { first: "Sophie",    last: "Morin",      loc: "QC" },
+  { first: "Nathalie",  last: "Lavoie",     loc: "QC" },
+  { first: "Isabelle",  last: "Ouellet",    loc: "QC" },
+  { first: "Mélanie",   last: "Pelletier",  loc: "QC" },
+  { first: "Valérie",   last: "Bergeron",   loc: "QC" },
+  // ── Mixed ──
+  { first: "Dylan",     last: "Beaulieu",   loc: "ON" },
+  { first: "Kayla",     last: "Fontaine",   loc: "MB" },
+  { first: "Tyler",     last: "Vachon",     loc: "BC" },
+  { first: "Amber",     last: "Leclerc",    loc: "AB" },
+  { first: "Raj",       last: "Patel",      loc: "ON" },
+  { first: "Priya",     last: "Singh",      loc: "BC" },
+  { first: "Harpreet",  last: "Gill",       loc: "AB" },
+  { first: "Amy",       last: "Chen",       loc: "ON" },
+  { first: "Wei",       last: "Zhang",      loc: "BC" },
+  { first: "Mei",       last: "Liu",        loc: "ON" },
+];
+
+const AU_RECIPIENTS: Recipient[] = [
+  // ── Male ──
+  { first: "Lachlan",   last: "Smith",      loc: "NSW" },
+  { first: "Hamish",    last: "Jones",      loc: "VIC" },
+  { first: "Angus",     last: "Williams",   loc: "QLD" },
+  { first: "Fraser",    last: "Brown",      loc: "WA" },
+  { first: "Callum",    last: "Taylor",     loc: "SA" },
+  { first: "Flynn",     last: "Wilson",     loc: "NSW" },
+  { first: "Brody",     last: "Johnson",    loc: "QLD" },
+  { first: "Cooper",    last: "Anderson",   loc: "VIC" },
+  { first: "Remy",      last: "Thomas",     loc: "NSW" },
+  { first: "Blake",     last: "O'Brien",    loc: "QLD" },
+  { first: "Declan",    last: "Murphy",     loc: "VIC" },
+  { first: "Jake",      last: "Morrison",   loc: "WA" },
+  { first: "Dylan",     last: "Martin",     loc: "NSW" },
+  { first: "Brendan",   last: "Clarke",     loc: "SA" },
+  { first: "Shane",     last: "Walker",     loc: "NSW" },
+  // ── Female ──
+  { first: "Sienna",    last: "Evans",      loc: "VIC" },
+  { first: "Matilda",   last: "White",      loc: "NSW" },
+  { first: "Isla",      last: "Harris",     loc: "QLD" },
+  { first: "Imogen",    last: "Robinson",   loc: "VIC" },
+  { first: "Zoe",       last: "Thompson",   loc: "WA" },
+  { first: "Freya",     last: "Campbell",   loc: "NSW" },
+  { first: "Ellie",     last: "Roberts",    loc: "QLD" },
+  { first: "Phoebe",    last: "Mitchell",   loc: "VIC" },
+  { first: "Chloe",     last: "Turner",     loc: "SA" },
+  { first: "Ruby",      last: "Stewart",    loc: "NSW" },
+  { first: "Grace",     last: "Cooper",     loc: "VIC" },
+  { first: "Sophie",    last: "Lee",        loc: "NSW" },
+  { first: "Amelia",    last: "Hall",       loc: "QLD" },
+  { first: "Lily",      last: "Phillips",   loc: "VIC" },
+  { first: "Tara",      last: "Moore",      loc: "ACT" },
+  { first: "Bridget",   last: "Scott",      loc: "TAS" },
+  { first: "Jade",      last: "Young",      loc: "NT" },
+];
+
+const DE_RECIPIENTS: Recipient[] = [
+  // ── Male ──
+  { first: "Hans",      last: "Müller",     loc: "BY" },
+  { first: "Stefan",    last: "Schmidt",    loc: "NW" },
+  { first: "Klaus",     last: "Schneider",  loc: "BW" },
+  { first: "Thomas",    last: "Fischer",    loc: "NI" },
+  { first: "Michael",   last: "Weber",      loc: "HE" },
+  { first: "Andreas",   last: "Meyer",      loc: "BE" },
+  { first: "Christian", last: "Wagner",     loc: "BW" },
+  { first: "Markus",    last: "Becker",     loc: "BY" },
+  { first: "Tobias",    last: "Hoffmann",   loc: "NW" },
+  { first: "Felix",     last: "Schäfer",    loc: "HH" },
+  { first: "Lukas",     last: "Koch",       loc: "BE" },
+  { first: "Julian",    last: "Bauer",      loc: "SH" },
+  { first: "Florian",   last: "Richter",    loc: "BY" },
+  { first: "Jan",       last: "Klein",      loc: "SN" },
+  { first: "Niklas",    last: "Wolf",       loc: "NW" },
+  // ── Female ──
+  { first: "Heike",     last: "Braun",      loc: "NI" },
+  { first: "Sabine",    last: "Lange",      loc: "BW" },
+  { first: "Monika",    last: "Zimmermann", loc: "BY" },
+  { first: "Petra",     last: "Krause",     loc: "BE" },
+  { first: "Ute",       last: "Krüger",     loc: "NW" },
+  { first: "Karin",     last: "Hartmann",   loc: "HE" },
+  { first: "Claudia",   last: "Schulz",     loc: "BW" },
+  { first: "Birgit",    last: "Lehmann",    loc: "BY" },
+  { first: "Stefanie",  last: "Neumann",    loc: "HH" },
+  { first: "Melanie",   last: "Schwarz",    loc: "SN" },
+  { first: "Laura",     last: "Günther",    loc: "NW" },
+  { first: "Hannah",    last: "Huber",      loc: "BY" },
+  { first: "Lisa",      last: "Schumacher", loc: "NI" },
+  { first: "Anna",      last: "Brandt",     loc: "BE" },
+  { first: "Julia",     last: "Maier",      loc: "BW" },
+];
+
+// ─── Combined weighted pool ───────────────────────────────────────────────────
+// US: ~45%, CA: ~20%, AU: ~20%, DE: ~15%
+const ALL_RECIPIENTS: Recipient[] = [
+  ...US_RECIPIENTS, ...US_RECIPIENTS, ...US_RECIPIENTS, // ×3 weight
+  ...CA_RECIPIENTS, ...CA_RECIPIENTS,                   // ×2 weight
+  ...AU_RECIPIENTS, ...AU_RECIPIENTS,                   // ×2 weight
+  ...DE_RECIPIENTS,                                     // ×1 weight
 ];
 
 const CATEGORIES: { label: string; min: number; max: number; weight: number }[] = [
@@ -64,12 +215,6 @@ const CATEGORIES: { label: string; min: number; max: number; weight: number }[] 
   { label: "accident relief",              min: 7500,  max: 30000, weight: 5  },
   { label: "mortgage relief",              min: 12000, max: 45000, weight: 3  },
   { label: "disability & long-term care",  min: 15000, max: 60000, weight: 1  },
-];
-
-const STATES = [
-  "TX", "OH", "FL", "GA", "CA", "NC", "MI", "AZ", "PA", "TN", "IL", "MO",
-  "NY", "IN", "WI", "VA", "AL", "SC", "KY", "OK", "WA", "NJ", "MN", "LA",
-  "CO", "MD", "OR", "NV", "UT", "AR", "MS", "KS", "NM", "NE", "WV", "ID",
 ];
 
 function pick<T>(arr: T[]) {
@@ -92,9 +237,9 @@ function makeMessage(): string {
   const raw = cat.min + skew * (cat.max - cat.min);
   const step = raw < 10000 ? 250 : raw < 25000 ? 500 : 1000;
   const amount = Math.max(cat.min, Math.round(raw / step) * step);
-  const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
-  const state = pick(STATES);
-  return `🎉 Congratulations ${name} (${state}) — approved for a $${amount.toLocaleString("en-US")} ${cat.label} grant.   🌱 Your seed can be next.`;
+  const { first, last, loc } = pick(ALL_RECIPIENTS);
+  const name = `${first} ${last}`;
+  return `🎉 Congratulations ${name} (${loc}) — approved for a $${amount.toLocaleString("en-US")} ${cat.label} grant.   🌱 Your seed can be next.`;
 }
 
 // ─── Tuning knobs ─────────────────────────────────────────────────────────────
