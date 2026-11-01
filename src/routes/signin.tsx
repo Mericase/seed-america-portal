@@ -9,8 +9,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/signin")({
   head: () => ({
     meta: [
-      { title: "Sign In — Seedin America" },
-      { name: "description", content: "Access your secure Seedin America member dashboard." },
+      { title: "Sign In — Seedin" },
+      { name: "description", content: "Access your secure Seedin member dashboard." },
     ],
   }),
   component: SignInPage,
@@ -97,7 +97,7 @@ function SignInPage() {
             </form>
 
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              New to Seedin America?{" "}
+              New to Seedin?{" "}
               <Link to="/signup" className="font-semibold text-forest hover:underline">Create an account</Link>
             </p>
           </div>
