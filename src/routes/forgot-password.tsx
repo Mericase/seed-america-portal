@@ -22,7 +22,6 @@ function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const [otpToken, setOtpToken] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
