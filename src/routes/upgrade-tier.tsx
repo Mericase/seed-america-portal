@@ -302,7 +302,7 @@ function MaskedSsn({ label, value, onChange, placeholder }: { label: string; val
               onChange(value + added);
             }
           }}
-          placeholder="•••-••-••••"
+          placeholder={placeholder ?? "•••-••-••••"}
           className="block w-full rounded-lg border border-input bg-background px-4 py-3 font-mono text-base tracking-[0.3em] text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
         />
       </div>
