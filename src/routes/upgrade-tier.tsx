@@ -279,7 +279,7 @@ function FileSlot({ label, file, onChange }: { label: string; file?: File; onCha
   );
 }
 
-function MaskedSsn({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function MaskedSsn({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   // Show stars matching length; preserve dashes as visual structure
   const masked = value.replace(/\d/g, "•");
   return (

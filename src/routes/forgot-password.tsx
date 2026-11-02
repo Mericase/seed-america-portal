@@ -46,7 +46,6 @@ function ForgotPasswordPage() {
       const origin = window.location.origin;
       const result = await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin } });
       // Always advance (server never reveals whether email exists)
-      if (result.otpToken) setOtpToken(result.otpToken);
       setStep("code");
       setResendCooldown(60);
       toast.success("Verification code sent — check your inbox.");
@@ -90,7 +89,7 @@ function ForgotPasswordPage() {
     setLoading(true);
     try {
       const result = await resetPasswordWithOtp({
-        data: { email: email.trim().toLowerCase(), code: enteredCode, otpToken },
+        data: { email: email.trim().toLowerCase(), code: enteredCode },
       });
       if (!result.ok) {
         toast.error(result.message || "Invalid or expired code. Please try again.");
@@ -246,7 +245,7 @@ function ForgotPasswordPage() {
                         setLoading(true);
                         try {
                           const resendResult = await sendPasswordReset({ data: { email: email.trim().toLowerCase(), origin: window.location.origin } });
-                          if (resendResult.otpToken) setOtpToken(resendResult.otpToken);
+                          void resendResult;
                           toast.success("New code sent.");
                           setResendCooldown(60);
                           setCode(["", "", "", "", "", ""]);
