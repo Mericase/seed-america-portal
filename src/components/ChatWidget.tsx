@@ -32,7 +32,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
   const greeting: Msg = {
     id: "greeting",
     direction: "in",
-    body: `Good day ${firstName}, this is Seedin America Support. How can we help you today?`,
+    body: `Good day ${firstName}, this is Seedin Support. How can we help you today?`,
     created_at: new Date(0).toISOString(),
   };
 
@@ -171,7 +171,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
           <div className="flex shrink-0 items-center justify-between bg-gradient-primary px-4 py-3 text-primary-foreground">
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-gold">Support</p>
-              <p className="text-sm font-semibold">Seedin America</p>
+              <p className="text-sm font-semibold">Seedin</p>
             </div>
             <div className="flex items-center gap-1">
               <button

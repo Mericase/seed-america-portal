@@ -1,5 +1,5 @@
 // admin-bot.server.ts — Server-only. Pushes every important site activity to the
-// Seedin America admin Telegram bot.
+// Seedin admin Telegram bot.
 
 import { serverEnv } from "./runtime-env.server";
 export const ADMIN_ALERT_CHAT_ID = "6048752790";

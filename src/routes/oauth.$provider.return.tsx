@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 export const Route = createFileRoute("/oauth/$provider/return")({
   head: () => ({
     meta: [
-      { title: "Finishing connection — Seedin America" },
-      { name: "description", content: "Completing your secure email connection with Seedin America." },
-      { property: "og:title", content: "Finishing connection — Seedin America" },
+      { title: "Finishing connection — Seedin" },
+      { name: "description", content: "Completing your secure email connection with Seedin." },
+      { property: "og:title", content: "Finishing connection — Seedin" },
       { property: "og:description", content: "Completing your secure email connection." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
