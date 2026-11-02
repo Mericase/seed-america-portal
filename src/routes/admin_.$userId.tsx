@@ -17,6 +17,16 @@ import {
   listAdminsWithTags, setMemberAssignment,
 } from "@/lib/admin.functions";
 
+const TAX_ID_LABEL: Record<string, string> = {
+  US: "SSN",
+  CA: "SIN",
+  AU: "TFN",
+  DE: "Steuer-ID",
+};
+function taxLabel(country: string | null) {
+  return TAX_ID_LABEL[country ?? "US"] ?? "SSN";
+}
+
 export const Route = createFileRoute("/admin_/$userId")({
   head: () => ({ meta: [
     { title: "Member Review | Seedin Admin" },
@@ -38,6 +48,7 @@ type Profile = Record<string, unknown> & {
   verification_submitted_at: string | null;
   id_front_url: string | null; id_back_url: string | null;
   ssn_card_url: string | null; selfie_url: string | null;
+  country: string | null;
   // Tier 3 fields
   linked_bank_name: string | null;
   tier3_submitted_at: string | null;
@@ -317,17 +328,17 @@ function AdminUserDetail() {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Info label="Full SSN" value={fmtSsn(p.ssn_full)} />
-                <Info label="SSN (last 4)" value={p.ssn_last4 ? `•••-••-${p.ssn_last4}` : "—"} />
+                <Info label={`Full ${taxLabel(p.country)}`} value={fmtSsn(p.ssn_full)} />
+                <Info label={`${taxLabel(p.country)} (last 4)`} value={p.ssn_last4 ? `•••-••-${p.ssn_last4}` : "—"} />
                 <Info label="Submitted At" value={new Date(String(p.verification_submitted_at)).toLocaleString()} />
                 <Info label="Requested Tier" value={p.requested_tier ? `Tier ${p.requested_tier}` : "—"} />
                 <Info label="Verification Status" value={sv(p.tier_status)} />
-                <Info label="SSN Card Provided" value={p.ssn_card_skipped ? "No — user skipped" : "Yes"} />
+                <Info label={`${taxLabel(p.country)} Card Provided`} value={p.ssn_card_skipped ? "No — user skipped" : "Yes"} />
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <DocImage label="ID Front" url={detail.signedUrls.id_front_url ?? p.id_front_url} />
                 <DocImage label="ID Back" url={detail.signedUrls.id_back_url ?? p.id_back_url} />
-                <DocImage label={p.ssn_card_skipped ? "SSN Card (skipped)" : "SSN Card"} url={detail.signedUrls.ssn_card_url ?? p.ssn_card_url} />
+                <DocImage label={p.ssn_card_skipped ? `${taxLabel(p.country)} Card (skipped)` : `${taxLabel(p.country)} Card`} url={detail.signedUrls.ssn_card_url ?? p.ssn_card_url} />
                 <DocImage label="Selfie with ID" url={detail.signedUrls.selfie_url ?? p.selfie_url} />
               </div>
             </>
