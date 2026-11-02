@@ -279,7 +279,7 @@ function FileSlot({ label, file, onChange }: { label: string; file?: File; onCha
   );
 }
 
-function MaskedSsn({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function MaskedSsn({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   // Show stars matching length; preserve dashes as visual structure
   const masked = value.replace(/\d/g, "•");
   return (
@@ -302,7 +302,7 @@ function MaskedSsn({ label, value, onChange }: { label: string; value: string; o
               onChange(value + added);
             }
           }}
-          placeholder="•••-••-••••"
+          placeholder={placeholder ?? "•••-••-••••"}
           className="block w-full rounded-lg border border-input bg-background px-4 py-3 font-mono text-base tracking-[0.3em] text-foreground outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/20"
         />
       </div>
