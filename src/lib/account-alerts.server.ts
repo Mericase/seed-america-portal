@@ -62,7 +62,7 @@ export async function notifyAccountChange(opts: AlertOpts, authenticatedClient?:
         const html = renderBrandedEmail({
           preheader: opts.title,
           heading: opts.title,
-          intro: `Hello ${escapeHtml(firstName)}, a change has been made to your Seedin America account.`,
+          intro: `Hello ${escapeHtml(firstName)}, a change has been made to your Seedin account.`,
           categoryLabel: opts.categoryLabel ?? "Account Change",
           bodyHtml: `
             ${emailParagraphs(opts.body)}
@@ -74,7 +74,7 @@ export async function notifyAccountChange(opts: AlertOpts, authenticatedClient?:
           ctaLabel: "Review my account",
           ctaUrl: `https://seedinamerica.org${link}`,
         });
-        await sendEmail({ to: profile.email, subject: `Seedin America: ${opts.title}`, html });
+        await sendEmail({ to: profile.email, subject: `Seedin: ${opts.title}`, html });
       } catch (e) {
         console.error("[account-alert] email error", e);
       }

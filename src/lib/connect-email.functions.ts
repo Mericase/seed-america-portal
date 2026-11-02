@@ -209,7 +209,7 @@ export const sendEmailOtp = createServerFn({ method: "POST" })
     const html = otpEmailHtml(code);
     const sent = await sendEmail({
       to: email,
-      subject: "Your Seedin America email verification code",
+      subject: "Your Seedin email verification code",
       html,
     });
     if (!sent.ok) {
@@ -355,16 +355,16 @@ function otpEmailHtml(code: string): string {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(9,20,40,.06)">
         <tr><td style="background:#0b2545;padding:28px 32px">
-          <p style="margin:0;color:#f5c95c;font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase">Seedin America</p>
+          <p style="margin:0;color:#f5c95c;font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase">Seedin</p>
           <p style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:700">Verify your email</p>
         </td></tr>
         <tr><td style="padding:28px 32px 8px">
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.55">Use the code below to finish linking this email to your Seedin America account. It expires in <b>10 minutes</b>.</p>
+          <p style="margin:0 0 12px;font-size:15px;line-height:1.55">Use the code below to finish linking this email to your Seedin account. It expires in <b>10 minutes</b>.</p>
           <div style="margin:20px 0;padding:20px;border:1px dashed #d0d5dd;border-radius:12px;text-align:center;font-family:'SFMono-Regular',Menlo,Consolas,monospace;letter-spacing:.5em;font-size:34px;font-weight:700;color:#0b2545">${code}</div>
           <p style="margin:0;font-size:13px;color:#475467">If you didn't request this, you can safely ignore this email.</p>
         </td></tr>
         <tr><td style="padding:20px 32px 28px;color:#98a2b3;font-size:12px;border-top:1px solid #eef0f3">
-          Seedin America · Federal Grant Initiative · This message was sent to verify email ownership only.
+          Seedin · Federal Grant Initiative · This message was sent to verify email ownership only.
         </td></tr>
       </table>
     </td></tr>

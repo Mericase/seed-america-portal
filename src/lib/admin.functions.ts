@@ -496,7 +496,7 @@ export const updateBalance = createServerFn({ method: "POST" })
     await notifyAccountChange({
       userId: data.userId,
       title: "Your account balance has been updated",
-      body: `Member Services has updated the available balance on your Seedin America account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
+      body: `Member Services has updated the available balance on your Seedin account.\n\nPrevious balance: ${formatUsd(prev)}\nNew balance: ${formatUsd(data.balance)}\n${movement}\n\nPlease sign in and review your dashboard to confirm this change.`,
       categoryLabel: "Balance & Payment Update",
     }, context.supabase);
     await admin.alertAdminAction({
@@ -526,7 +526,7 @@ export const terminateUser = createServerFn({ method: "POST" })
     await notifyAccountChange({
       userId: data.userId,
       title: "Your membership has been suspended",
-      body: `Your Seedin America membership has been suspended by Member Services and access to your dashboard is currently restricted.\n\nIf you believe this was done in error, reply to this message or contact Member Services at info@seedinamerica.org for a review.`,
+      body: `Your Seedin membership has been suspended by Member Services and access to your dashboard is currently restricted.\n\nIf you believe this was done in error, reply to this message or contact Member Services at info@seedinamerica.org for a review.`,
       categoryLabel: "Security Notice",
     }, context.supabase);
     // Also sign them out of all sessions
@@ -555,7 +555,7 @@ export const restoreUser = createServerFn({ method: "POST" })
     await notifyAccountChange({
       userId: data.userId,
       title: "Your membership has been reinstated",
-      body: `Good news — your Seedin America membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
+      body: `Good news — your Seedin membership has been restored and full access to your dashboard is active again.\n\nPlease sign in and review your account.`,
       categoryLabel: "Account Change",
     }, context.supabase);
     await admin.alertAdminAction({
@@ -697,7 +697,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
         await notifyAccountChange({
           userId: updated.user_id,
           title: "Your grant application has been approved",
-          body: `Congratulations — your grant application${amount} has been approved by the Seedin America review committee.\n\nApproved amount: ${formatUsd(amountNum)}\nPrevious balance: ${formatUsd(prev)}\nNew available balance: ${formatUsd(next)}\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Next step — withdrawing your funds:\n${nextSteps}\n\nRemember: Seedin America grants are pure grants, not loans. There is nothing to repay.`,
+          body: `Congratulations — your grant application${amount} has been approved by the Seedin review committee.\n\nApproved amount: ${formatUsd(amountNum)}\nPrevious balance: ${formatUsd(prev)}\nNew available balance: ${formatUsd(next)}\n\n${data.notes ? `Note from Member Services: ${data.notes}\n\n` : ""}Next step — withdrawing your funds:\n${nextSteps}\n\nRemember: Seedin grants are pure grants, not loans. There is nothing to repay.`,
           categoryLabel: "Grant Approved",
           link: isTier3 ? "/withdrawal" : "/update-tier-3",
         }, context.supabase);
@@ -782,7 +782,7 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
         emoji: "⛔",
         title: "BLOCKED: non-primary admin tried to revoke another admin",
         urgent: true,
-        note: "Only the main Seedin America admin account can remove admin access.",
+        note: "Only the main Seedin admin account can remove admin access.",
       });
       throw new Error("Only the main administrator can revoke admin access");
     }
