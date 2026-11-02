@@ -22,7 +22,7 @@ export const listUsers = createServerFn({ method: "POST" })
     const supabaseAdmin = context.supabase;
     let q = supabaseAdmin
       .from("profiles")
-      .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code, assigned_admin_id")
+      .select("id, full_name, email, phone, tier, tier_status, requested_tier, balance, profile_status, created_at, referral_code, assigned_admin_id, country")
       .order("created_at", { ascending: false });
 
     // Sub-admins only see their assigned members.
