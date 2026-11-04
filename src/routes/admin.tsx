@@ -155,7 +155,7 @@ function AdminPage() {
                 setAdminCountryState(c);
                 try {
                   await updateMyCountry({ data: { country: c } });
-                  toast.success(`Switched to ${COUNTRY_FLAGS[c.code] ?? c} view`);
+                  toast.success(`Switched to ${COUNTRY_FLAGS[c] ?? c} view`);
                   window.location.reload();
                 } catch (err) {
                   toast.error("Failed to switch country");
