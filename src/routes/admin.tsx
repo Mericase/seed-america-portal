@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { listUsersBrief, sendNotification } from "@/lib/notifications.functions";
-import { adminStats, listUsers, listAdminsWithTags, setAdminTag } from "@/lib/admin.functions";
+import { adminStats, listUsers, listAdminsWithTags, setAdminTag, getMyAdminCountry, setAdminCountry } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -88,16 +88,20 @@ function AdminPage() {
   const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated" | "pending_apps">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
   const [authChecked, setAuthChecked] = useState(false);
+  const [adminCountry, setAdminCountryState] = useState("US");
   const getStats = useServerFn(adminStats);
   const getUsers = useServerFn(listUsers);
+  const fetchMyCountry = useServerFn(getMyAdminCountry);
+  const updateMyCountry = useServerFn(setAdminCountry);
 
   useEffect(() => {
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate({ to: "/signin" }); return; }
-        const stats = await getStats();
+        const [stats, myCountry] = await Promise.all([getStats(), fetchMyCountry()]);
         setS(stats);
+        setAdminCountryState(myCountry.country);
         setAuthChecked(true);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to load admin");
@@ -144,6 +148,25 @@ function AdminPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <select
+              value={adminCountry}
+              onChange={async (e) => {
+                const c = e.target.value;
+                setAdminCountryState(c);
+                try {
+                  await updateMyCountry({ data: { country: c } });
+                  toast.success(`Switched to ${COUNTRY_FLAGS[c] ?? c} view`);
+                  window.location.reload();
+                } catch (err) {
+                  toast.error("Failed to switch country");
+                }
+              }}
+              className="rounded-full border border-input bg-background px-3 py-2 text-sm font-medium cursor-pointer hover:bg-accent"
+            >
+              {FILTER_COUNTRIES.map((fc) => (
+                <option key={fc.code} value={fc.code}>{fc.flag} {fc.code}</option>
+              ))}
+            </select>
             <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
