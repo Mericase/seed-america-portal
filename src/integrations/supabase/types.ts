@@ -301,6 +301,7 @@ export type Database = {
           id: string
           id_back_url: string | null
           id_front_url: string | null
+          language: string | null
           linked_bank_name: string | null
           pending_withdrawal: number | null
           phone: string
@@ -337,6 +338,7 @@ export type Database = {
           id: string
           id_back_url?: string | null
           id_front_url?: string | null
+          language?: string | null
           linked_bank_name?: string | null
           pending_withdrawal?: number | null
           phone: string
@@ -373,6 +375,7 @@ export type Database = {
           id?: string
           id_back_url?: string | null
           id_front_url?: string | null
+          language?: string | null
           linked_bank_name?: string | null
           pending_withdrawal?: number | null
           phone?: string
