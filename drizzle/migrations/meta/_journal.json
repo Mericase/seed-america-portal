@@ -15,6 +15,13 @@
       "when": 1793519895962,
       "tag": "0001_create_password_reset_otps",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793800226892,
+      "tag": "0002_add_language_to_profiles",
+      "breakpoints": true
     }
   ]
 }
