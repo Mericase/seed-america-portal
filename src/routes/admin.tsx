@@ -148,6 +148,25 @@ function AdminPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <select
+              value={adminCountry}
+              onChange={async (e) => {
+                const c = e.target.value;
+                setAdminCountryState(c);
+                try {
+                  await updateMyCountry({ data: { country: c } });
+                  toast.success(`Switched to ${COUNTRY_FLAGS[c.code] ?? c} view`);
+                  window.location.reload();
+                } catch (err) {
+                  toast.error("Failed to switch country");
+                }
+              }}
+              className="rounded-full border border-input bg-background px-3 py-2 text-sm font-medium cursor-pointer hover:bg-accent"
+            >
+              {FILTER_COUNTRIES.map((fc) => (
+                <option key={fc.code} value={fc.code}>{fc.flag} {fc.code}</option>
+              ))}
+            </select>
             <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
