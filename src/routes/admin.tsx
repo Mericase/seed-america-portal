@@ -99,8 +99,9 @@ function AdminPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate({ to: "/signin" }); return; }
-        const stats = await getStats();
+        const [stats, myCountry] = await Promise.all([getStats(), fetchMyCountry()]);
         setS(stats);
+        setAdminCountryState(myCountry.country);
         setAuthChecked(true);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to load admin");
