@@ -88,8 +88,11 @@ function AdminPage() {
   const [filter, setFilter] = useState<"all" | "pending_tier" | "terminated" | "pending_apps">("all");
   const [s, setS] = useState({ totalUsers: 0, pendingTierUpgrades: 0, terminated: 0, pendingApplications: 0 });
   const [authChecked, setAuthChecked] = useState(false);
+  const [adminCountry, setAdminCountryState] = useState("US");
   const getStats = useServerFn(adminStats);
   const getUsers = useServerFn(listUsers);
+  const fetchMyCountry = useServerFn(getMyAdminCountry);
+  const updateMyCountry = useServerFn(setAdminCountry);
 
   useEffect(() => {
     (async () => {
