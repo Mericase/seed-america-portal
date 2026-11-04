@@ -822,3 +822,33 @@ export const adminStats = createServerFn({ method: "GET" })
       pendingApplications: apps ?? 0,
     };
   });
+
+export const getMyAdminCountry = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("country")
+      .eq("id", context.userId)
+      .single();
+    if (error) throw new Error(error.message);
+    return { country: (data?.country as string) ?? "US" };
+  });
+
+export const setAdminCountry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { country: string }) => i)
+  .handler(async ({ context, data }) => {
+    const admin = await import("./admin-core.server");
+    await admin.assertAdmin(context.userId, context.supabase);
+    const valid = ["US", "CA", "AU", "DE"];
+    if (!valid.includes(data.country)) throw new Error("Invalid country code");
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ country: data.country })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
