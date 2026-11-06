@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Laptop, Monitor, ShieldCheck, Smartphone, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { markTier2LiveStarted } from "@/lib/admin.functions";
@@ -17,6 +18,7 @@ export function isMobilePhone(): boolean {
 }
 
 export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [link, setLink] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,7 +69,7 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
 
   const proceed = async () => {
     if (isMobilePhone()) {
-      toast.error("Mobile phones are not permitted. Please sign in on a laptop, computer, tablet or iPad with a webcam.");
+      toast.error(t('tier2Live.mobileNotPermitted'));
       return;
     }
     setBusy(true);
@@ -77,14 +79,14 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
       if (!fresh) {
         setLink(null);
         setOpen(false);
-        toast.error("This verification session is no longer active. Our team will send you a new link shortly.");
+        toast.error(t('tier2Live.sessionExpired'));
         return;
       }
       setLink(fresh);
       // Open synchronously-ish to avoid popup blockers, then notify admin
       const win = window.open(fresh, "_blank", "noopener,noreferrer");
       if (!win) {
-        toast.error("Please allow pop-ups, then tap Proceed again.");
+        toast.error(t('tier2Live.popupBlocked'));
         return;
       }
       markStarted({}).catch(() => null);
@@ -107,28 +109,28 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
         </button>
         <div className="bg-gradient-primary px-7 py-6 text-primary-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-            <ShieldCheck className="h-3.5 w-3.5" /> Urgent — Action Required
+            <ShieldCheck className="h-3.5 w-3.5" /> {t('tier2Live.urgentLabel')}
           </div>
-          <h2 className="mt-2 font-display text-2xl font-semibold">Final Tier 2 live verification</h2>
+          <h2 className="mt-2 font-display text-2xl font-semibold">{t('tier2Live.title')}</h2>
           <p className="mt-1 text-sm text-white/80">
-            Your documents were approved. One last live identity session is required — Tier 2 activates once our team confirms your session.
+            {t('tier2Live.desc')}
           </p>
         </div>
 
         <div className="space-y-4 p-7">
           <div className="rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm text-foreground">
-            <p className="font-semibold">This step can only be completed on:</p>
+            <p className="font-semibold">{t('tier2Live.deviceRequirement')}</p>
             <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Laptop className="h-4 w-4 text-forest" /> A laptop with a webcam</li>
-              <li className="flex items-center gap-2"><Monitor className="h-4 w-4 text-forest" /> A desktop computer with a webcam</li>
-              <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-forest" /> A tablet or iPad</li>
-              <li className="flex items-center gap-2 text-destructive"><Smartphone className="h-4 w-4" /> Mobile phones are <strong className="mx-1">not allowed</strong></li>
+              <li className="flex items-center gap-2"><Laptop className="h-4 w-4 text-forest" /> {t('tier2Live.deviceLaptop')}</li>
+              <li className="flex items-center gap-2"><Monitor className="h-4 w-4 text-forest" /> {t('tier2Live.deviceDesktop')}</li>
+              <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-forest" /> {t('tier2Live.deviceTablet')}</li>
+              <li className="flex items-center gap-2 text-destructive"><Smartphone className="h-4 w-4" /> {t('tier2Live.deviceMobileNotAllowed')}</li>
             </ul>
           </div>
 
           {phone ? (
             <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs font-medium text-destructive">
-              We've detected you're on a mobile phone. Please sign in again on a laptop, computer, tablet or iPad to continue.
+              {t('tier2Live.mobileDetected')}
             </p>
           ) : null}
 
@@ -137,11 +139,11 @@ export function Tier2LiveVerificationPrompt({ userId }: { userId: string }) {
             disabled={phone || busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-forest px-6 py-3.5 text-sm font-semibold text-forest-foreground shadow-elegant transition disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
           >
-            {busy ? "Fetching your secure link…" : "Proceed to live verification"}
+            {busy ? t('tier2Live.fetchingLink') : t('tier2Live.proceedBtn')}
 
           </button>
           <button onClick={() => setOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">
-            Remind me later
+            {t('tier2Live.remindLater')}
           </button>
         </div>
       </div>
