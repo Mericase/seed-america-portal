@@ -14,6 +14,8 @@ import { InAppBrowserGate } from "@/components/InAppBrowserGate";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import "../i18n";
+import { LanguagePrompt } from "@/components/LanguagePrompt";
 
 function NotFoundComponent() {
   return (
@@ -99,6 +101,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <InAppBrowserGate />
+      <LanguagePrompt />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
