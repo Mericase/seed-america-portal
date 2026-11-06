@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X, Minus, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const BOT_TOKEN = "7972563603:AAFR9N0X2GxQ5ggQXFWhtMWtD8HR3eyo1JA";
 const ADMIN_CHAT_ID = "6048752790";
@@ -8,6 +9,7 @@ const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 type Msg = { id: string; direction: "in" | "out"; body: string; created_at: string };
 
 export function ChatWidget({ userId, firstName }: { userId: string; firstName: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -32,7 +34,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
   const greeting: Msg = {
     id: "greeting",
     direction: "in",
-    body: `Good day ${firstName}, this is Seedin Support. How can we help you today?`,
+    body: t('chatWidget.greeting', { firstName }),
     created_at: new Date(0).toISOString(),
   };
 
@@ -136,7 +138,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
         {
           id: `err-${Date.now()}`,
           direction: "in",
-          body: "Message failed to send. Please try again.",
+          body: t('chatWidget.sendFailed'),
           created_at: new Date().toISOString(),
         },
       ]);
@@ -151,7 +153,7 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
     <>
       {!open && (
         <button
-          aria-label="Open support chat"
+          aria-label={t('chatWidget.openChat')}
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-forest text-forest-foreground shadow-elegant hover:scale-105 transition"
         >
@@ -177,14 +179,14 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
               <button
                 onClick={() => setMinimized((v) => !v)}
                 className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10"
-                aria-label={minimized ? "Expand chat" : "Minimise chat"}
+                aria-label={minimized ? t('chatWidget.expandChat') : t('chatWidget.minimiseChat')}
               >
                 <Minus className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setOpen(false)}
                 className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10"
-                aria-label="Close chat"
+                aria-label={t('chatWidget.closeChat')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -219,14 +221,14 @@ export function ChatWidget({ userId, firstName }: { userId: string; firstName: s
                     }
                   }}
                   rows={1}
-                  placeholder="Type a message…"
+                  placeholder={t('chatWidget.placeholder')}
                   className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-forest focus:ring-2 focus:ring-forest/20 max-h-32"
                 />
                 <button
                   onClick={handleSend}
                   disabled={!text.trim() || sending}
                   className="grid h-9 w-9 place-items-center rounded-full bg-gradient-forest text-forest-foreground disabled:opacity-50"
-                  aria-label="Send"
+                  aria-label={t('chatWidget.send')}
                 >
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
