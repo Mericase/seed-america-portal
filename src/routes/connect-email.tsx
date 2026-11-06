@@ -11,6 +11,7 @@ import {
   getLinkedEmail, startProviderConnect, completeProviderConnect,
   sendEmailOtp, verifyEmailOtp, disconnectLinkedEmail,
 } from "@/lib/connect-email.functions";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/connect-email")({
   head: () => ({
@@ -39,6 +40,7 @@ const PROVIDER_LABEL: Record<string, string> = {
 };
 
 function ConnectEmailPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [linked, setLinked] = useState<Linked>(null);
@@ -72,7 +74,7 @@ function ConnectEmailPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-5 sm:py-4">
           <Logo />
           <Link to="/settings" className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
-            <ArrowLeft className="h-4 w-4" /> Settings
+            <ArrowLeft className="h-4 w-4" /> {t('connectEmail.settingsBack')}
           </Link>
         </div>
       </header>
@@ -80,40 +82,36 @@ function ConnectEmailPage() {
       <main className="mx-auto max-w-3xl space-y-6 px-4 pt-8 sm:px-5">
         <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
           <div className="bg-gradient-to-br from-primary to-primary/80 px-6 py-8 sm:px-8 sm:py-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Account Protection</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{t('connectEmail.heroLabel')}</p>
             <h1 className="mt-2 font-display text-3xl font-semibold text-primary-foreground sm:text-4xl">
-              Connect your everyday email
+              {t('connectEmail.heroTitle')}
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-              Members who link a verified inbox move through review faster and carry a stronger, harder-to-compromise
-              account. It takes under a minute, and you stay in complete control.
+              {t('connectEmail.heroDesc')}
             </p>
           </div>
 
           <div className="grid gap-5 p-6 sm:grid-cols-3 sm:p-8">
             <Benefit
               icon={<ShieldCheck className="h-5 w-5" />}
-              title="A third layer of security"
-              body="Beyond your password and sign-in code, a verified inbox lets us confirm it's really you before any balance, tier or withdrawal change is processed."
+              title={t('connectEmail.benefit1Title')}
+              body={t('connectEmail.benefit1Body')}
             />
             <Benefit
               icon={<Zap className="h-5 w-5" />}
-              title="Faster reviews"
-              body="Applications from members with a confirmed inbox skip a manual identity step, which typically shortens review time considerably."
+              title={t('connectEmail.benefit2Title')}
+              body={t('connectEmail.benefit2Body')}
             />
             <Benefit
               icon={<Bell className="h-5 w-5" />}
-              title="Never miss an award"
-              body="Grant approvals, verification links and disbursement notices reach you reliably — even if you're away from the app."
+              title={t('connectEmail.benefit3Title')}
+              body={t('connectEmail.benefit3Body')}
             />
           </div>
 
           <div className="flex items-start gap-2.5 border-t border-border bg-muted/40 px-6 py-4 text-xs leading-relaxed text-muted-foreground sm:px-8">
             <Lock className="mt-0.5 h-4 w-4 shrink-0 text-forest" />
-            <p>
-              Seedin never sees or stores your email password. Provider sign-in happens entirely on Google's or
-              Microsoft's own website, and you can disconnect at any time from this page.
-            </p>
+            <p>{t('connectEmail.privacyNote')}</p>
           </div>
         </section>
 
@@ -137,6 +135,7 @@ function ConnectEmailPage() {
 /* ── Connected state ─────────────────────────────────────── */
 
 function ConnectedCard({ linked, onDisconnected }: { linked: NonNullable<Linked>; onDisconnected: () => void }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   const disconnect = async () => {
@@ -144,9 +143,9 @@ function ConnectedCard({ linked, onDisconnected }: { linked: NonNullable<Linked>
     try {
       await disconnectLinkedEmail();
       onDisconnected();
-      toast.success("Email disconnected");
+      toast.success(t('connectEmail.disconnected'));
     } catch {
-      toast.error("Couldn't disconnect right now. Please try again.");
+      toast.error(t('connectEmail.disconnectFailed'));
     } finally {
       setBusy(false);
     }
@@ -157,7 +156,7 @@ function ConnectedCard({ linked, onDisconnected }: { linked: NonNullable<Linked>
       <div className="flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-forest" />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-xl font-semibold">Email connected</p>
+          <p className="font-display text-xl font-semibold">{t('connectEmail.connectedTitle')}</p>
           <p className="mt-1 break-all text-sm text-muted-foreground">{linked.email}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-forest">
@@ -165,7 +164,7 @@ function ConnectedCard({ linked, onDisconnected }: { linked: NonNullable<Linked>
               {PROVIDER_LABEL[linked.provider] ?? linked.provider}
             </span>
             <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {linked.method === "oauth" ? "Verified by provider sign-in" : "Verified by code"}
+              {linked.method === "oauth" ? t('connectEmail.verifiedByProvider') : t('connectEmail.verifiedByCode')}
             </span>
           </div>
         </div>
@@ -175,7 +174,7 @@ function ConnectedCard({ linked, onDisconnected }: { linked: NonNullable<Linked>
         disabled={busy}
         className="mt-6 inline-flex items-center gap-2 rounded-lg border border-destructive/30 bg-background px-5 py-3 text-sm font-semibold text-destructive hover:bg-destructive/5 disabled:opacity-60"
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unplug className="h-4 w-4" />} Disconnect email
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unplug className="h-4 w-4" />} {t('connectEmail.disconnectEmail')}
       </button>
     </section>
   );
@@ -216,6 +215,7 @@ function waitForOAuth(popup: Window, provider: string) {
 }
 
 function ProviderCard({ onLinked }: { onLinked: () => Promise<void> }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState<string | null>(null);
 
   const connect = async (provider: "gmail" | "outlook") => {
@@ -223,7 +223,7 @@ function ProviderCard({ onLinked }: { onLinked: () => Promise<void> }) {
     const popup = window.open("", "seedin-email-oauth", "width=600,height=740");
     if (!popup) {
       setBusy(null);
-      return toast.error("Please allow pop-ups for this site and try again.");
+      return toast.error(t('connectEmail.popupBlocked'));
     }
     try {
       const start = await startProviderConnect({ data: { provider } });
@@ -237,11 +237,11 @@ function ProviderCard({ onLinked }: { onLinked: () => Promise<void> }) {
       if (code) {
         await completeProviderConnect({ data: { code, provider } });
         await onLinked();
-        toast.success("Email connected securely");
+        toast.success(t('connectEmail.connectedSecurely'));
       }
     } catch (e) {
       popup.close();
-      toast.error(e instanceof Error ? e.message : "Connection failed. Please try again.");
+      toast.error(e instanceof Error ? e.message : t('connectEmail.connectionFailed'));
     } finally {
       setBusy(null);
     }
@@ -249,23 +249,23 @@ function ProviderCard({ onLinked }: { onLinked: () => Promise<void> }) {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recommended</p>
-      <h2 className="mt-1 font-display text-2xl font-semibold">Sign in with your email provider</h2>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t('connectEmail.recommendedLabel')}</p>
+      <h2 className="mt-1 font-display text-2xl font-semibold">{t('connectEmail.providerTitle')}</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        You'll be taken to the provider's own secure sign-in page. Seedin never sees your password.
+        {t('connectEmail.providerDesc')}
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <ProviderButton
-          label="Continue with Gmail"
-          sub="Google Account"
+          label={t('connectEmail.gmailBtn')}
+          sub={t('connectEmail.gmailSub')}
           busy={busy === "gmail"}
           disabled={busy !== null}
           onClick={() => connect("gmail")}
         />
         <ProviderButton
-          label="Continue with Outlook"
-          sub="Microsoft Account"
+          label={t('connectEmail.outlookBtn')}
+          sub={t('connectEmail.outlookSub')}
           busy={busy === "outlook"}
           disabled={busy !== null}
           onClick={() => connect("outlook")}
@@ -298,36 +298,37 @@ function ProviderButton({ label, sub, busy, disabled, onClick }: {
 /* ── OTP fallback ────────────────────────────────────────── */
 
 function OtpCard({ onLinked }: { onLinked: () => Promise<void> }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [stage, setStage] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
 
   const request = async () => {
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return toast.error("Enter a valid email address.");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return toast.error(t('connectEmail.invalidEmail'));
     setBusy(true);
     try {
       const res = await sendEmailOtp({ data: { email: email.trim() } });
       if (!res.ok) return toast.error(res.message);
       setStage("code");
-      toast.success("Code sent", { description: `Check ${email.trim()} for a 6-digit code.` });
+      toast.success(t('connectEmail.otpSent'), { description: t('connectEmail.otpSentDesc', { email: email.trim() }) });
     } catch {
-      toast.error("Couldn't send the code. Please try again.");
+      toast.error(t('connectEmail.codeSendFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   const verify = async () => {
-    if (!/^\d{6}$/.test(code)) return toast.error("Enter the 6-digit code.");
+    if (!/^\d{6}$/.test(code)) return toast.error(t('connectEmail.invalidCode'));
     setBusy(true);
     try {
       const res = await verifyEmailOtp({ data: { email: email.trim(), code } });
       if (!res.ok) return toast.error(res.message);
       await onLinked();
-      toast.success("Email verified and connected");
+      toast.success(t('connectEmail.verifiedConnected'));
     } catch {
-      toast.error("Verification failed. Please try again.");
+      toast.error(t('connectEmail.verifyFailed'));
     } finally {
       setBusy(false);
     }
@@ -335,11 +336,10 @@ function OtpCard({ onLinked }: { onLinked: () => Promise<void> }) {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Any other inbox</p>
-      <h2 className="mt-1 font-display text-2xl font-semibold">Verify by code</h2>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t('connectEmail.otherLabel')}</p>
+      <h2 className="mt-1 font-display text-2xl font-semibold">{t('connectEmail.otherTitle')}</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Using Yahoo, iCloud, AOL or a work address? We'll email you a 6-digit code to confirm the inbox is yours. No
-        password required.
+        {t('connectEmail.otherDesc')}
       </p>
 
       {stage === "email" ? (
@@ -358,13 +358,13 @@ function OtpCard({ onLinked }: { onLinked: () => Promise<void> }) {
             disabled={busy}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-forest px-5 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Send code
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} {t('connectEmail.sendCode')}
           </button>
         </div>
       ) : (
         <div className="mt-5 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Enter the code sent to <span className="font-semibold text-foreground">{email}</span>. It expires in 10 minutes.
+            {t('connectEmail.codeExpiry', { email })}
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
@@ -380,14 +380,14 @@ function OtpCard({ onLinked }: { onLinked: () => Promise<void> }) {
               disabled={busy}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-forest px-5 py-3 text-sm font-semibold text-forest-foreground disabled:opacity-60"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />} Verify
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />} {t('connectEmail.verifyBtn')}
             </button>
           </div>
           <button
             onClick={() => { setStage("email"); setCode(""); }}
             className="text-xs font-semibold text-muted-foreground underline underline-offset-4"
           >
-            Use a different email address
+            {t('connectEmail.useDifferentEmail')}
           </button>
         </div>
       )}
