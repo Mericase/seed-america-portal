@@ -14,7 +14,8 @@ import { InAppBrowserGate } from "@/components/InAppBrowserGate";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import "../i18n";
+import i18n from "../i18n";
+import { I18nextProvider } from "react-i18next";
 import { LanguagePrompt } from "@/components/LanguagePrompt";
 
 function NotFoundComponent() {
@@ -98,11 +99,13 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <InAppBrowserGate />
-      <LanguagePrompt />
-      <Toaster richColors position="top-center" />
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <InAppBrowserGate />
+        <LanguagePrompt />
+        <Toaster richColors position="top-center" />
+      </QueryClientProvider>
+    </I18nextProvider>
   );
 }
