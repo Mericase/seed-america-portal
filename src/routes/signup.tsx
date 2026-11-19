@@ -98,22 +98,14 @@ function SignupPage() {
   const doSendOtp = useServerFn(sendSignupOtp);
   const doVerifyOtp = useServerFn(verifySignupOtp);
 
+  // OTP DISABLED — skip email verification step, go straight to referral
+  // To re-enable: replace this function with the original that calls doSendOtp and setStep(2)
   const requestOtpAndAdvance = async () => {
     const parsed = step1Schema.safeParse(data);
     if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your details"); return; }
-    setSendingOtp(true);
-    try {
-      const res = await doSendOtp({ data: { email: data.email } });
-      toast.success(`Verification code sent to ${data.email}`);
-      setEmailVerified(false);
-      setVerifiedEmail("");
-      setOtpToken(res.otpToken ?? "");
-      setStep(2);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not send verification code");
-    } finally {
-      setSendingOtp(false);
-    }
+    setEmailVerified(true);
+    setVerifiedEmail(data.email);
+    setStep(3);
   };
 
   if (success) return <SuccessScreen />;
@@ -193,11 +185,6 @@ function SignupPage() {
                 accepted={acceptedTerms} setAccepted={setAcceptedTerms}
                 onBack={() => setStep(3)} submitting={submitting}
                 onSubmit={async () => {
-                  if (!emailVerified || verifiedEmail !== data.email) {
-                    toast.error("Please verify your email address first");
-                    setStep(2);
-                    return;
-                  }
                   setSubmitting(true);
 
                   const { error, data: authData } = await supabase.auth.signUp({
