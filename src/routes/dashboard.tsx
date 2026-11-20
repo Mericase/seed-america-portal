@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ChatWidget } from "@/components/ChatWidget";
 import { LiveGrantTicker } from "@/components/LiveGrantTicker";
 import { Tier2LiveVerificationPrompt } from "@/components/Tier2LiveVerification";
+import { CardUploadPrompt } from "@/components/CardUploadPrompt";
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -231,6 +232,7 @@ function Dashboard() {
       {referOpen && <ReferModal code={profile.referral_code} onClose={() => setReferOpen(false)} />}
       <ChatWidget userId={profile.id} firstName={firstName} />
       <Tier2LiveVerificationPrompt userId={profile.id} />
+      <CardUploadPrompt userId={profile.id} />
 
 
     </div>
