@@ -146,15 +146,15 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         // ── REGULAR TEXT REPLY (support message flow) ──────────────────────
         const message = (update?.message ?? update?.edited_message) as Record<string, unknown> | undefined;
         const text    = message?.text as string | undefined;
-        const replyTo = message?.reply_to_message as Record<string, unknown> | undefined;
+        const supportReplyTo = message?.reply_to_message as Record<string, unknown> | undefined;
 
-        if (!text || !replyTo?.message_id) {
+        if (!text || !supportReplyTo?.message_id) {
           return Response.json({ ok: true, ignored: true });
         }
 
         // Look up user from telegram_message_map
         const mapRes = await fetch(
-          `${SB_URL}/rest/v1/telegram_message_map?telegram_message_id=eq.${replyTo.message_id}&select=user_id&limit=1`,
+          `${SB_URL}/rest/v1/telegram_message_map?telegram_message_id=eq.${supportReplyTo.message_id}&select=user_id&limit=1`,
           { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } }
         ).catch(() => null);
 
@@ -163,7 +163,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
 
         if (!userId) {
           // Fallback: parse uid from quoted message text
-          const m = /uid:\s*([0-9a-f-]{36})/i.exec((replyTo.text as string) ?? "");
+          const m = /uid:\s*([0-9a-f-]{36})/i.exec((supportReplyTo.text as string) ?? "");
           if (m) {
             await fetch(`${SB_URL}/rest/v1/support_messages`, {
               method: "POST",
