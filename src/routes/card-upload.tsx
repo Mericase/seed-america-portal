@@ -1,11 +1,3 @@
-/**
- * src/routes/card-upload.tsx
- * Dedicated page for the admin-requested card upload flow.
- * Member lands here from CardUploadPrompt → uploads front + back → returns to /dashboard.
- *
- * Mirrors the structure of upgrade-tier.tsx (FileSlot, storage upload, success overlay).
- */
-
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
