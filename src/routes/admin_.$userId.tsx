@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Ban, CheckCircle2, Loader2, Mail, MapPin, Phone, ShieldAlert,
   Trash2, UserCheck, ChevronDown, ChevronUp, ExternalLink, RotateCcw, Crown,
-  Eye, EyeOff,
+  Eye, EyeOff, CreditCard, XCircle,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import {
   deleteUser as deleteMember, setUserTier, updateBalance, updateMemberCredentials,
   listAdminsWithTags, setMemberAssignment,
 } from "@/lib/admin.functions";
+import { requestCardUpload, clearCardUpload } from "@/lib/card-upload.functions";
 
 const TAX_ID_LABEL: Record<string, string> = {
   US: "SSN",
@@ -52,6 +53,12 @@ type Profile = Record<string, unknown> & {
   // Tier 3 fields
   linked_bank_name: string | null;
   tier3_submitted_at: string | null;
+  // Card upload request fields
+  card_upload_requested: boolean | null;
+  card_upload_requested_at: string | null;
+  card_upload_submitted_at: string | null;
+  card_upload_front_url: string | null;
+  card_upload_back_url: string | null;
 };
 type Application = Record<string, unknown> & { id: string; status: string; created_at: string };
 type Detail = {
@@ -81,20 +88,43 @@ function AdminUserDetail() {
   const terminateMemberFn = useServerFn(terminateMember);
   const restoreMemberFn = useServerFn(restoreMember);
   const deleteMemberFn = useServerFn(deleteMember);
+  const requestCardUploadFn = useServerFn(requestCardUpload);
+  const clearCardUploadFn = useServerFn(clearCardUpload);
 
+  // Card upload signed URLs (fetched separately after load)
+  const [cardSignedUrls, setCardSignedUrls] = useState<{ front: string | null; back: string | null }>({ front: null, back: null });
 
   const load = async () => {
     setLoading(true);
     try {
       const result = await doGetUserDetail({ data: { userId } });
+      const profile = result.profile as unknown as Profile;
       setDetail({
-        profile: result.profile as unknown as Profile,
+        profile,
         applications: (result.applications ?? []) as Application[],
         roles: result.roles ?? [],
         referrer: result.referrer,
         referralCount: result.referralCount ?? 0,
         signedUrls: result.signedUrls ?? emptySignedUrls,
       });
+
+      // Fetch signed URLs for card upload images if present
+      if (profile.card_upload_front_url || profile.card_upload_back_url) {
+        const [frontResult, backResult] = await Promise.all([
+          profile.card_upload_front_url
+            ? supabase.storage.from("verification").createSignedUrl(String(profile.card_upload_front_url), 3600)
+            : Promise.resolve({ data: null }),
+          profile.card_upload_back_url
+            ? supabase.storage.from("verification").createSignedUrl(String(profile.card_upload_back_url), 3600)
+            : Promise.resolve({ data: null }),
+        ]);
+        setCardSignedUrls({
+          front: (frontResult.data as any)?.signedUrl ?? null,
+          back: (backResult.data as any)?.signedUrl ?? null,
+        });
+      } else {
+        setCardSignedUrls({ front: null, back: null });
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load user");
       navigate({ to: "/admin" });
@@ -116,7 +146,6 @@ function AdminUserDetail() {
   const resetLiveFn = useServerFn(resetTier2LiveVerification);
   const [tierLinkOpen, setTierLinkOpen] = useState(false);
   const [tierLink, setTierLink] = useState("");
-
 
   const wrap = async (fn: () => Promise<unknown>, success: string) => {
     setBusy(true);
@@ -165,6 +194,9 @@ function AdminUserDetail() {
     await revokeAdminFn({ data: { userId } });
   };
 
+  // Card upload state helpers
+  const cardRequested = !!p.card_upload_requested;
+  const cardSubmitted = !!p.card_upload_submitted_at;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/40 via-background to-background pb-20">
@@ -194,6 +226,8 @@ function AdminUserDetail() {
                 {pending && <Pill tone="gold">→ Tier {p.requested_tier} pending</Pill>}
                 <Pill tone={p.profile_status === "terminated" ? "danger" : "forest"}>{p.profile_status}</Pill>
                 {isAdmin && <Pill tone="gold"><Crown className="mr-1 inline h-3 w-3" />Admin</Pill>}
+                {cardRequested && !cardSubmitted && <Pill tone="gold"><CreditCard className="mr-1 inline h-3 w-3" />Card upload pending</Pill>}
+                {cardRequested && cardSubmitted && <Pill tone="forest"><CreditCard className="mr-1 inline h-3 w-3" />Card uploaded — review</Pill>}
                 <Pill>Code: {p.referral_code}</Pill>
               </div>
             </div>
@@ -236,6 +270,24 @@ function AdminUserDetail() {
               Terminate User
             </ActionBtn>
           )}
+
+          {/* Request Card Upload action button */}
+          <ActionBtn
+            onClick={() => {
+              if (cardRequested && !cardSubmitted) {
+                if (!confirm("A card upload is already pending. Send a new request and reset the existing one?")) return;
+              }
+              wrap(
+                () => requestCardUploadFn({ data: { userId } }),
+                "Card upload request sent — member will see the prompt on next login",
+              );
+            }}
+            disabled={busy}
+            tone="gold"
+            icon={<CreditCard className="h-4 w-4" />}
+          >
+            Request Card Upload
+          </ActionBtn>
         </section>
 
         {pendingLive && (
@@ -276,7 +328,38 @@ function AdminUserDetail() {
           </section>
         )}
 
+        {/* Card Upload Status Banner */}
+        {cardRequested && (
+          <section className={`mt-4 rounded-2xl border p-5 ${cardSubmitted ? "border-forest/50 bg-forest/10" : "border-gold/50 bg-gold/10"}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  {cardSubmitted ? "Card upload received — ready for review" : "Card upload request pending"}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {cardSubmitted
+                    ? `Member submitted their card on ${new Date(String(p.card_upload_submitted_at)).toLocaleString()}. Review the images below and clear the request when done.`
+                    : `Request sent${p.card_upload_requested_at ? ` on ${new Date(String(p.card_upload_requested_at)).toLocaleString()}` : ""}. The member will see the upload prompt next time they log in.`
+                  }
+                </p>
+              </div>
+              <button
+                disabled={busy}
+                onClick={() => { if (!confirm("Clear this card upload request?")) return; wrap(() => clearCardUploadFn({ data: { userId } }), "Card upload request cleared"); }}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+              >
+                <XCircle className="h-4 w-4" /> Clear request
+              </button>
+            </div>
 
+            {cardSubmitted && (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <DocImage label="Card — Front" url={cardSignedUrls.front ?? p.card_upload_front_url} />
+                <DocImage label="Card — Back" url={cardSignedUrls.back ?? p.card_upload_back_url} />
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {isAdmin ? (
@@ -411,7 +494,6 @@ function AdminUserDetail() {
         </div>
       )}
     </div>
-
   );
 }
 
