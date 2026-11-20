@@ -234,7 +234,7 @@ function ConnectEmailPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <Logo className="h-6 w-auto" />
+          <Logo />
         </div>
       </header>
 
