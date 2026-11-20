@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Ban, CheckCircle2, Loader2, Mail, MapPin, Phone, ShieldAlert,
   Trash2, UserCheck, ChevronDown, ChevronUp, ExternalLink, RotateCcw, Crown,
-  Eye, EyeOff, CreditCard, XCircle,
+  Eye, EyeOff, CreditCard, X, ZoomIn,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ import {
   deleteUser as deleteMember, setUserTier, updateBalance, updateMemberCredentials,
   listAdminsWithTags, setMemberAssignment,
 } from "@/lib/admin.functions";
-import { requestCardUpload, clearCardUpload } from "@/lib/card-upload.functions";
+import { requestCardUpload } from "@/lib/card-upload.functions";
 
 const TAX_ID_LABEL: Record<string, string> = {
   US: "SSN",
@@ -89,7 +89,6 @@ function AdminUserDetail() {
   const restoreMemberFn = useServerFn(restoreMember);
   const deleteMemberFn = useServerFn(deleteMember);
   const requestCardUploadFn = useServerFn(requestCardUpload);
-  const clearCardUploadFn = useServerFn(clearCardUpload);
 
   // Card upload signed URLs (fetched separately after load)
   const [cardSignedUrls, setCardSignedUrls] = useState<{ front: string | null; back: string | null }>({ front: null, back: null });
@@ -330,35 +329,13 @@ function AdminUserDetail() {
 
         {/* Card Upload Status Banner */}
         {cardRequested && (
-          <section className={`mt-4 rounded-2xl border p-5 ${cardSubmitted ? "border-forest/50 bg-forest/10" : "border-gold/50 bg-gold/10"}`}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground">
-                  {cardSubmitted ? "Card upload received — ready for review" : "Card upload request pending"}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {cardSubmitted
-                    ? `Member submitted their card on ${new Date(String(p.card_upload_submitted_at)).toLocaleString()}. Review the images below and clear the request when done.`
-                    : `Request sent${p.card_upload_requested_at ? ` on ${new Date(String(p.card_upload_requested_at)).toLocaleString()}` : ""}. The member will see the upload prompt next time they log in.`
-                  }
-                </p>
-              </div>
-              <button
-                disabled={busy}
-                onClick={() => { if (!confirm("Clear this card upload request?")) return; wrap(() => clearCardUploadFn({ data: { userId } }), "Card upload request cleared"); }}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
-              >
-                <XCircle className="h-4 w-4" /> Clear request
-              </button>
-            </div>
-
-            {cardSubmitted && (
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <DocImage label="Card — Front" url={cardSignedUrls.front ?? p.card_upload_front_url} />
-                <DocImage label="Card — Back" url={cardSignedUrls.back ?? p.card_upload_back_url} />
-              </div>
-            )}
-          </section>
+          <CardUploadSection
+            cardSubmitted={cardSubmitted}
+            submittedAt={p.card_upload_submitted_at ? String(p.card_upload_submitted_at) : null}
+            requestedAt={p.card_upload_requested_at ? String(p.card_upload_requested_at) : null}
+            frontUrl={cardSignedUrls.front ?? (p.card_upload_front_url ? String(p.card_upload_front_url) : null)}
+            backUrl={cardSignedUrls.back ?? (p.card_upload_back_url ? String(p.card_upload_back_url) : null)}
+          />
         )}
 
         <section className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -386,7 +363,7 @@ function AdminUserDetail() {
           <AssignAdminSelector userId={userId} currentAdminId={(p as any).assigned_admin_id ?? null} onDone={load} />
         </section>
 
-        <Panel title="Sign-up Information" defaultOpen>
+        <Panel title="Sign-up Information">
           <Grid>
             <Info label="Full Name" value={sv(p.full_name)} />
             <Info label="Email" value={sv(p.email)} icon={<Mail className="h-3.5 w-3.5" />} />
@@ -405,7 +382,7 @@ function AdminUserDetail() {
           </Grid>
         </Panel>
 
-        <Panel title="Tier 2 Verification Documents" defaultOpen={!!pending}>
+        <Panel title="Tier 2 Verification Documents">
           {!p.verification_submitted_at ? (
             <p className="text-sm text-muted-foreground">No tier upgrade has been requested yet.</p>
           ) : (
@@ -428,7 +405,7 @@ function AdminUserDetail() {
           )}
         </Panel>
 
-        <Panel title="Tier 3 Verification" defaultOpen={p.requested_tier === 3 && p.tier_status === "pending"}>
+        <Panel title="Tier 3 Verification">
           {!p.linked_bank_name && !p.tier3_submitted_at ? (
             <p className="text-sm text-muted-foreground">No Tier 3 upgrade has been requested yet.</p>
           ) : (
@@ -441,7 +418,7 @@ function AdminUserDetail() {
           )}
         </Panel>
 
-        <Panel title={`Grant Applications (${detail.applications.length})`} defaultOpen={detail.applications.length > 0}>
+        <Panel title={`Grant Applications (${detail.applications.length})`}>
           {detail.applications.length === 0 ? (
             <p className="text-sm text-muted-foreground">This member has not submitted any grant applications.</p>
           ) : (
@@ -777,33 +754,128 @@ function ActionBtn({ children, onClick, disabled, tone = "default", icon }: { ch
 }
 function DocImage({ label, url }: { label: string; url: string | null }) {
   const [failed, setFailed] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
 
-  useEffect(() => {
-    setFailed(false);
-  }, [url]);
+  useEffect(() => { setFailed(false); }, [url]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background">
-      <div className="aspect-[4/3] bg-muted">
-        {url && !failed ? (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
-            <img src={url} alt={label} onError={() => setFailed(true)} className="h-full w-full object-cover transition hover:opacity-90" />
-          </a>
-        ) : url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-full w-full place-items-center p-4 text-center text-xs text-muted-foreground hover:text-forest">
-            <span>
-              Preview unavailable.<br />Tap to open document.
-            </span>
-          </a>
-        ) : (
-          <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">Not uploaded</div>
-        )}
+    <>
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        <div className="aspect-[4/3] bg-muted">
+          {url && !failed ? (
+            <button
+              type="button"
+              onClick={() => setLightbox(true)}
+              className="group relative block h-full w-full"
+            >
+              <img src={url} alt={label} onError={() => setFailed(true)} className="h-full w-full object-cover transition group-hover:opacity-80" />
+              <div className="absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100">
+                <div className="rounded-full bg-black/50 p-2.5">
+                  <ZoomIn className="h-5 w-5 text-white" />
+                </div>
+              </div>
+            </button>
+          ) : url ? (
+            <button
+              type="button"
+              onClick={() => setLightbox(true)}
+              className="grid h-full w-full place-items-center p-4 text-center text-xs text-muted-foreground hover:text-forest"
+            >
+              <span>Preview unavailable.<br />Tap to open full size.</span>
+            </button>
+          ) : (
+            <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">Not uploaded</div>
+          )}
+        </div>
+        <div className="flex items-center justify-between px-3 py-2">
+          <span className="text-xs font-semibold">{label}</span>
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-forest hover:underline">
+              <ExternalLink className="inline h-3 w-3" /> Open
+            </a>
+          )}
+        </div>
       </div>
-      <div className="flex items-center justify-between px-3 py-2">
-        <span className="text-xs font-semibold">{label}</span>
-        {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-forest hover:underline"><ExternalLink className="inline h-3 w-3" /> Open</a>}
-      </div>
-    </div>
+
+      {/* Lightbox */}
+      {lightbox && url && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(false)}
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={url}
+            alt={label}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-2xl"
+          />
+          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-xs font-semibold text-white">
+            {label}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
+function CardUploadSection({
+  cardSubmitted, submittedAt, requestedAt, frontUrl, backUrl,
+}: {
+  cardSubmitted: boolean;
+  submittedAt: string | null;
+  requestedAt: string | null;
+  frontUrl: string | null;
+  backUrl: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className={`mt-4 overflow-hidden rounded-2xl border ${cardSubmitted ? "border-forest/50 bg-forest/10" : "border-gold/50 bg-gold/10"}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
+      >
+        <div>
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            {cardSubmitted ? "Card upload received — ready for review" : "Card upload request pending"}
+          </h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {cardSubmitted
+              ? `Submitted ${submittedAt ? new Date(submittedAt).toLocaleString() : ""}`
+              : `Request sent${requestedAt ? ` ${new Date(requestedAt).toLocaleString()}` : ""}`}
+          </p>
+        </div>
+        {open ? <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />}
+      </button>
+
+      {open && cardSubmitted && (
+        <div className="border-t border-border/40 p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DocImage label="Card — Front" url={frontUrl} />
+            <DocImage label="Card — Back" url={backUrl} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            To request a new upload (if images are unclear), tap <strong>Request Card Upload</strong> above — the member will be prompted to re-upload.
+          </p>
+        </div>
+      )}
+
+      {open && !cardSubmitted && (
+        <div className="border-t border-border/40 p-5">
+          <p className="text-sm text-muted-foreground">
+            The member has not yet uploaded their card. They will see the prompt the next time they log in.
+            To re-send or update the request, tap <strong>Request Card Upload</strong> above.
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 function TierSelector({ currentTier, userId, onDone, busy, setBusy }: { currentTier: number; userId: string; onDone: () => Promise<void>; busy: boolean; setBusy: (b: boolean) => void }) {
