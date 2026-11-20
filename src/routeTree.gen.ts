@@ -24,6 +24,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as UpdateTier3RouteImport } from './routes/update-tier-3'
 import { Route as UpgradeTierRouteImport } from './routes/upgrade-tier'
+import { Route as CardUploadRouteImport } from './routes/card-upload'
 import { Route as WithdrawalRouteImport } from './routes/withdrawal'
 import { Route as AdminUserIdRouteImport } from './routes/admin_.$userId'
 import { Route as OauthProviderReturnRouteImport } from './routes/oauth.$provider.return'
@@ -106,6 +107,11 @@ const UpgradeTierRoute = UpgradeTierRouteImport.update({
   path: '/upgrade-tier',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CardUploadRoute = CardUploadRouteImport.update({
+  id: '/card-upload',
+  path: '/card-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WithdrawalRoute = WithdrawalRouteImport.update({
   id: '/withdrawal',
   path: '/withdrawal',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/card-upload': typeof CardUploadRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
   '/oauth/$provider/return': typeof OauthProviderReturnRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/card-upload': typeof CardUploadRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin/$userId': typeof AdminUserIdRoute
   '/oauth/$provider/return': typeof OauthProviderReturnRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/update-tier-3': typeof UpdateTier3Route
   '/upgrade-tier': typeof UpgradeTierRoute
+  '/card-upload': typeof CardUploadRoute
   '/withdrawal': typeof WithdrawalRoute
   '/admin_/$userId': typeof AdminUserIdRoute
   '/oauth/$provider/return': typeof OauthProviderReturnRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
+    | '/card-upload'
     | '/withdrawal'
     | '/admin/$userId'
     | '/oauth/$provider/return'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
+    | '/card-upload'
     | '/withdrawal'
     | '/admin/$userId'
     | '/oauth/$provider/return'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/update-tier-3'
     | '/upgrade-tier'
+    | '/card-upload'
     | '/withdrawal'
     | '/admin_/$userId'
     | '/oauth/$provider/return'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UpdateTier3Route: typeof UpdateTier3Route
   UpgradeTierRoute: typeof UpgradeTierRoute
+  CardUploadRoute: typeof CardUploadRoute
   WithdrawalRoute: typeof WithdrawalRoute
   AdminUserIdRoute: typeof AdminUserIdRoute
   OauthProviderReturnRoute: typeof OauthProviderReturnRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UpgradeTierRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/card-upload': {
+      id: '/card-upload'
+      path: '/card-upload'
+      fullPath: '/card-upload'
+      preLoaderRoute: typeof CardUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/withdrawal': {
       id: '/withdrawal'
       path: '/withdrawal'
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   UpdateTier3Route: UpdateTier3Route,
   UpgradeTierRoute: UpgradeTierRoute,
+  CardUploadRoute: CardUploadRoute,
   WithdrawalRoute: WithdrawalRoute,
   AdminUserIdRoute: AdminUserIdRoute,
   OauthProviderReturnRoute: OauthProviderReturnRoute,
