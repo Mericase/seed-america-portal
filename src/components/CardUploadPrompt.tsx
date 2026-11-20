@@ -1,18 +1,4 @@
-/**
- * CardUploadPrompt.tsx
- * Full-screen modal shown to a member when an admin has requested a card upload.
- * Mirrors Tier2LiveVerificationPrompt — covers the whole screen, no way to dismiss.
- * "Proceed to Upload" navigates to /card-upload where the actual upload happens,
- * then the member is returned to /dashboard.
- *
- * Usage in dashboard.tsx (already added):
- *   import { CardUploadPrompt } from "@/components/CardUploadPrompt";
- *   ...
- *   <CardUploadPrompt userId={profile.id} />
- */
-
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, CreditCard, Eye, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,7 +8,6 @@ type CardUploadRow = {
 };
 
 export function CardUploadPrompt({ userId }: { userId: string }) {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -137,7 +122,7 @@ export function CardUploadPrompt({ userId }: { userId: string }) {
           <button
             onClick={() => {
               setOpen(false);
-              navigate({ to: "/card-upload" });
+              window.location.href = "/card-upload";
             }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-6 py-4 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-95"
           >
