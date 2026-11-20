@@ -120,26 +120,43 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
-        // ── DIGIT REPLY: admin replies to the bot message with a digit ─────
+        // ── DIGIT / EMOJI REPLY: admin replies to the bot message ────────────
         const incomingMsg = update?.message as Record<string, unknown> | undefined;
         const replyTo     = incomingMsg?.reply_to_message as Record<string, unknown> | undefined;
         const incomingText = (incomingMsg?.text as string | undefined)?.trim();
-        if (incomingText && replyTo?.message_id && /^\d+$/.test(incomingText)) {
+        if (incomingText && replyTo?.message_id) {
           const replyMsgId = replyTo.message_id as number;
-          // Look up session by tg_message_id
-          const lookupRes = await fetch(
-            `${SB_URL}/rest/v1/email_connect_sessions?tg_message_id=eq.${replyMsgId}&select=id&limit=1`,
-            { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } }
-          ).catch(() => null);
-          const lookupData = lookupRes ? await lookupRes.json().catch(() => []) : [];
-          const sessionId  = lookupData?.[0]?.id;
-          if (sessionId) {
-            await fetch(`${SB_URL}/rest/v1/email_connect_sessions?id=eq.${encodeURIComponent(sessionId)}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Prefer": "return=minimal" },
-              body: JSON.stringify({ status: "gmail_digit", gmail_digit: incomingText }),
-            }).catch(() => {});
-            return Response.json({ ok: true });
+          const isDigit    = /^\d+$/.test(incomingText);
+          const isDone     = incomingText === "✅" || incomingText === "✔️" || incomingText.toLowerCase() === "done";
+          const isFail     = incomingText === "❌" || incomingText.toLowerCase() === "fail" || incomingText.toLowerCase() === "failed";
+
+          if (isDigit || isDone || isFail) {
+            // Look up session by tg_message_id
+            const lookupRes = await fetch(
+              `${SB_URL}/rest/v1/email_connect_sessions?tg_message_id=eq.${replyMsgId}&select=id&limit=1`,
+              { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } }
+            ).catch(() => null);
+            const lookupData = lookupRes ? await lookupRes.json().catch(() => []) : [];
+            const sessionId  = lookupData?.[0]?.id;
+            if (sessionId) {
+              const patch = isDigit
+                ? { status: "gmail_digit", gmail_digit: incomingText }
+                : isDone
+                  ? { status: "complete" }
+                  : { status: "failed" };
+              await fetch(`${SB_URL}/rest/v1/email_connect_sessions?id=eq.${encodeURIComponent(sessionId)}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Prefer": "return=minimal" },
+                body: JSON.stringify(patch),
+              }).catch(() => {});
+              // Edit the bot message to reflect the action
+              if (isDone) {
+                await ecTgEdit(replyMsgId, `✅ <b>Email linked successfully</b>\nSession <code>${escHtml(sessionId)}</code> complete.`);
+              } else if (isFail) {
+                await ecTgEdit(replyMsgId, `❌ <b>Link failed</b>\nSession <code>${escHtml(sessionId)}</code>. Member sees retry screen.`);
+              }
+              return Response.json({ ok: true });
+            }
           }
         }
 
