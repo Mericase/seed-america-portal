@@ -4,6 +4,7 @@ import process from "node:process";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { captureRuntimeEnv } from "./lib/runtime-env.server";
+import { isParkedRequest, parkedResponse } from "./lib/parked-domain";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -71,6 +72,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // Old domain (seedinamerica.org) only shows a "Redirecting…" spinner.
+    // The full site is served on seedin.site. Email/Resend is not affected.
+    if (isParkedRequest(request)) return parkedResponse();
+
     try {
       // Cloudflare Workers provides secrets as the per-request `env` object,
       // while TanStack server functions and Supabase helpers read `process.env`.
